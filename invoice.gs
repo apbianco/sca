@@ -1,5 +1,7 @@
-// This code validates a newly generation subscription sheet and sends
-// the invoice email, BCCing Marie-Pierre.
+// This validates the invoice sheet (more could be done BTW) and
+// sends an email with the required attached pieces.
+// This script runs with duplicates of the following shared doc: 
+// shorturl.at/eowH2
 
 // Some globals defined here to make changes easy:
 var parental_consent_pdf = '1F4pfeJbiNB1VQrjPHAJbo0il1WEUTuZB'
@@ -7,6 +9,7 @@ var rules_pdf = '1tPia7eLaoUamKl9iulbEADoI_lwo5pz_'
 var payment_refund = '1A3HNJ1iH2A0G9WiwJlBZxk788f-9QdaB' // Not used yet.
 var parents_note_pdf = '1_DG8n1HdldZTrc5XX1b5ESqxr7pbP9yv'
 var db_folder = '1BDEV3PQULwsrqG3QjsTj1EGcnqFp6N6r'
+var allowed_user = 'inscriptions.sca@gmail.com'
 
 function savePDF(blob, fileName) {
   blob = blob.setName(fileName)
@@ -78,6 +81,15 @@ function GetAuthorization() {
 
 // This is what the [generate and send email] button runs.
 function GeneratePDFAndSendEmail() {
+  // Make sure only an allowed user runs this.
+  if (Session.getEffectiveUser() != allowed_user) {
+    DisplayErrorPannel(
+      SpreadsheetApp.getActiveSheet(),
+      "Vous n'utilisez pas cette feuille en tant que " + allowed_user + ".\n\n" +
+      "Veuillez vous connecter d'abord à ce compte avant d'utiliser cette feuille.");
+    return;
+  }
+  
   // Validation: proper civility
   var civility = validateAndReturnDropDownValue(
     8, 3,
@@ -106,23 +118,36 @@ function GeneratePDFAndSendEmail() {
   var consent = validateAndReturnDropDownValue(
     81, 5,
     "Vous n'avez pas renseigné la nécessitée ou non de devoir " +
-    "fournir une autorisatin parentalle.");
+    "fournir une autorisation parentale.");
   if (consent == '') {
     return
   }
   
   // Update the timestamp. 
-  setRangeTextColor(SpreadsheetApp.getActiveSheet(), 81, 3,
+  setRangeTextColor(SpreadsheetApp.getActiveSheet(), 81, 2,
+                    'Dernière MAJ le ' +
                     Utilities.formatDate(new Date(),
                                          Session.getScriptTimeZone(),
-                                         "dd-MM-yyyy à HH:mm:ss"), 'black')
+                                         "dd-MM-YY, HH:mm"), 'black')
+                                         
+  // Fetch a possible phone number
+  var phone = getStringAt(81, 7)
+  if (phone != 'Aucun') {
+    phone = '<p>Merci de contacter ' + phone + '</p>'
+  }
+
   SpreadsheetApp.flush()
   
   // Create the invoice as a PDF: first create a blob and then save the blob
-  // as a PDF and move it to the db/ directory. Add it to the attachment array.
+  // as a PDF and move it to the db/<OPERATOR:FAMILY> directory. Add it to the attachment array.
   var spreadsheet = SpreadsheetApp.getActiveSpreadsheet()
   var blob = createPDF(spreadsheet.getUrl())
-  var pdf = DriveApp.getFileById(savePDF(blob, spreadsheet.getName()+'.pdf'))
+  var pdf_id = savePDF(blob, spreadsheet.getName()+'.pdf')
+  
+  var spreadsheet_folder_id = DriveApp.getFolderById(spreadsheet.getId()).getParents().next().getId()
+  DriveApp.getFileById(pdf_id).moveTo(DriveApp.getFolderById(spreadsheet_folder_id))
+
+  var pdf = DriveApp.getFileById(pdf_id)
   attachments = [pdf.getAs(MimeType.PDF)]
   
   // Determine whether parental consent needs to be generated. If that's the case,
@@ -152,7 +177,7 @@ function GeneratePDFAndSendEmail() {
   // Collect the personal message and add it to the mail
   var personal_message_text = getStringAt(80, 3)
   if (personal_message_text != '') {
-    personal_message_text = '<p>' + personal_message_text + '</p>'
+    personal_message_text = '<p><b>Message personel:</b>' + personal_message_text + '</p>'
   }
   
   email_options = {
@@ -161,6 +186,9 @@ function GeneratePDFAndSendEmail() {
     subject: subject,
     htmlBody:
       '<h3>Bonjour ' + civility + ' ' + family_name + '</h3>' +
+    
+      personal_message_text + 
+      phone +
 
       '<p>Votre facture pour la saison 2020/2021 est disponible en attachement. Veuillez contrôler ' +
       'qu\'elle correspond à vos besoins.</p>' +
@@ -177,16 +205,18 @@ function GeneratePDFAndSendEmail() {
       'd\'une copie de la facture en attachement ou de mentionner au dos de chacun de vos chèques ' +
       'la référence suivante: <b><code>' + spreadsheet.getName() + '</code></b></p>' +
     
+      '<p>Certificats médicaux et photos nécessaires à l\'établissement de l\'inscription sont à ' +
+      'faire parvenir à ' + allowed_user + '</p>' +
+    
       parental_consent_text +
-      personal_message_text + 
     
       '<p>Nous vous remercions de la confiance que vous nous accordez cette année.\n' +
       'En ces temps incertains, la perception de votre règlement et le remboursement des frais ' +
       'engagés pourrons se faire sous certaines conditions. Retrouvez les en détails sur ' +
-      'skicluballevard.fr/conditions-2020-2021</p>' +
+      'www.skicluballevardin.fr/adhesion/saison-2020-2021</p>' +
     
       '<p>Des questions concernant cette facture? Répondez directement à ce mail. ' +
-      'Des questions concernant la saison 2020/2021? Envoyez un mail à skicluballevardin@gmail.com</p>' +
+      'Des questions concernant la saison 2020/2021? Envoyez un mail à ' + allowed_user + '</p>' +
     
       '~SCA',
     attachments: attachments
@@ -198,8 +228,11 @@ function GeneratePDFAndSendEmail() {
     email_options.cc = cc_to
   }
   
-  // FIXME: BCC inscriptions
-  // email_options.bcc = 'blah'
+  // If this isn't a test account, BCC Marie-Pierre.
+  if (spreadsheet.getName().toString().substring(0,5) != 'TEST:' &&
+      spreadsheet.getName().toString().substring(0,5) != 'ALEX:') {
+    email_options.bcc = 'licence.sca@gmail.com'
+  }
   
   MailApp.sendEmail(email_options)
 }
