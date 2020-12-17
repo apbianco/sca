@@ -134,6 +134,8 @@ function GeneratePDFAndSendEmail() {
   var phone = getStringAt(81, 7)
   if (phone != 'Aucun') {
     phone = '<p>Merci de contacter ' + phone + '</p>'
+  } else {
+    phone = ''
   }
 
   SpreadsheetApp.flush()
