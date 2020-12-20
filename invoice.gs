@@ -179,7 +179,7 @@ function GeneratePDFAndSendEmail() {
   // Collect the personal message and add it to the mail
   var personal_message_text = getStringAt(80, 3)
   if (personal_message_text != '') {
-    personal_message_text = '<p><b>Message personel:</b>' + personal_message_text + '</p>'
+    personal_message_text = '<p><b>Message personnel:</b>' + personal_message_text + '</p>'
   }
   
   email_options = {
