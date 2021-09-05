@@ -18,9 +18,10 @@ var db_folder = '1BDEV3PQULwsrqG3QjsTj1EGcnqFp6N6r'
 var allowed_user = 'inscriptions.sca@gmail.com'
 
 // Spreadsheet parameters (row, columns, etc...)
-var coord_family_name = [1, 2]
-var coord_status_info = [2, 2]
-var coord_family_range = [8, 2]
+var coord_family_name = [1, 2];
+var coord_family_last_season = [2, 2];
+var coord_status_info = [3, 2];
+var coord_download_link = [9, 2];
 
 function Debug(message) {
   var ui = SpreadsheetApp.getUi();
@@ -40,6 +41,17 @@ function clearRange(sheet, coord) {
   sheet.getRange(x,y).clear();
 }
 
+function setLastSeasonFamilyList(sheet) {
+  list = [
+    "BADOUARD",
+    "PETIT-BIANCO"
+  ];
+  var rule = SpreadsheetApp.newDataValidation().requireValueInList(list, true).build();
+  var x = coord_family_last_season[0];
+  var y = coord_family_last_season[1];
+  sheet.getRange(x, y).clearDataValidations().clearContent().setDataValidation(rule);
+}
+
 // Retrieve and sanitize a family name.
 function getFamilyName(sheet) {
   return sheet.getRange(1,2).getValue().toString().toUpperCase().
@@ -47,6 +59,7 @@ function getFamilyName(sheet) {
     replace(/\d+/g, "").  // No numbers
     replace(/\//g, "-").  // / into -
     replace(/\./g, "-").  // . into -
+    replace(/_/g, "-").   // _ into -
     replace(/-+/g, "-")   // Many - into a single one.
 }
 
@@ -94,9 +107,10 @@ function onEdit(event){
     }
     setRangeTextColor(sheet, coord_family_name, family_name, "black");
     setRangeTextColor(sheet, coord_status_info,
-                      "Cliquez sur 'Créer une nouvelle inscription'...",
-		      "green");
-    clearRange(sheet, coord_family_range);
+                      "Cliquez sur 'Créer une nouvelle inscription' " +
+                      "pour créer un dossier " + family_name,
+                      "green");
+    clearRange(sheet, coord_download_link);
   }
 }
 
@@ -105,14 +119,22 @@ function onChange(event) {
   onEdit(event);
 }
 
-// Display an error panel with some text, collect OK and
-// clear the status cell.
+function onOpen(event) {
+  var sheet = SpreadsheetApp.getActiveSheet();
+  clearRange(sheet, coord_family_name);
+  setLastSeasonFamilyList(sheet);
+  setRangeTextColor(sheet, coord_status_info, "Créer ou importer une famille", "green");
+}
+
+// Display an error panel with some text, collect OK, 
+// clear the status cell and the family input cell
 function DisplayErrorPannel(sheet, message) {
   setRangeTextColor(sheet, coord_status_info, "Erreur", "red");
   SpreadsheetApp.flush();
   var ui = SpreadsheetApp.getUi();
   var result = ui.alert(message, ui.ButtonSet.OK);
   clearRange(sheet, coord_status_info);
+  clearRange(sheet, coord_family_name);
 }
 
 // This call back is attached to the button used to create a new entry.
@@ -147,7 +169,7 @@ function GenerateEntry() {
   
   // We have a valid family name, indicate that we're preparing the data, clear
   // the old download link.
-  clearRange(sheet, coord_family_range);
+  clearRange(sheet, coord_download_link);
   x = coord_family_name[0];
   y = coord_family_name[1];
   sheet.getRange(x, y).setValue(family_name);
@@ -176,6 +198,7 @@ function GenerateEntry() {
   var url = "https://docs.google.com/spreadsheets/d/" +
 	    documentId + "/edit#gid=0";
   var link = '=HYPERLINK("' + url + '"; "Ouvrir ' + final_name + '")'
+  
   sheet.getRange(8,2).setFormula(link);
   clearRange(sheet, coord_family_name);
   setRangeTextColor(sheet, coord_status_info,
