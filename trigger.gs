@@ -6,15 +6,25 @@
 // 1- The user enters a family name
 // 2- The family is upper-cased and prefixed with the sheet's name
 //    which will carry the name of the operator (Xavier, Alex, etc...)
-// 3- A new sheet is generate from the "FACTURE VIERGE 2020/2021"
+// 3- A new sheet is generated from the "FACTURE VIERGE 2020/2021"
 //    template and stored in a directory create in the db/ directory
 // 4- A link to that sheet is inserted back into the sheet from which
 //    this script runs, so that the user can start directly interact with
 //    it.
 
 // Some globals defined here to make changes easy:
-var empty_invoice = '1wh8HadLsEvbUOg00d7wfQt8MMpudBmwZceqSytWF5Ho'
-var db_folder = '1BDEV3PQULwsrqG3QjsTj1EGcnqFp6N6r'
+//
+// The ID of the empty invoice to use to create content. Adjust
+// this ID for the new season
+var empty_invoice = '1thTPqNLroAAaa5D82IUanJSQ_JY-NJkFMsJ4E56kuwo';
+
+// The DB folder for the 2020/2021 season
+var previous_db_folder = '1BDEV3PQULwsrqG3QjsTj1EGcnqFp6N6r'
+var ranges_previous_season = ["C8:G12", "B16:G20"];
+var ranges_current_season = ["C8:G12", "B16:G20"];
+// The DB folder for the current season
+var db_folder = '1UmSA2OIMZs_9J7kEFu0LSfAHaYFfi8Et';
+
 var allowed_user = 'inscriptions.sca@gmail.com'
 
 // Spreadsheet parameters (row, columns, etc...)
@@ -22,6 +32,11 @@ var coord_family_name = [1, 2];
 var coord_family_last_season = [2, 2];
 var coord_status_info = [3, 2];
 var coord_download_link = [9, 2];
+
+var last_season_list = [
+  "PETIT-BIANCO",
+  "BADOUARD",
+];
 
 function Debug(message) {
   var ui = SpreadsheetApp.getUi();
@@ -42,45 +57,50 @@ function clearRange(sheet, coord) {
 }
 
 function setLastSeasonFamilyList(sheet) {
-  list = [
-    "BADOUARD",
-    "PETIT-BIANCO"
-  ];
-  var rule = SpreadsheetApp.newDataValidation().requireValueInList(list, true).build();
+  var rule = SpreadsheetApp.newDataValidation().requireValueInList(
+    last_season_list, true).build();
   var x = coord_family_last_season[0];
   var y = coord_family_last_season[1];
   sheet.getRange(x, y).clearDataValidations().clearContent().setDataValidation(rule);
 }
 
 // Retrieve and sanitize a family name.
-function getFamilyName(sheet) {
-  return sheet.getRange(1,2).getValue().toString().toUpperCase().
-    replace(/\s/g, "-").  // No spaces
-    replace(/\d+/g, "").  // No numbers
-    replace(/\//g, "-").  // / into -
-    replace(/\./g, "-").  // . into -
-    replace(/_/g, "-").   // _ into -
-    replace(/-+/g, "-")   // Many - into a single one.
+function getFamilyName(sheet, coord) {
+  var x = coord[0];
+  var y = coord[1];
+  if (sheet.getRange(x, y)) {
+    return sheet.getRange(x, y).getValue().toString().toUpperCase().
+      replace(/\s/g, "-").  // No spaces
+      replace(/\d+/g, "").  // No numbers
+      replace(/\//g, "-").  // / into -
+      replace(/\./g, "-").  // . into -
+      replace(/_/g, "-").   // _ into -
+      replace(/-+/g, "-")   // Many - into a single one.
+  } else {
+    return "";
+  }
+} 
+
+function setFamilyName(sheet, coord, value) {
+  sheet.getRange(coord[0], coord[1]).setValue(value);  
 }
 
-// Warn if the validated family name is already in db/ under any form. Return
-// a boolean: true if something was found.
-function checkNotAlreadyExists(sheet, family_name) {
-  var files = DriveApp.getFolderById(db_folder).getFolders()
-  Logger.log('cheching ' + family_name + 'in ' + db_folder)
+// Warn if the validated family name is already in db/ under any form.
+// When something is found, return a filename/file_id tuple, otherwise
+// return a tuple of empty strings.
+function checkAlreadyExists(folder, family_name) {
+  var files = DriveApp.getFolderById(folder).getFolders()
   while (files.hasNext()) {
     file = files.next();
-    Logger.log('file= ' + file)
-    Logger.log('family_name=' + family_name + ', check=' + file.getName());
     if (file.getName().includes(family_name)) {
-      DisplayErrorPannel(
-        sheet,
-        "Un dossier d'inscription existe déjà sous cette dénomination: " +
-        file.getName());
-      return true;
+      return [file.getName(), file.getId()];
     }
   }
-  return false;
+  return ['', ''];
+}
+
+function activeRangeInCoord(r, coord) {
+  return r.getRow() == coord[0] && r.getColumn() == coord[1];
 }
 
 // onEdit runs when the cell where you enter the family name sees its
@@ -88,19 +108,23 @@ function checkNotAlreadyExists(sheet, family_name) {
 //
 // 1- Validate the content
 // 2- Give direction in the status cell on what to do next.
+//
+// TODO: Change to validate the only input that should be there
+// and perform transfer.
 function onEdit(event){
   var ui = SpreadsheetApp.getUi();
   var r = event.source.getActiveRange();
-  // If we're entering a non empty family name, upper-case it and
-  // indicate that we might proceed.
-  var x = coord_family_name[0];
-  var y = coord_family_name[1];
-  if (r.getRow() == x && r.getColumn() == y) {
-    var sheet = SpreadsheetApp.getActiveSheet();
-    var family_name = ''
-    if (sheet.getRange(x, y)) {
-      var family_name = getFamilyName(sheet);
+  var sheet = SpreadsheetApp.getActiveSheet();
+
+  // Check whether the event happened entering a new family name.
+  // If that value can be validated, indicate we might proceed.
+  if (activeRangeInCoord(r, coord_family_name)) {
+    // Do not allow a last season entry to be present at the same time.
+    if (getFamilyName(sheet, coord_family_last_season) != '') {
+      clearRange(sheet, coord_status_info);      
+      return;
     }
+    var family_name = getFamilyName(sheet, coord_family_name);
     if (family_name == '') {
       clearRange(sheet, coord_status_info);      
       return;
@@ -111,6 +135,26 @@ function onEdit(event){
                       "pour créer un dossier " + family_name,
                       "green");
     clearRange(sheet, coord_download_link);
+    return
+  }
+  
+  if (activeRangeInCoord(r, coord_family_last_season)) {
+    // Do not allow an entered family name to be present at the same time.
+    if (getFamilyName(sheet, coord_family_name) != '') {
+      clearRange(sheet, coord_status_info);      
+      return;
+    }
+    var family_name = getFamilyName(sheet, coord_family_last_season);
+    if (family_name == '') {
+      clearRange(sheet, coord_status_info);      
+      return;
+    }
+    setRangeTextColor(sheet, coord_status_info,
+                      "Cliquez sur 'Créer une nouvelle inscription' " +
+                      "pour importer le dossier de " + family_name,
+                      "green");
+    clearRange(sheet, coord_download_link);
+    return    
   }
 }
 
@@ -137,12 +181,87 @@ function DisplayErrorPannel(sheet, message) {
   clearRange(sheet, coord_family_name);
 }
 
+function createNewFamilySheet(sheet, family_name) {
+  // This is the final name for the directory that will contain the
+  // subscriptions
+  var final_name = sheet.getName().toString() + ":" + family_name
+    
+  // Create a directory in db/<final_name>.
+  var family_dir_id = DriveApp.createFolder(final_name).getId();
+  DriveApp.getFileById(family_dir_id).moveTo(DriveApp.getFolderById(db_folder));
+  
+  // Make a copy of the template file and move it to the 'db/'
+  // directory, then rename it.
+  var document_id = DriveApp.getFileById(empty_invoice).makeCopy().getId();
+  document_id = DriveApp.getFileById(document_id).moveTo(
+    DriveApp.getFolderById(family_dir_id)).getId();  
+  DriveApp.getFileById(document_id).setName(final_name);
+  
+  // Assemble the URL that leads to the new file and insert that in
+  // the sheet... Change the readiness indicator.
+  var url = "https://docs.google.com/spreadsheets/d/" +
+	        document_id + "/edit#gid=0";
+  var link = '=HYPERLINK("' + url + '"; "Ouvrir ' + final_name + '")'
+
+  // Set the download link  
+  x = coord_download_link[0];
+  y = coord_download_link[1];
+  sheet.getRange(x, y).setFormula(link);
+  
+  // Reset the family name, update the status bar.
+  clearRange(sheet, coord_family_name);
+  setRangeTextColor(sheet, coord_status_info,
+		    "Terminé - cliquez sur le lien en bas de cette page " +
+		    "pour charger la nouvelle feuille", "green");
+  Logger.log("Created " + final_name + ", stored in " + url);
+  Logger.log("User " + Session.getEffectiveUser());
+  
+  return document_id;
+}
+
+function createNewFamilySheetFromOld(sheet, family_name) {
+  var new_sheet_id = createNewFamilySheet(sheet, family_name);
+  Debug('new_sheet_id='+new_sheet_id);
+  var old = checkAlreadyExists(previous_db_folder, family_name);
+  var old_sheet_name = old[0];
+  var old_folder_id = old[1];
+  var old_sheet_id = '';
+  
+  // Inside the old folder, search the sheet and determine its id
+  var files = DriveApp.getFolderById(old_folder_id).getFiles()
+  while (files.hasNext()) {
+    file = files.next();
+    if (file.getName() == old_sheet_name) {
+      old_sheet_id = file.getId();
+      break;
+    }
+  }
+  if (old_sheet_id == '') {
+    // FIXME: Error message
+    return;
+  }
+  
+  var old_sheet = SpreadsheetApp.openById(old_sheet_id).getSheetByName('Inscription');
+  var new_sheet = SpreadsheetApp.openById(new_sheet_id).getSheetByName('Inscription');
+  // Iterate over all the ranges to copy.
+  if (ranges_previous_season.length != ranges_current_season.length) {
+    // FIXME: Error message
+    return;
+  }
+  // FIXME: Add verification for the old/new sheets
+  for (var index in ranges_previous_season) {
+    // FIXME: Verify ranges exist.
+    var old_sheet_range = old_sheet.getRange(ranges_previous_season[index]);
+    var new_sheet_range = new_sheet.getRange(ranges_current_season[index]);
+    new_sheet_range.setValues(old_sheet_range.getValues());
+  }
+}
+
 // This call back is attached to the button used to create a new entry.
 function GenerateEntry() {
-  // Get a handle on the current sheet, clear old data...
+  // Get a handle on the current sheet, make sure only an allowed
+  // user runs this.
   var sheet = SpreadsheetApp.getActiveSheet();
-  clearRange(sheet, coord_status_info);
-  // Make sure only an allowed user runs this.
   if (Session.getEffectiveUser() != allowed_user) {
     DisplayErrorPannel(
       sheet,
@@ -153,58 +272,51 @@ function GenerateEntry() {
     return;
   }
   
+  // Clear the status bar.
+  clearRange(sheet, coord_status_info);
+  
   // Capture the sanitized family name. Warn if that doesn't work and return.
-  var family_name = getFamilyName(sheet);
+  var new_family = true;
+  var family_name = getFamilyName(sheet, coord_family_name);
   if (family_name == '') {
-    DisplayErrorPannel(
-      sheet,
-      "Veuillez correctement saisir un nom de famille.\n\n" +
-      "N'avez vous pas oublié de valider par [return] ou [enter] 😋 ?")
-    return;
+    family_name = getFamilyName(sheet, coord_family_last_season);
+    if (family_name == '') {
+      DisplayErrorPannel(
+        sheet,
+        "Veuillez correctement saisir ou selectionner un nom de famille.\n\n" +
+        "N'avez vous pas oublié de valider par [return] ou [enter] 😋 ?");
+      return;
+    }
+    new_family = false;
   }
   
-  if (checkNotAlreadyExists(sheet, family_name)) {
+  var already_exists = checkAlreadyExists(db_folder, family_name);
+  if (already_exists[0] != '') {
+      DisplayErrorPannel(
+        sheet,
+        "Un dossier d'inscription existe déjà sous cette dénomination: " +
+        already_exists[0]);
     return;
   }
   
   // We have a valid family name, indicate that we're preparing the data, clear
   // the old download link.
   clearRange(sheet, coord_download_link);
-  x = coord_family_name[0];
-  y = coord_family_name[1];
-  sheet.getRange(x, y).setValue(family_name);
-  setRangeTextColor(sheet, coord_status_info,
-	            "Preparation de " + family_name + "...", "orange");
-  SpreadsheetApp.flush();
+  // If this is a new family, we force the cell value to be the normalized name
+  if (new_family) {
+    setFamilyName(sheet, coord_family_name, family_name)
+  }
 
-  // This is the final name for the directory that will contain the
-  // subscriptions
-  var final_name = sheet.getName().toString() + ":" + family_name
-    
-  // Create a directory in db/<final_name>. Verify first that it
-  // doesn't yet exist.
-  var family_dir_id = DriveApp.createFolder(final_name).getId();
-  DriveApp.getFileById(family_dir_id).moveTo(DriveApp.getFolderById(db_folder));
   
-  // Make a copy of the template file and move it to the 'db/'
-  // directory, then rename it.
-  var documentId = DriveApp.getFileById(empty_invoice).makeCopy().getId();
-  documentId = DriveApp.getFileById(documentId).moveTo(
-    DriveApp.getFolderById(family_dir_id)).getId();  
-  DriveApp.getFileById(documentId).setName(final_name);
-  
-  // Assemble the URL that leads to the new file and insert that in
-  // the sheet... Change the readiness indicator.
-  var url = "https://docs.google.com/spreadsheets/d/" +
-	    documentId + "/edit#gid=0";
-  var link = '=HYPERLINK("' + url + '"; "Ouvrir ' + final_name + '")'
-  
-  sheet.getRange(8,2).setFormula(link);
-  clearRange(sheet, coord_family_name);
-  setRangeTextColor(sheet, coord_status_info,
-		    "Terminé - cliquez sur le lien en bas de cette page " +
-		    "pour charger la nouvelle feuille", "green");
-
-  Logger.log("Created " + final_name + ", stored in " + url);
-  Logger.log("User " + Session.getEffectiveUser())
+  if (new_family) {
+    setRangeTextColor(sheet, coord_status_info,
+                      "Preparation de " + family_name + "...", "orange");
+    SpreadsheetApp.flush();
+    createNewFamilySheet(sheet, family_name);
+  } else {
+    setRangeTextColor(sheet, coord_status_info,
+                      "Importation de " + family_name + "...", "orange");
+    SpreadsheetApp.flush();    
+    createNewFamilySheetFromOld(sheet, family_name);
+  }
 }
