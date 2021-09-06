@@ -12,6 +12,11 @@
 //    this script runs, so that the user can start directly interact with
 //    it.
 
+// BUG TO FIX:
+// - Create an already existing family from drop down
+// - Error message appears
+// - But content for row 1 and 2 isn't clear
+
 // Some globals defined here to make changes easy:
 //
 // The ID of the empty invoice to use to create content. Adjust
@@ -20,10 +25,13 @@ var empty_invoice = '1thTPqNLroAAaa5D82IUanJSQ_JY-NJkFMsJ4E56kuwo';
 
 // The DB folder for the 2020/2021 season
 var previous_db_folder = '1BDEV3PQULwsrqG3QjsTj1EGcnqFp6N6r'
+// Ranges to copy from an entry filed last season:
 var ranges_previous_season = ["C8:G12", "B16:G20"];
-var ranges_current_season = ["C8:G12", "B16:G20"];
+
 // The DB folder for the current season
 var db_folder = '1UmSA2OIMZs_9J7kEFu0LSfAHaYFfi8Et';
+// Ranges to copy to for an entry filed this season:
+var ranges_current_season = ["C8:G12", "B16:G20"];
 
 var allowed_user = 'inscriptions.sca@gmail.com'
 
@@ -51,9 +59,7 @@ function setRangeTextColor(sheet, coord, text, color) {
 }
 
 function clearRange(sheet, coord) {
-  var x = coord[0];
-  var y = coord[1];
-  sheet.getRange(x,y).clear();
+  sheet.getRange(coord[0],coord[1]).clear();
 }
 
 function setLastSeasonFamilyList(sheet) {
@@ -103,14 +109,18 @@ function activeRangeInCoord(r, coord) {
   return r.getRow() == coord[0] && r.getColumn() == coord[1];
 }
 
+function resetSheet() {
+  var sheet = SpreadsheetApp.getActiveSheet();
+  clearRange(sheet, coord_family_name);
+  setLastSeasonFamilyList(sheet);
+  setRangeTextColor(sheet, coord_status_info, "Créer ou importer une famille", "green");
+}
+
 // onEdit runs when the cell where you enter the family name sees its
 // content changed. It serves two purposes:
 //
-// 1- Validate the content
+// 1- Validate the selected content
 // 2- Give direction in the status cell on what to do next.
-//
-// TODO: Change to validate the only input that should be there
-// and perform transfer.
 function onEdit(event){
   var ui = SpreadsheetApp.getUi();
   var r = event.source.getActiveRange();
@@ -120,6 +130,7 @@ function onEdit(event){
   // If that value can be validated, indicate we might proceed.
   if (activeRangeInCoord(r, coord_family_name)) {
     // Do not allow a last season entry to be present at the same time.
+    // FIXME: Display an error message
     if (getFamilyName(sheet, coord_family_last_season) != '') {
       clearRange(sheet, coord_status_info);      
       return;
@@ -140,6 +151,7 @@ function onEdit(event){
   
   if (activeRangeInCoord(r, coord_family_last_season)) {
     // Do not allow an entered family name to be present at the same time.
+    // FIXME: Display and error message
     if (getFamilyName(sheet, coord_family_name) != '') {
       clearRange(sheet, coord_status_info);      
       return;
@@ -163,22 +175,21 @@ function onChange(event) {
   onEdit(event);
 }
 
+// When the sheet is opened or loaded, clear the family name,
+// install the name of the old families in a drop-down and
+// update the status bar.
 function onOpen(event) {
-  var sheet = SpreadsheetApp.getActiveSheet();
-  clearRange(sheet, coord_family_name);
-  setLastSeasonFamilyList(sheet);
-  setRangeTextColor(sheet, coord_status_info, "Créer ou importer une famille", "green");
+  resetSheet();
 }
 
 // Display an error panel with some text, collect OK, 
 // clear the status cell and the family input cell
-function DisplayErrorPannel(sheet, message) {
-  setRangeTextColor(sheet, coord_status_info, "Erreur", "red");
+function displayErrorPannel(sheet, message) {
+  setRangeTextColor(sheet, coord_status_info, "⚠️ Erreur...", "red");
   SpreadsheetApp.flush();
   var ui = SpreadsheetApp.getUi();
   var result = ui.alert(message, ui.ButtonSet.OK);
-  clearRange(sheet, coord_status_info);
-  clearRange(sheet, coord_family_name);
+  resetSheet();
 }
 
 function createNewFamilySheet(sheet, family_name) {
@@ -241,9 +252,11 @@ function createNewFamilySheetFromOld(sheet, family_name) {
     return;
   }
   
+  // Load the old and new sheets
   var old_sheet = SpreadsheetApp.openById(old_sheet_id).getSheetByName('Inscription');
   var new_sheet = SpreadsheetApp.openById(new_sheet_id).getSheetByName('Inscription');
-  // Iterate over all the ranges to copy.
+
+  // Iterate over all the ranges to copy and copy the content from the old to the new.
   if (ranges_previous_season.length != ranges_current_season.length) {
     // FIXME: Error message
     return;
@@ -263,9 +276,9 @@ function GenerateEntry() {
   // user runs this.
   var sheet = SpreadsheetApp.getActiveSheet();
   if (Session.getEffectiveUser() != allowed_user) {
-    DisplayErrorPannel(
+    displayErrorPannel(
       sheet,
-      "Vous n'utilisez pas cette feuille en tant que " +
+      "⚠️ Vous n'utilisez pas cette feuille en tant que " +
       allowed_user + ".\n\n" +
       "Veuillez vous connecter d'abord à ce compte avant d'utiliser " +
       "cette feuille.");
@@ -281,9 +294,9 @@ function GenerateEntry() {
   if (family_name == '') {
     family_name = getFamilyName(sheet, coord_family_last_season);
     if (family_name == '') {
-      DisplayErrorPannel(
+      displayErrorPannel(
         sheet,
-        "Veuillez correctement saisir ou selectionner un nom de famille.\n\n" +
+        "⚠️ Veuillez correctement saisir ou selectionner un nom de famille.\n\n" +
         "N'avez vous pas oublié de valider par [return] ou [enter] 😋 ?");
       return;
     }
@@ -292,9 +305,9 @@ function GenerateEntry() {
   
   var already_exists = checkAlreadyExists(db_folder, family_name);
   if (already_exists[0] != '') {
-      DisplayErrorPannel(
+      displayErrorPannel(
         sheet,
-        "Un dossier d'inscription existe déjà sous cette dénomination: " +
+        "⚠️ Un dossier d'inscription existe déjà sous cette dénomination: " +
         already_exists[0]);
     return;
   }
