@@ -12,10 +12,8 @@
 //    this script runs, so that the user can start directly interact with
 //    it.
 
-// BUG TO FIX:
-// - Create an already existing family from drop down
-// - Error message appears
-// - But content for row 1 and 2 isn't clear
+// ABC hits ABCD
+// When exist, list the link?
 
 // Some globals defined here to make changes easy:
 //
@@ -41,11 +39,6 @@ var coord_family_last_season = [2, 2];
 var coord_status_info = [3, 2];
 var coord_download_link = [9, 2];
 
-var last_season_list = [
-  "PETIT-BIANCO",
-  "BADOUARD",
-];
-
 function Debug(message) {
   var ui = SpreadsheetApp.getUi();
   ui.alert(message, ui.ButtonSet.OK);
@@ -63,6 +56,18 @@ function clearRange(sheet, coord) {
 }
 
 function setLastSeasonFamilyList(sheet) {
+  var last_season_entries = getFolderFolderNames(previous_db_folder);
+  var last_season_list = [];
+  for (var index in last_season_entries) {
+    family = last_season_entries[index].split(":")[1];
+    if (family != '' && family != undefined) {
+      last_season_list.push(family)
+    }
+  }
+  if (last_season_list.length == 0) {
+    return;
+  }
+  last_season_list.sort();
   var rule = SpreadsheetApp.newDataValidation().requireValueInList(
     last_season_list, true).build();
   var x = coord_family_last_season[0];
@@ -81,6 +86,7 @@ function getFamilyName(sheet, coord) {
       replace(/\//g, "-").  // / into -
       replace(/\./g, "-").  // . into -
       replace(/_/g, "-").   // _ into -
+      replace(/:/g, "-").   // : into -
       replace(/-+/g, "-")   // Many - into a single one.
   } else {
     return "";
@@ -105,6 +111,18 @@ function checkAlreadyExists(folder, family_name) {
   return ['', ''];
 }
 
+// Get the names of all folders found inside a folder. Return an
+// array of strings.
+function getFolderFolderNames(folder) {
+  var folder_list = [];
+  var files = DriveApp.getFolderById(folder).getFolders();
+  while (files.hasNext()) {
+    file = files.next();
+    folder_list.push(file.getName());
+  }
+  return folder_list;
+}
+
 function activeRangeInCoord(r, coord) {
   return r.getRow() == coord[0] && r.getColumn() == coord[1];
 }
@@ -114,6 +132,7 @@ function resetSheet() {
   clearRange(sheet, coord_family_name);
   setLastSeasonFamilyList(sheet);
   setRangeTextColor(sheet, coord_status_info, "Créer ou importer une famille", "green");
+  SpreadsheetApp.flush();
 }
 
 // onEdit runs when the cell where you enter the family name sees its
@@ -232,7 +251,6 @@ function createNewFamilySheet(sheet, family_name) {
 
 function createNewFamilySheetFromOld(sheet, family_name) {
   var new_sheet_id = createNewFamilySheet(sheet, family_name);
-  Debug('new_sheet_id='+new_sheet_id);
   var old = checkAlreadyExists(previous_db_folder, family_name);
   var old_sheet_name = old[0];
   var old_folder_id = old[1];
@@ -332,4 +350,5 @@ function GenerateEntry() {
     SpreadsheetApp.flush();    
     createNewFamilySheetFromOld(sheet, family_name);
   }
+  setLastSeasonFamilyList(sheet);
 }
