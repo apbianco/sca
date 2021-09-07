@@ -56,23 +56,25 @@ function clearRange(sheet, coord) {
 }
 
 function setLastSeasonFamilyList(sheet) {
-  var last_season_entries = getFolderFolderNames(previous_db_folder);
-  var last_season_list = [];
-  for (var index in last_season_entries) {
-    family = last_season_entries[index].split(":")[1];
-    if (family != '' && family != undefined) {
-      last_season_list.push(family)
-    }
-  }
-  if (last_season_list.length == 0) {
-    return;
-  }
-  last_season_list.sort();
-  var rule = SpreadsheetApp.newDataValidation().requireValueInList(
-    last_season_list, true).build();
   var x = coord_family_last_season[0];
   var y = coord_family_last_season[1];
-  sheet.getRange(x, y).clearDataValidations().clearContent().setDataValidation(rule);
+  if (sheet.getRange(x, y).getDataValidation() == null) {
+    var last_season_entries = getFolderFolderNames(previous_db_folder);
+    var last_season_list = [];
+    for (var index in last_season_entries) {
+      family = last_season_entries[index].split(":")[1];
+      if (family != '' && family != undefined) {
+        last_season_list.push(family)
+      }
+    }
+    if (last_season_list.length == 0) {
+      return;
+    }
+    last_season_list.sort();
+    var rule = SpreadsheetApp.newDataValidation().requireValueInList(
+      last_season_list, true).build();
+    sheet.getRange(x, y).clearDataValidations().clearContent().setDataValidation(rule);
+  }
 }
 
 // Retrieve and sanitize a family name.
