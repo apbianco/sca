@@ -12,8 +12,9 @@
 //    this script runs, so that the user can start directly interact with
 //    it.
 
-// ABC hits ABCD
-// When exist, list the link?
+// TODO:
+//  - When exist, list the link?
+//  - All FIXMEs
 
 // Some globals defined here to make changes easy:
 //
@@ -55,58 +56,53 @@ function clearRange(sheet, coord) {
   sheet.getRange(coord[0],coord[1]).clear();
 }
 
-function setLastSeasonFamilyList(sheet) {
-  var x = coord_family_last_season[0];
-  var y = coord_family_last_season[1];
-  if (sheet.getRange(x, y).getDataValidation() == null) {
-    var last_season_entries = getFolderFolderNames(previous_db_folder);
-    var last_season_list = [];
-    for (var index in last_season_entries) {
-      family = last_season_entries[index].split(":")[1];
-      if (family != '' && family != undefined) {
-        last_season_list.push(family)
-      }
-    }
-    if (last_season_list.length == 0) {
-      return;
-    }
-    last_season_list.sort();
-    var rule = SpreadsheetApp.newDataValidation().requireValueInList(
-      last_season_list, true).build();
-    sheet.getRange(x, y).clearDataValidations().clearContent().setDataValidation(rule);
-  }
-}
-
-// Retrieve and sanitize a family name.
-function getFamilyName(sheet, coord) {
-  var x = coord[0];
-  var y = coord[1];
-  if (sheet.getRange(x, y)) {
-    return sheet.getRange(x, y).getValue().toString().toUpperCase().
-      replace(/\s/g, "-").  // No spaces
-      replace(/\d+/g, "").  // No numbers
-      replace(/\//g, "-").  // / into -
-      replace(/\./g, "-").  // . into -
-      replace(/_/g, "-").   // _ into -
-      replace(/:/g, "-").   // : into -
-      replace(/-+/g, "-")   // Many - into a single one.
-  } else {
-    return "";
-  }
-} 
-
-function setFamilyName(sheet, coord, value) {
+function setCellValueAtCoord(sheet, coord, value) {
   sheet.getRange(coord[0], coord[1]).setValue(value);  
 }
 
-// Warn if the validated family name is already in db/ under any form.
-// When something is found, return a filename/file_id tuple, otherwise
-// return a tuple of empty strings.
+// Return true when the active range is at coord.
+function activeRangeInCoord(r, coord) {
+  return r.getRow() == coord[0] && r.getColumn() == coord[1];
+}
+
+// If no data exists, read available family name from the previous
+// season folder and use them to build a pull down menu that is used
+// to populate a cell. If data already exists, nothing happens.
+function setLastSeasonFamilyList(sheet) {
+  var x = coord_family_last_season[0];
+  var y = coord_family_last_season[1];
+  if (sheet.getRange(x, y).getDataValidation() != null) {
+    sheet.getRange(x, y).setValue("");
+    return;
+  }
+	
+  var last_season_entries = getFolderFolderNames(previous_db_folder);
+  var last_season_list = [];
+  for (var index in last_season_entries) {
+    family = last_season_entries[index].split(":")[1];
+    if (family != '' && family != undefined) {
+      last_season_list.push(family)
+    }
+  }
+  if (last_season_list.length == 0) {
+    return;
+  }
+  last_season_list.sort();
+  var rule = SpreadsheetApp.newDataValidation()
+      .requireValueInList(last_season_list, true).build();
+  sheet.getRange(x, y).clearDataValidations()
+      .clearContent().setDataValidation(rule);
+  sheet.getRange(x, y).setValue("");
+}
+
+// Warn if the validated family name is already in db/ under any form
+// (<operator>:<family_name>).  When something is found, return a
+// filename/file_id tuple, otherwise return a tuple of empty strings.
 function checkAlreadyExists(folder, family_name) {
   var files = DriveApp.getFolderById(folder).getFolders()
   while (files.hasNext()) {
     file = files.next();
-    if (file.getName().includes(family_name)) {
+    if (file.getName().split(':')[1] == family_name) {
       return [file.getName(), file.getId()];
     }
   }
@@ -125,16 +121,42 @@ function getFolderFolderNames(folder) {
   return folder_list;
 }
 
-function activeRangeInCoord(r, coord) {
-  return r.getRow() == coord[0] && r.getColumn() == coord[1];
+// Retrieve and sanitize a family name at coord, return it.
+function getFamilyName(sheet, coord) {
+  var x = coord[0];
+  var y = coord[1];
+  if (sheet.getRange(x, y)) {
+    return sheet.getRange(x, y).getValue().toString().toUpperCase().
+      replace(/\s/g, "-").  // No spaces
+      replace(/\d+/g, "").  // No numbers
+      replace(/\//g, "-").  // / into -
+      replace(/\./g, "-").  // . into -
+      replace(/_/g, "-").   // _ into -
+      replace(/:/g, "-").   // : into -
+      replace(/-+/g, "-")   // Many - into a single one.
+  } else {
+    return "";
+  }
+} 
+
+// Display an error panel with some text, collect OK, 
+// clear the status cell and the family input cell
+function displayErrorPannel(sheet, message) {
+  setRangeTextColor(sheet, coord_status_info, "⚠️ Erreur...", "red");
+  SpreadsheetApp.flush();
+  var ui = SpreadsheetApp.getUi();
+  var result = ui.alert(message, ui.ButtonSet.OK);
+  resetSheet();
 }
 
+// Clear the family name input, set the list of families from last
+// season and indicate that the system is ready.
 function resetSheet() {
   var sheet = SpreadsheetApp.getActiveSheet();
   clearRange(sheet, coord_family_name);
   setLastSeasonFamilyList(sheet);
   setRangeTextColor(sheet, coord_status_info,
-  			   "Créer ou importer une famille", "green");
+                    "Créer ou importer une famille", "green");
   SpreadsheetApp.flush();
 }
 
@@ -197,21 +219,15 @@ function onChange(event) {
   onEdit(event);
 }
 
-// When the sheet is opened or loaded, clear the family name,
-// install the name of the old families in a drop-down and
-// update the status bar.
+// When the sheet is opened or loaded, just reset its state
 function onOpen(event) {
   resetSheet();
 }
 
-// Display an error panel with some text, collect OK, 
-// clear the status cell and the family input cell
-function displayErrorPannel(sheet, message) {
-  setRangeTextColor(sheet, coord_status_info, "⚠️ Erreur...", "red");
-  SpreadsheetApp.flush();
-  var ui = SpreadsheetApp.getUi();
-  var result = ui.alert(message, ui.ButtonSet.OK);
-  resetSheet();
+function createHyperLinkFromDocId(doc_id, link_text) {
+  var url = ("https://docs.google.com/spreadsheets/d/" +
+             doc_id + "/edit#gid=0");
+  return '=HYPERLINK("' + url + '"; "' + link_text + '")';
 }
 
 function createNewFamilySheet(sheet, family_name) {
@@ -232,11 +248,7 @@ function createNewFamilySheet(sheet, family_name) {
   
   // Assemble the URL that leads to the new file and insert that in
   // the sheet... Change the readiness indicator.
-  var url = "https://docs.google.com/spreadsheets/d/" +
-	        document_id + "/edit#gid=0";
-  var link = '=HYPERLINK("' + url + '"; "Ouvrir ' + final_name + '")'
-
-  // Set the download link  
+  var link = createHyperLinkFromDocId(document_id, "Ouvrir " + final_name);
   x = coord_download_link[0];
   y = coord_download_link[1];
   sheet.getRange(x, y).setFormula(link);
@@ -246,9 +258,6 @@ function createNewFamilySheet(sheet, family_name) {
   setRangeTextColor(sheet, coord_status_info,
 		    "Terminé - cliquez sur le lien en bas de cette page " +
 		    "pour charger la nouvelle feuille", "green");
-  Logger.log("Created " + final_name + ", stored in " + url);
-  Logger.log("User " + Session.getEffectiveUser());
-  
   return document_id;
 }
 
@@ -279,7 +288,8 @@ function createNewFamilySheetFromOld(sheet, family_name) {
   var new_sheet = SpreadsheetApp.openById(
       new_sheet_id).getSheetByName('Inscription');
 
-  // Iterate over all the ranges to copy and copy the content from the old to the new.
+  // Iterate over all the ranges to copy and copy the content from the
+  // old to the new.
   if (ranges_previous_season.length != ranges_current_season.length) {
     // FIXME: Error message
     return;
@@ -336,14 +346,14 @@ function GenerateEntry() {
     return;
   }
   
-  // We have a valid family name, indicate that we're preparing the data, clear
-  // the old download link.
+  // We have a valid family name, indicate that we're preparing the
+  // data, clear the old download link.
   clearRange(sheet, coord_download_link);
-  // If this is a new family, we force the cell value to be the normalized name
+  // If this is a new family, we force the cell value to be the
+  // normalized name
   if (new_family) {
-    setFamilyName(sheet, coord_family_name, family_name)
+    setCellValueAtCoord(sheet, coord_family_name, family_name)
   }
-
   
   if (new_family) {
     setRangeTextColor(sheet, coord_status_info,
@@ -357,4 +367,5 @@ function GenerateEntry() {
     createNewFamilySheetFromOld(sheet, family_name);
   }
   setLastSeasonFamilyList(sheet);
+  SpreadsheetApp.flush();
 }
