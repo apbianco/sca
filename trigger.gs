@@ -72,7 +72,7 @@ function setLastSeasonFamilyList(sheet) {
   var x = coord_family_last_season[0];
   var y = coord_family_last_season[1];
   if (sheet.getRange(x, y).getDataValidation() != null) {
-    sheet.getRange(x, y).setValue("");
+    clearRange(sheet, coord_family_last_season);
     return;
   }
 	
@@ -92,7 +92,7 @@ function setLastSeasonFamilyList(sheet) {
       .requireValueInList(last_season_list, true).build();
   sheet.getRange(x, y).clearDataValidations()
       .clearContent().setDataValidation(rule);
-  sheet.getRange(x, y).setValue("");
+  clearRange(sheet, coord_family_last_season);
 }
 
 // Warn if the validated family name is already in db/ under any form
