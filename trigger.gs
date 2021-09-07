@@ -133,7 +133,8 @@ function resetSheet() {
   var sheet = SpreadsheetApp.getActiveSheet();
   clearRange(sheet, coord_family_name);
   setLastSeasonFamilyList(sheet);
-  setRangeTextColor(sheet, coord_status_info, "Créer ou importer une famille", "green");
+  setRangeTextColor(sheet, coord_status_info,
+  			   "Créer ou importer une famille", "green");
   SpreadsheetApp.flush();
 }
 
@@ -273,8 +274,10 @@ function createNewFamilySheetFromOld(sheet, family_name) {
   }
   
   // Load the old and new sheets
-  var old_sheet = SpreadsheetApp.openById(old_sheet_id).getSheetByName('Inscription');
-  var new_sheet = SpreadsheetApp.openById(new_sheet_id).getSheetByName('Inscription');
+  var old_sheet = SpreadsheetApp.openById(
+      old_sheet_id).getSheetByName('Inscription');
+  var new_sheet = SpreadsheetApp.openById(
+      new_sheet_id).getSheetByName('Inscription');
 
   // Iterate over all the ranges to copy and copy the content from the old to the new.
   if (ranges_previous_season.length != ranges_current_season.length) {
@@ -316,7 +319,8 @@ function GenerateEntry() {
     if (family_name == '') {
       displayErrorPannel(
         sheet,
-        "⚠️ Veuillez correctement saisir ou selectionner un nom de famille.\n\n" +
+        "⚠ Veuillez correctement saisir ou selectionner un " +
+	"nom de famille.\n\n" +
         "N'avez vous pas oublié de valider par [return] ou [enter] 😋 ?");
       return;
     }
