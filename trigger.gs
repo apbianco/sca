@@ -67,7 +67,9 @@ function activeRangeInCoord(r, coord) {
 
 // If no data exists, read available family name from the previous
 // season folder and use them to build a pull down menu that is used
-// to populate a cell. If data already exists, nothing happens.
+// to populate a cell and the existing entry selection is reset.
+// If data already exists, nothing happens, but the existing entry
+// selection is reset.
 function setLastSeasonFamilyList(sheet) {
   var x = coord_family_last_season[0];
   var y = coord_family_last_season[1];
@@ -85,13 +87,12 @@ function setLastSeasonFamilyList(sheet) {
     }
   }
   if (last_season_list.length == 0) {
-    return;
-  }
-  last_season_list.sort();
-  var rule = SpreadsheetApp.newDataValidation()
+    last_season_list.sort();
+    var rule = SpreadsheetApp.newDataValidation()
       .requireValueInList(last_season_list, true).build();
-  sheet.getRange(x, y).clearDataValidations()
+    sheet.getRange(x, y).clearDataValidations()
       .clearContent().setDataValidation(rule);
+  }
   clearRange(sheet, coord_family_last_season);
 }
 
@@ -109,7 +110,7 @@ function checkAlreadyExists(folder, family_name) {
   return ['', ''];
 }
 
-// Get the names of all folders found inside a folder. Return an
+// Get the file names of all folders found inside a folder. Return an
 // array of strings.
 function getFolderFolderNames(folder) {
   var folder_list = [];
@@ -156,7 +157,8 @@ function resetSheet() {
   clearRange(sheet, coord_family_name);
   setLastSeasonFamilyList(sheet);
   setRangeTextColor(sheet, coord_status_info,
-                    "Créer ou importer une famille", "green");
+                    "➡️ Entrer le nom d'une nouvelle famille ou selectionner " +
+                    "une famille de la saison précédente", "green");
   SpreadsheetApp.flush();
 }
 
@@ -186,7 +188,7 @@ function onEdit(event){
     }
     setRangeTextColor(sheet, coord_family_name, family_name, "black");
     setRangeTextColor(sheet, coord_status_info,
-                      "Cliquez sur 'Créer une nouvelle inscription' " +
+                      "➡️ Cliquez sur 'Créer une nouvelle inscription' " +
                       "pour créer un dossier " + family_name,
                       "green");
     clearRange(sheet, coord_download_link);
@@ -206,7 +208,7 @@ function onEdit(event){
       return;
     }
     setRangeTextColor(sheet, coord_status_info,
-                      "Cliquez sur 'Créer une nouvelle inscription' " +
+                      "➡️ Cliquez sur 'Créer une nouvelle inscription' " +
                       "pour importer le dossier de " + family_name,
                       "green");
     clearRange(sheet, coord_download_link);
@@ -256,7 +258,7 @@ function createNewFamilySheet(sheet, family_name) {
   // Reset the family name, update the status bar.
   clearRange(sheet, coord_family_name);
   setRangeTextColor(sheet, coord_status_info,
-		    "Terminé - cliquez sur le lien en bas de cette page " +
+		    "✅ Terminé - cliquez sur le lien en bas de cette page " +
 		    "pour charger la nouvelle feuille", "green");
   return document_id;
 }
@@ -330,7 +332,7 @@ function GenerateEntry() {
       displayErrorPannel(
         sheet,
         "⚠ Veuillez correctement saisir ou selectionner un " +
-	"nom de famille.\n\n" +
+	    "nom de famille.\n\n" +
         "N'avez vous pas oublié de valider par [return] ou [enter] 😋 ?");
       return;
     }
@@ -357,15 +359,17 @@ function GenerateEntry() {
   
   if (new_family) {
     setRangeTextColor(sheet, coord_status_info,
-                      "Preparation de " + family_name + "...", "orange");
+                      "⏳ Preparation de " + family_name + "...", "orange");
     SpreadsheetApp.flush();
     createNewFamilySheet(sheet, family_name);
   } else {
     setRangeTextColor(sheet, coord_status_info,
-                      "Importation de " + family_name + "...", "orange");
+                      "⏳ Importation de " + family_name + "...", "orange");
     SpreadsheetApp.flush();    
     createNewFamilySheetFromOld(sheet, family_name);
   }
   setLastSeasonFamilyList(sheet);
   SpreadsheetApp.flush();
+}
+
 }
