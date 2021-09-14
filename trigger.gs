@@ -15,6 +15,7 @@
 // TODO:
 //  - When exist, list the link?
 //  - All FIXMEs
+//  - On click on link replaces the status with a ready message
 
 // Some globals defined here to make changes easy:
 //
@@ -331,7 +332,7 @@ function GenerateEntry() {
     if (family_name == '') {
       displayErrorPannel(
         sheet,
-        "⚠ Veuillez correctement saisir ou selectionner un " +
+        "⚠️ Veuillez correctement saisir ou selectionner un " +
 	    "nom de famille.\n\n" +
         "N'avez vous pas oublié de valider par [return] ou [enter] 😋 ?");
       return;
@@ -370,6 +371,4 @@ function GenerateEntry() {
   }
   setLastSeasonFamilyList(sheet);
   SpreadsheetApp.flush();
-}
-
 }
