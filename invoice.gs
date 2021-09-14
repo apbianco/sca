@@ -12,6 +12,7 @@ coord_family_civility = [8, 3]
 coord_family_name = [8, 4]
 coord_family_email = [11, 3]
 coord_cc = [11, 5]
+coord_personal_message = [80, 3]
 coord_family_phone = [81, 7]
 coord_timestamp = [81, 2]
 coord_parental_consent = [81, 5]
@@ -21,8 +22,9 @@ var parental_consent_pdf = '1F4pfeJbiNB1VQrjPHAJbo0il1WEUTuZB'
 var rules_pdf = '1tPia7eLaoUamKl9iulbEADoI_lwo5pz_'
 var payment_refund = '1A3HNJ1iH2A0G9WiwJlBZxk788f-9QdaB' // Not used yet.
 var parents_note_pdf = '1_DG8n1HdldZTrc5XX1b5ESqxr7pbP9yv'
-var db_folder = '1BDEV3PQULwsrqG3QjsTj1EGcnqFp6N6r'
+var db_folder = '1UmSA2OIMZs_9J7kEFu0LSfAHaYFfi8Et'
 var allowed_user = 'inscriptions.sca@gmail.com'
+var email_loisir = 'sca.loisir@gmail.com'
 
 function savePDF(blob, fileName) {
   blob = blob.setName(fileName)
@@ -122,7 +124,7 @@ function GeneratePDFAndSendEmail() {
   if (family_name == '') {
       displayErrorPanel(
 	  "Vous n'avez pas renseigné de nom de famille ou " +
-	  "vous avez oublié \n"
+	  "vous avez oublié \n" +
 	  "de valider le nom de famille par [return] ou [enter]...")
     return
   }
@@ -215,7 +217,7 @@ function GeneratePDFAndSendEmail() {
     to: mail_to,
     subject: subject,
     htmlBody:
-      '<h3>Bonjour ' + civility + ' ' + family_name + '</h3>' +
+      "<h3>Bonjour " + civility + " " + family_name + "</h3>" +
     
       personal_message_text + 
       phone +
@@ -245,15 +247,10 @@ function GeneratePDFAndSendEmail() {
     
       "<p>Nous vous remercions de la confiance que vous nous accordez " +
       "cette année.\n" +
-      "En ces temps incertains, la perception de votre règlement et le " +
-      "remboursement des frais " +
-      "engagés pourrons se faire sous certaines conditions. Retrouvez " +
-      "les en détails sur "
-      "www.skicluballevardin.fr/adhesion/" + season_web + "</p>" +
     
       "<p>Des questions concernant cette facture? Répondez directement " +
-      "à ce mail. Des questions concernant la saison " + season " ? " +
-      "Envoyez un mail à " + allowed_user + "</p>" +
+      "à ce mail. Des questions concernant la saison " + season + " ? " +
+      "Envoyez un mail à " + email_loisir + "</p>" +
     
       "~SCA",
     attachments: attachments
@@ -265,7 +262,8 @@ function GeneratePDFAndSendEmail() {
     email_options.cc = cc_to
   }
   
-  // If this isn't a test account, BCC Marie-Pierre.
+  // If this isn't a test, BCC Marie-Pierre. A test is something ran by
+  // the ALEX or TEST trigger.
   if (spreadsheet.getName().toString().substring(0,5) != "TEST:" &&
       spreadsheet.getName().toString().substring(0,5) != "ALEX:") {
     email_options.bcc = "licence.sca@gmail.com"
