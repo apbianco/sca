@@ -1,7 +1,10 @@
 // This validates the invoice sheet (more could be done BTW) and
 // sends an email with the required attached pieces.
 // This script runs with duplicates of the following shared doc: 
-// shorturl.at/eowH2
+// shorturl.at/dkmrH
+
+// FIXME:
+// - On Open, clear the cell with the PDF link
 
 // Seasonal parameters
 var season = "2021/2022"
@@ -32,17 +35,16 @@ function Debug(message) {
   ui.alert(message, ui.ButtonSet.OK);
 }
 
-function createHyperLinkFromDocId(doc_id, link_text) {
-  var url = ("https://docs.google.com/spreadsheets/d/" +
-             doc_id + "/edit#gid=0");
+function createHyperLinkFromURL(url, link_text) {
   return '=HYPERLINK("' + url + '"; "' + link_text + '")';
 }
 
 function savePDF(blob, fileName) {
   blob = blob.setName(fileName)
+  var file = DriveApp.createFile(blob);
   pdfId = DriveApp.createFile(blob).getId()
-  DriveApp.getFileById(pdfId).moveTo(DriveApp.getFolderById(db_folder))
-  return pdfId
+  DriveApp.getFileById(file.getId()).moveTo(DriveApp.getFolderById(db_folder))
+  return file;
 }
 
 function createPDF(url) {
@@ -118,18 +120,17 @@ function GetAuthorization() {
 // Create the invoice as a PDF: first create a blob and then save
 // the blob as a PDF and move it to the <db>/<OPERATOR:FAMILY>
 // directory. Return the PDF file ID.  
-function GeneratePDF() {
+function generatePDF() {
   var spreadsheet = SpreadsheetApp.getActiveSpreadsheet()
   var blob = createPDF(spreadsheet.getUrl())
   var pdf_filename = spreadsheet.getName() + '.pdf'
-  var pdf_id = savePDF(blob, pdf_filename)
+  var file = savePDF(blob, pdf_filename)
   
   var spreadsheet_folder_id =
     DriveApp.getFolderById(spreadsheet.getId()).getParents().next().getId()
-  DriveApp.getFileById(pdf_id).moveTo(
+  DriveApp.getFileById(file.getId()).moveTo(
     DriveApp.getFolderById(spreadsheet_folder_id))
-  
-  return {'id': pdf_id, 'filename': pdf_filename}
+  return file;
 }
 
 // Validate the invoice and return a dictionary of values
@@ -204,15 +205,12 @@ function GeneratePDFButton() {
   }
 
   SpreadsheetApp.flush()
-  var pdf_info = GeneratePDF()
-  var pdf_id = pdf_info['id']
-  var pdf_filename = pdf_info['filename']
-  
-  var link = createHyperLinkFromDocId(pdf_id, "✅ Ouvrir " + pdf_filename);
+  var pdf_file = generatePDF()
+  var pdf_filename = pdf_file.getName();
+  var link = createHyperLinkFromURL(pdf_file.getUrl(), "📂 Ouvrir " + pdf_filename);
   x = coord_generated_pdf[0];
   y = coord_generated_pdf[1];
   SpreadsheetApp.getActiveSheet().getRange(x, y).setFormula(link);  
-  // FIXME: Onload: maybe delete the link?
 }
 
 // This is what the [generate and send email] button runs.
@@ -225,7 +223,7 @@ function GeneratePDFAndSendEmailButton() {
   SpreadsheetApp.flush()
   
   // Generate and prepare attaching the PDF to the email
-  var pdf_id = GeneratePDF()['id']; 
+  var pdf_id = generatePDF().getId(); 
   var pdf = DriveApp.getFileById(pdf_id)
   attachments = [pdf.getAs(MimeType.PDF)]
   
