@@ -16,6 +16,7 @@ coord_personal_message = [80, 3]
 coord_family_phone = [81, 7]
 coord_timestamp = [81, 2]
 coord_parental_consent = [81, 5]
+coord_generated_pdf = [82, 3]
 
 // Some globals defined here to make changes easy:
 var parental_consent_pdf = '1F4pfeJbiNB1VQrjPHAJbo0il1WEUTuZB'
@@ -25,6 +26,17 @@ var parents_note_pdf = '1_DG8n1HdldZTrc5XX1b5ESqxr7pbP9yv'
 var db_folder = '1UmSA2OIMZs_9J7kEFu0LSfAHaYFfi8Et'
 var allowed_user = 'inscriptions.sca@gmail.com'
 var email_loisir = 'sca.loisir@gmail.com'
+
+function Debug(message) {
+  var ui = SpreadsheetApp.getUi();
+  ui.alert(message, ui.ButtonSet.OK);
+}
+
+function createHyperLinkFromDocId(doc_id, link_text) {
+  var url = ("https://docs.google.com/spreadsheets/d/" +
+             doc_id + "/edit#gid=0");
+  return '=HYPERLINK("' + url + '"; "' + link_text + '")';
+}
 
 function savePDF(blob, fileName) {
   blob = blob.setName(fileName)
@@ -93,22 +105,45 @@ function validateAndReturnDropDownValue(coord, message) {
   return value
 }
 
+function isEmpty(obj) {
+  return Object.keys(obj).length === 0;
+}
+
 // Runs when the [secure authorization] button is pressed.
 function GetAuthorization() {
   ScriptApp.getAuthorizationInfo(ScriptApp.AuthMode.FULL)
 }
 
-// This is what the [generate and send email] button runs.
-function GeneratePDFAndSendEmail() {
+
+// Create the invoice as a PDF: first create a blob and then save
+// the blob as a PDF and move it to the <db>/<OPERATOR:FAMILY>
+// directory. Return the PDF file ID.  
+function GeneratePDF() {
+  var spreadsheet = SpreadsheetApp.getActiveSpreadsheet()
+  var blob = createPDF(spreadsheet.getUrl())
+  var pdf_filename = spreadsheet.getName() + '.pdf'
+  var pdf_id = savePDF(blob, pdf_filename)
+  
+  var spreadsheet_folder_id =
+    DriveApp.getFolderById(spreadsheet.getId()).getParents().next().getId()
+  DriveApp.getFileById(pdf_id).moveTo(
+    DriveApp.getFolderById(spreadsheet_folder_id))
+  
+  return {'id': pdf_id, 'filename': pdf_filename}
+}
+
+// Validate the invoice and return a dictionary of values
+// to use during invoice generation.
+function validateInvoice() {
   // Make sure only an allowed user runs this.
   if (Session.getEffectiveUser() != allowed_user) {
     displayErrorPannel(
       SpreadsheetApp.getActiveSheet(),
-	"Vous n'utilisez pas cette feuille en tant que " +
-	allowed_user + ".\n\n" +
-	"Veuillez vous connecter d'abord à ce compte avant " +
-	"d'utiliser cette feuille.");
-    return;
+      "Vous n'utilisez pas cette feuille en tant que " +
+      allowed_user + ".\n\n" +
+      "Veuillez vous connecter d'abord à ce compte avant " +
+      "d'utiliser cette feuille.");
+    return {};
   }
   
   // Validation: proper civility
@@ -116,27 +151,27 @@ function GeneratePDFAndSendEmail() {
     coord_family_civility,
     "Vous n'avez pas renseigné de civilité")
   if (civility == '') {
-    return
+    return {};
   }
   
   // Validation: a family name
   var family_name = getStringAt(coord_family_name)
   if (family_name == '') {
-      displayErrorPanel(
-	  "Vous n'avez pas renseigné de nom de famille ou " +
-	  "vous avez oublié \n" +
-	  "de valider le nom de famille par [return] ou [enter]...")
-    return
+    displayErrorPanel(
+      "Vous n'avez pas renseigné de nom de famille ou " +
+      "vous avez oublié \n" +
+      "de valider le nom de famille par [return] ou [enter]...")
+    return {};
   }
 
   // Validation: proper email adress.
   var mail_to = getStringAt(coord_family_email)
   if (mail_to == '') {
-      displayErrorPanel(
-	  "Vous n'avez pas saisi d'adresse email principale ou " +
-	  "vous avez oublié \n" +
-          "de valider l'adresse email par [return] ou [enter]...")
-    return
+    displayErrorPanel(
+      "Vous n'avez pas saisi d'adresse email principale ou " +
+      "vous avez oublié \n" +
+      "de valider l'adresse email par [return] ou [enter]...")
+    return {}
   }
   
   // Validation: parental consent set.
@@ -145,51 +180,70 @@ function GeneratePDFAndSendEmail() {
     "Vous n'avez pas renseigné la nécessitée ou non de devoir " +
     "fournir une autorisation parentale.");
   if (consent == '') {
-    return
+    return {}
   }
-  
+
   // Update the timestamp. 
   setRangeTextColor(SpreadsheetApp.getActiveSheet(), coord_timestamp,
                     'Dernière MAJ le ' +
                     Utilities.formatDate(new Date(),
                                          Session.getScriptTimeZone(),
                                          "dd-MM-YY, HH:mm"), 'black')
-                                         
-  // Fetch a possible phone number
-  var phone = getStringAt(coord_family_phone)
-  if (phone != 'Aucun') {
-    phone = '<p>Merci de contacter ' + phone + '</p>'
-  } else {
-    phone = ''
+
+  return {'civility': civility,
+          'family_name': family_name,
+          'mail_to': mail_to,
+          'consent': consent};
+}
+
+// This is what the [generate] button runs
+function GeneratePDFButton() {
+  var validation = validateInvoice();
+  if (isEmpty(validation)) {
+    return;
+  }
+
+  SpreadsheetApp.flush()
+  var pdf_info = GeneratePDF()
+  var pdf_id = pdf_info['id']
+  var pdf_filename = pdf_info['filename']
+  
+  var link = createHyperLinkFromDocId(pdf_id, "✅ Ouvrir " + pdf_filename);
+  x = coord_generated_pdf[0];
+  y = coord_generated_pdf[1];
+  SpreadsheetApp.getActiveSheet().getRange(x, y).setFormula(link);  
+  // FIXME: Onload: maybe delete the link?
+}
+
+// This is what the [generate and send email] button runs.
+function GeneratePDFAndSendEmailButton() {
+  var validation = validateInvoice();
+  if (isEmpty(validation)) {
+    return;
   }
 
   SpreadsheetApp.flush()
   
-  // Create the invoice as a PDF: first create a blob and then save
-  // the blob as a PDF and move it to the db/<OPERATOR:FAMILY>
-  // directory. Add it to the attachment array.
-  var spreadsheet = SpreadsheetApp.getActiveSpreadsheet()
-  var blob = createPDF(spreadsheet.getUrl())
-  var pdf_id = savePDF(blob, spreadsheet.getName()+'.pdf')
-  
- var spreadsheet_folder_id =
-   DriveApp.getFolderById(spreadsheet.getId()).getParents().next().getId()
-   DriveApp.getFileById(pdf_id).moveTo(
-     DriveApp.getFolderById(spreadsheet_folder_id))
-
+  // Generate and prepare attaching the PDF to the email
+  var pdf_id = GeneratePDF()['id']; 
   var pdf = DriveApp.getFileById(pdf_id)
   attachments = [pdf.getAs(MimeType.PDF)]
+  
+  var civility = validation['civility'];
+  var family_name = validation['family_name'];
+  var mail_to = validation['mail_to'];
+  var consent = validation['consent'];
   
   // Determine whether parental consent needs to be generated. If
   // that's the case, we generate additional attachment content.
   var rules, parents_note, parental_consent, parental_consent_text = ''
   if (consent = 'Nécessaire') {
-    var consent = DriveApp.getFileById(parental_consent_pdf)
-    var rules = DriveApp.getFileById(rules_pdf)
-    var notes = DriveApp.getFileById(parents_note_pdf)
-    attachments.push(consent.getAs(MimeType.PDF))
-    attachments.push(rules.getAs(MimeType.PDF))
-    attachments.push(notes.getAs(MimeType.PDF))
+    var consent_file = DriveApp.getFileById(parental_consent_pdf)
+    var rules_file = DriveApp.getFileById(rules_pdf)
+    var notes_file = DriveApp.getFileById(parents_note_pdf)
+    attachments.push(consent_file.getAs(MimeType.PDF))
+    attachments.push(rules_file.getAs(MimeType.PDF))
+    attachments.push(notes_file.getAs(MimeType.PDF))
     
     parental_consent_text = (
       "<p>Il vous faut également compléter et signer l'autorisation " +
@@ -203,13 +257,21 @@ function GeneratePDFAndSendEmail() {
 
   var subject = ("[Incription Ski Club Allevardin] " +
                  civility + ' ' + family_name +
-		 ": Facture pour la saison "+ season)
+		         ": Facture pour la saison " + season)
 
   // Collect the personal message and add it to the mail
   var personal_message_text = getStringAt(coord_personal_message)
   if (personal_message_text != '') {
       personal_message_text = '<p><b>Message personnel:</b>' +
       personal_message_text + '</p>'
+  }
+  
+  // Fetch a possible phone number
+  var phone = getStringAt(coord_family_phone)
+  if (phone != 'Aucun') {
+    phone = '<p>Merci de contacter ' + phone + '</p>'
+  } else {
+    phone = ''
   }
   
   email_options = {
