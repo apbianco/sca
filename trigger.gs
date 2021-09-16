@@ -6,11 +6,11 @@
 // 1- The user enters a family name
 // 2- The family is upper-cased and prefixed with the sheet's name
 //    which will carry the name of the operator (Xavier, Alex, etc...)
-// 3- A new sheet is generated from the "FACTURE VIERGE 2020/2021"
+// 3- A new sheet is generated from the "FACTURE VIERGE <SEASON>"
 //    template and stored in a directory create in the db/ directory
 // 4- A link to that sheet is inserted back into the sheet from which
-//    this script runs, so that the user can start directly interact with
-//    it.
+//    this script runs, so that the user can start directly interacting
+//    with it.
 
 // TODO:
 //  - When exist, list the link?
@@ -360,7 +360,7 @@ function GenerateEntry() {
   
   if (new_family) {
     setRangeTextColor(sheet, coord_status_info,
-                      "⏳ Preparation de " + family_name + "...", "orange");
+                      "⏳ Préparation de " + family_name + "...", "orange");
     SpreadsheetApp.flush();
     createNewFamilySheet(sheet, family_name);
   } else {
