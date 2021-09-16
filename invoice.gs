@@ -12,18 +12,19 @@ coord_family_civility = [8, 3]
 coord_family_name = [8, 4]
 coord_family_email = [11, 3]
 coord_cc = [11, 5]
-coord_personal_message = [80, 3]
-coord_family_phone = [81, 7]
-coord_timestamp = [81, 2]
-coord_parental_consent = [81, 5]
-coord_status = [82, 3]
-coord_generated_pdf = [82, 4]
+coord_personal_message = [81, 3]
+coord_family_phone = [82, 7]
+coord_timestamp = [82, 2]
+coord_parental_consent = [82, 5]
+coord_status = [83, 3]
+coord_generated_pdf = [83, 4]
 
 // Some globals defined here to make changes easy:
-var parental_consent_pdf = '1F4pfeJbiNB1VQrjPHAJbo0il1WEUTuZB'
-var rules_pdf = '1tPia7eLaoUamKl9iulbEADoI_lwo5pz_'
-var payment_refund = '1A3HNJ1iH2A0G9WiwJlBZxk788f-9QdaB' // Not used yet.
-var parents_note_pdf = '1_DG8n1HdldZTrc5XX1b5ESqxr7pbP9yv'
+var parental_consent_pdf = '1LaWS0mmjE8GPeendM1c1mCGUcrsBIUFc'
+var rules_pdf = '1tNrkUkI2w_DYgXg9dRXPda_25gBh1TAG'
+var parents_note_pdf = '1zkI5NapvYyLn_vEIxyejKJ4WzAvEco6z'
+var pass_pdf = '1fsjge7JAuV3PTPXBnLbX9PGkSGW3nVHL'
+
 var db_folder = '1UmSA2OIMZs_9J7kEFu0LSfAHaYFfi8Et'
 var allowed_user = 'inscriptions.sca@gmail.com'
 var email_loisir = 'sca.loisir@gmail.com'
@@ -250,11 +251,14 @@ function GeneratePDFAndSendEmailButton() {
   var pdf_file = generatePDF();
   var pdf = DriveApp.getFileById(pdf_file.getId());
   attachments = [pdf.getAs(MimeType.PDF)]
-
+  
   setRangeTextColor(SpreadsheetApp.getActiveSheet(),
                     coord_status, 
                     "⏳ Préparation et envoit du dossier...", "orange")
   SpreadsheetApp.flush()
+
+  // 2021-2022: FFS sanitary pass documentation
+  attachments.push(DriveApp.getFileById(pass_pdf).getAs(MimeType.PDF))
   
   var civility = validation['civility'];
   var family_name = validation['family_name'];
@@ -263,34 +267,31 @@ function GeneratePDFAndSendEmailButton() {
   
   // Determine whether parental consent needs to be generated. If
   // that's the case, we generate additional attachment content.
-  var rules, parents_note, parental_consent, parental_consent_text = ''
-  if (consent = 'Nécessaire') {
-    var consent_file = DriveApp.getFileById(parental_consent_pdf)
-    var rules_file = DriveApp.getFileById(rules_pdf)
-    var notes_file = DriveApp.getFileById(parents_note_pdf)
-    attachments.push(consent_file.getAs(MimeType.PDF))
-    attachments.push(rules_file.getAs(MimeType.PDF))
-    attachments.push(notes_file.getAs(MimeType.PDF))
+  var pass, rules, parents_note, parental_consent, parental_consent_text = ''
+  if (consent == 'Nécessaire') {
+    attachments.push(DriveApp.getFileById(parental_consent_pdf).getAs(MimeType.PDF))
+    attachments.push(DriveApp.getFileById(rules_pdf).getAs(MimeType.PDF))
     
     parental_consent_text = (
       "<p>Il vous faut également compléter et signer l'autorisation " +
       "parentale fournie en attachment, couvrant le droit à l'image, le " +
       "règlement intérieur et les interventions médicales.</p>" +
       "<p>Le règlement intérieur mentionné dans l'autorisation parentale " +
-      "est joint à ce message en attachement.</p>" +
-      "<p>Vous trouverez également en attachement une note adressée aux " +
-      "parents, merçi de la lire attentivement.</p>")
+      "est joint à ce message en attachement.</p>")
   }
-
-  var subject = ("[Incription Ski Club Allevardin] " +
+  
+  // Insert the note for the parents anyways
+  attachments.push(DriveApp.getFileById(parents_note_pdf).getAs(MimeType.PDF))
+  
+  var subject = ("❄️ [Incription Ski Club Allevardin] " +
                  civility + ' ' + family_name +
 		         ": Facture pour la saison " + season)
 
   // Collect the personal message and add it to the mail
   var personal_message_text = getStringAt(coord_personal_message)
   if (personal_message_text != '') {
-      personal_message_text = '<p><b>Message personnel:</b>' +
-      personal_message_text + '</p>'
+      personal_message_text = ('<p><b>Message personnel:</b>' +
+                               personal_message_text + '</p>')
   }
   
   // Fetch a possible phone number
@@ -312,11 +313,11 @@ function GeneratePDFAndSendEmailButton() {
       personal_message_text + 
       phone +
 
-      "<p>Votre facture pour la saison " + season +
+      "<p>Votre facture pour la saison " + season + " " +
       "est disponible en attachement. Veuillez contrôler " +
       "qu\'elle correspond à vos besoins.</p>" +
     
-      "<p>Votre règlement est à retourner à:" +
+      "<p>Si nécessaire, votre règlement est à retourner à:" +
     
       "<blockquote>" +
       "  <b>Marie-Pierre Béranger</b>,<br>" +
@@ -335,14 +336,17 @@ function GeneratePDFAndSendEmailButton() {
     
       parental_consent_text +
     
+      "<p>Vous trouverez également en attachement une note adressée aux " +
+      "parents, merçi de la lire attentivement.</p>" +
+    
       "<p>Nous vous remercions de la confiance que vous nous accordez " +
-      "cette année.\n" +
+      "cette année.</p>" +
     
       "<p>Des questions concernant cette facture? Répondez directement " +
       "à ce mail. Des questions concernant la saison " + season + " ? " +
       "Envoyez un mail à " + email_loisir + "</p>" +
     
-      "~SCA",
+      "~SCA ❄️ 🏔️ ⛷️ 🏂",
     attachments: attachments
   }
    
