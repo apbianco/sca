@@ -135,7 +135,9 @@ function getFamilyName(sheet, coord) {
       replace(/\./g, "-").  // . into -
       replace(/_/g, "-").   // _ into -
       replace(/:/g, "-").   // : into -
-      replace(/-+/g, "-")   // Many - into a single one.
+      replace(/-+/g, "-").  // Many - into a single one
+      replace(/-$/g, "").   // Last - into nothing
+      replace(/^-/g, "")    // First - into nothing
   } else {
     return "";
   }
