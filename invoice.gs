@@ -3,9 +3,6 @@
 // This script runs with duplicates of the following shared doc: 
 // shorturl.at/dkmrH
 
-// FIXME:
-// - On Open, clear the cell with the PDF link
-
 // Seasonal parameters
 var season = "2021/2022"
 var season_web = "saison-2021-2022"
@@ -19,7 +16,8 @@ coord_personal_message = [80, 3]
 coord_family_phone = [81, 7]
 coord_timestamp = [81, 2]
 coord_parental_consent = [81, 5]
-coord_generated_pdf = [82, 3]
+coord_status = [82, 3]
+coord_generated_pdf = [82, 4]
 
 // Some globals defined here to make changes easy:
 var parental_consent_pdf = '1F4pfeJbiNB1VQrjPHAJbo0il1WEUTuZB'
@@ -37,6 +35,17 @@ function Debug(message) {
 
 function createHyperLinkFromURL(url, link_text) {
   return '=HYPERLINK("' + url + '"; "' + link_text + '")';
+}
+
+function clearRange(sheet, coord) {
+  sheet.getRange(coord[0],coord[1]).clear();
+}
+
+function setRangeTextColor(sheet, coord, text, color) {
+  var x = coord[0];
+  var y = coord[1];
+  sheet.getRange(x,y).setValue(text);
+  sheet.getRange(x,y).setFontColor(color);
 }
 
 function savePDF(blob, fileName) {
@@ -197,20 +206,32 @@ function validateInvoice() {
           'consent': consent};
 }
 
+function displayPDFLink(pdf_file, offset) {
+  var link = createHyperLinkFromURL(pdf_file.getUrl(),
+                                    "📁 Ouvrir " + pdf_file.getName())
+  x = coord_generated_pdf[0]
+  y = coord_generated_pdf[1]
+  SpreadsheetApp.getActiveSheet().getRange(x, y).setFormula(link); 
+}
+
 // This is what the [generate] button runs
 function GeneratePDFButton() {
   var validation = validateInvoice();
   if (isEmpty(validation)) {
     return;
   }
-
+  setRangeTextColor(SpreadsheetApp.getActiveSheet(),
+                    coord_status, 
+                    "⏳ Préparation de la facture...", "orange")  
   SpreadsheetApp.flush()
-  var pdf_file = generatePDF()
-  var pdf_filename = pdf_file.getName();
-  var link = createHyperLinkFromURL(pdf_file.getUrl(), "📂 Ouvrir " + pdf_filename);
-  x = coord_generated_pdf[0];
-  y = coord_generated_pdf[1];
-  SpreadsheetApp.getActiveSheet().getRange(x, y).setFormula(link);  
+  displayPDFLink(generatePDF());
+}
+
+// Opening or reloading the sheet triggers this function.
+// Clear the invoice/email status and file indicators
+function onOpen() {
+  clearRange(SpreadsheetApp.getActiveSheet(), coord_status);  
+  clearRange(SpreadsheetApp.getActiveSheet(), coord_generated_pdf);  
 }
 
 // This is what the [generate and send email] button runs.
@@ -220,12 +241,20 @@ function GeneratePDFAndSendEmailButton() {
     return;
   }
 
+  setRangeTextColor(SpreadsheetApp.getActiveSheet(),
+                    coord_status, 
+                    "⏳ Préparation de la facture...", "orange")
   SpreadsheetApp.flush()
   
   // Generate and prepare attaching the PDF to the email
-  var pdf_id = generatePDF().getId(); 
-  var pdf = DriveApp.getFileById(pdf_id)
+  var pdf_file = generatePDF();
+  var pdf = DriveApp.getFileById(pdf_file.getId());
   attachments = [pdf.getAs(MimeType.PDF)]
+
+  setRangeTextColor(SpreadsheetApp.getActiveSheet(),
+                    coord_status, 
+                    "⏳ Préparation et envoit du dossier...", "orange")
+  SpreadsheetApp.flush()
   
   var civility = validation['civility'];
   var family_name = validation['family_name'];
@@ -271,7 +300,8 @@ function GeneratePDFAndSendEmailButton() {
   } else {
     phone = ''
   }
-  
+
+  var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
   email_options = {
     name: 'Ski Club Allevardin, gestion des inscriptions',
     to: mail_to,
@@ -330,4 +360,9 @@ function GeneratePDFAndSendEmailButton() {
   }
   
   MailApp.sendEmail(email_options)
+  setRangeTextColor(SpreadsheetApp.getActiveSheet(),
+                    coord_status, 
+                    "✅ Dossier envoyé", "green")  
+  displayPDFLink(pdf_file)
+  SpreadsheetApp.flush()  
 }
