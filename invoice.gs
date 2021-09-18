@@ -68,9 +68,14 @@ function getFamilyDictionary() {
     if (sex == "") {
       sex = "?"
     }
+    var city = getStringAt([coords_identity_lines[index], 5])
+    if (city != "") {
+      city = "(" + city + ")";
+    }
     family.push({'first': getStringAt([coords_identity_lines[index], 2]),
                  'last': getStringAt([coords_identity_lines[index], 3]),
                  'birth': Utilities.formatDate(birth, "GMT", "dd/MM/yyyy"),
+                 'city': city,
                  'sex': sex})
   }
   return family
@@ -102,7 +107,6 @@ function createPDF(sheet) {
       + '&pagenum=CENTER'
       + '&gridlines=false'
       + '&fzr=FALSE'
-      // Note: this cell range doesn't seem to work.
       + '&gid=' + id
       + '&ir=false'
       + '&ic=false'
@@ -273,7 +277,8 @@ function maybeEmailLicenseSCA(invoice) {
                               family_dict[index]['last'].toUpperCase() + "</b> " +
                               family_dict[index]['first'] + " " +
                               family_dict[index]['birth'] + " M/F=" +
-                              family_dict[index]['sex'] + "</tt><br>\n")
+                              family_dict[index]['sex'] + " " +
+                              family_dict[index]['city'] + "</tt><br>\n")
   }
   string_family_members += "</blockquote>\n"
   
