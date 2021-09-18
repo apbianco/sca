@@ -16,8 +16,8 @@ var coord_personal_message = [81, 3]
 var coord_family_phone = [82, 7]
 var coord_timestamp = [82, 2]
 var coord_parental_consent = [82, 5]
-var coord_status = [83, 3]
-var coord_generated_pdf = [83, 4]
+var coord_status = [84, 4]
+var coord_generated_pdf = [84, 6]
 
 var coords_identity_lines = [16, 17, 18, 19, 20]
 var coords_identity_cols  = [2, 3, 4, 5, 6]
@@ -84,9 +84,12 @@ function savePDF(blob, fileName) {
   return file;
 }
 
-function createPDF(url, id) {
-  var exportUrl = url.replace(/\/edit.*$/, '')
-      + '/export?exportFormat=pdf&format=pdf'
+function createPDF(sheet) {
+  var ss_url = sheet.getUrl()
+  var id = sheet.getSheetId()
+  var url = ss_url.replace(/\/edit.*$/,'')  
+      + '/export?exportformat=pdf'
+      + '&format=pdf'
       + '&size=7'
       + '&portrait=true'
       + '&fitw=true'       
@@ -100,20 +103,21 @@ function createPDF(url, id) {
       + '&gridlines=false'
       + '&fzr=FALSE'
       // Note: this cell range doesn't seem to work.
-      + '&gid='+id
+      + '&gid=' + id
       + '&ir=false'
       + '&ic=false'
       + '&r1=1'
       + '&c1=0'
       + '&r2=82'
       + '&c2=7'
+  Debug(url)
 
-  var response = UrlFetchApp.fetch(exportUrl, {
-    headers: { 
-      Authorization: 'Bearer ' +  ScriptApp.getOAuthToken(),
-    },
-  })
-  return response.getBlob()
+  var params = {
+    method: "GET",
+    headers: {
+      Authorization: "Bearer " + ScriptApp.getOAuthToken()},
+  }
+  return UrlFetchApp.fetch(url, params).getBlob(); 
 }
 
 function setRangeTextColor(sheet, coord, text, color) {
@@ -156,7 +160,7 @@ function GetAuthorization() {
 // directory. Return the PDF file ID.  
 function generatePDF() {
   var spreadsheet = SpreadsheetApp.getActiveSpreadsheet()
-  var blob = createPDF(spreadsheet.getUrl(), spreadsheet.getId())
+  var blob = createPDF(spreadsheet)
   var pdf_filename = spreadsheet.getName() + '.pdf'
   var file = savePDF(blob, pdf_filename)
   
