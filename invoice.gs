@@ -110,7 +110,6 @@ function createPDF(sheet) {
       + '&c1=0'
       + '&r2=82'
       + '&c2=7'
-  Debug(url)
 
   var params = {
     method: "GET",
@@ -254,13 +253,6 @@ function GeneratePDFButton() {
                     "⏳ Préparation de la facture...", "orange")  
   SpreadsheetApp.flush()
   displayPDFLink(generatePDF());
-}
-
-// Opening or reloading the sheet triggers this function.
-// Clear the invoice/email status and file indicators
-function onOpen() {
-  clearRange(SpreadsheetApp.getActiveSheet(), coord_status);  
-  clearRange(SpreadsheetApp.getActiveSheet(), coord_generated_pdf);  
 }
 
 function maybeEmailLicenseSCA(invoice) {
