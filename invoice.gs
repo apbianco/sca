@@ -8,16 +8,19 @@ var season = "2021/2022"
 var season_web = "saison-2021-2022"
 
 // Spreadsheet parameters (row, columns, etc...)
-coord_family_civility = [8, 3]
-coord_family_name = [8, 4]
-coord_family_email = [11, 3]
-coord_cc = [11, 5]
-coord_personal_message = [81, 3]
-coord_family_phone = [82, 7]
-coord_timestamp = [82, 2]
-coord_parental_consent = [82, 5]
-coord_status = [83, 3]
-coord_generated_pdf = [83, 4]
+var coord_family_civility = [8, 3]
+var coord_family_name = [8, 4]
+var coord_family_email = [11, 3]
+var coord_cc = [11, 5]
+var coord_personal_message = [81, 3]
+var coord_family_phone = [82, 7]
+var coord_timestamp = [82, 2]
+var coord_parental_consent = [82, 5]
+var coord_status = [83, 3]
+var coord_generated_pdf = [83, 4]
+
+var coords_identity_lines = [16, 17, 18, 19, 20]
+var coords_identity_cols  = [2, 3, 4, 5, 6]
 
 // Some globals defined here to make changes easy:
 var parental_consent_pdf = '1LaWS0mmjE8GPeendM1c1mCGUcrsBIUFc'
@@ -28,6 +31,8 @@ var pass_pdf = '1fsjge7JAuV3PTPXBnLbX9PGkSGW3nVHL'
 var db_folder = '1UmSA2OIMZs_9J7kEFu0LSfAHaYFfi8Et'
 var allowed_user = 'inscriptions.sca@gmail.com'
 var email_loisir = 'sca.loisir@gmail.com'
+var email_comp = 'skicluballevardin@gmail.com'
+var email_license = 'apbianco@gmail.com'
 
 function Debug(message) {
   var ui = SpreadsheetApp.getUi();
@@ -49,6 +54,28 @@ function setRangeTextColor(sheet, coord, text, color) {
   sheet.getRange(x,y).setFontColor(color);
 }
 
+function getStringAt(coord) {
+  var x = coord[0];
+  var y = coord[1];
+  return SpreadsheetApp.getActiveSheet().getRange(x, y).getValue().toString()
+}
+
+function getFamilyDictionary() {
+  var family = []
+  for (var index in coords_identity_lines) {
+    var birth = new Date(getStringAt([coords_identity_lines[index], 4]))
+    var sex = getStringAt([coords_identity_lines[index], 6])
+    if (sex == "") {
+      sex = "?"
+    }
+    family.push({'first': getStringAt([coords_identity_lines[index], 2]),
+                 'last': getStringAt([coords_identity_lines[index], 3]),
+                 'birth': Utilities.formatDate(birth, "GMT", "dd/MM/yyyy"),
+                 'sex': sex})
+  }
+  return family
+}
+
 function savePDF(blob, fileName) {
   blob = blob.setName(fileName)
   var file = DriveApp.createFile(blob);
@@ -57,7 +84,7 @@ function savePDF(blob, fileName) {
   return file;
 }
 
-function createPDF(url) {
+function createPDF(url, id) {
   var exportUrl = url.replace(/\/edit.*$/, '')
       + '/export?exportFormat=pdf&format=pdf'
       + '&size=7'
@@ -73,10 +100,13 @@ function createPDF(url) {
       + '&gridlines=false'
       + '&fzr=FALSE'
       // Note: this cell range doesn't seem to work.
-      + '&r1=2'
-      + '&r2=80'
-      + '&c1=2'
-      + '&c2=6'
+      + '&gid='+id
+      + '&ir=false'
+      + '&ic=false'
+      + '&r1=1'
+      + '&c1=0'
+      + '&r2=82'
+      + '&c2=7'
 
   var response = UrlFetchApp.fetch(exportUrl, {
     headers: { 
@@ -84,12 +114,6 @@ function createPDF(url) {
     },
   })
   return response.getBlob()
-}
-
-function getStringAt(coord) {
-  var x = coord[0];
-  var y = coord[1];
-  return SpreadsheetApp.getActiveSheet().getRange(x,y).getValue().toString()
 }
 
 function setRangeTextColor(sheet, coord, text, color) {
@@ -132,7 +156,7 @@ function GetAuthorization() {
 // directory. Return the PDF file ID.  
 function generatePDF() {
   var spreadsheet = SpreadsheetApp.getActiveSpreadsheet()
-  var blob = createPDF(spreadsheet.getUrl())
+  var blob = createPDF(spreadsheet.getUrl(), spreadsheet.getId())
   var pdf_filename = spreadsheet.getName() + '.pdf'
   var file = savePDF(blob, pdf_filename)
   
@@ -235,13 +259,49 @@ function onOpen() {
   clearRange(SpreadsheetApp.getActiveSheet(), coord_generated_pdf);  
 }
 
+function maybeEmailLicenseSCA(invoice) {
+  var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+  var operator = spreadsheet.getName().toString().split(':')[0]
+  var family_name = spreadsheet.getName().toString().split(':')[1]
+  if (operator == "TEST" || operator == "ALEX") {
+    Debug("Should normaly return");
+    // return
+  }
+  var family_dict = getFamilyDictionary() 
+  var string_family_members = "<blockquote>\n"
+  for (var index in family_dict) {
+    if (family_dict[index]['last'] == "") {
+      continue
+    }
+    string_family_members += ("<tt><b>" +
+                              family_dict[index]['last'].toUpperCase() + "</b> " +
+                              family_dict[index]['first'] + " " +
+                              family_dict[index]['birth'] + " M/F=" +
+                              family_dict[index]['sex'] + "</tt><br>\n")
+  }
+  string_family_members += "</blockquote>\n"
+  
+  var email_options = {
+    name: family_name + ": nouvelle inscription",
+    to: email_license,
+    subject: family_name + ": nouvelle inscription",
+    htmlBody:
+      "<p>Licences nécessaires pour:</p>" +
+      string_family_members +
+      "<p>Dossier saisi par: " + operator + "</p>" +
+      "<p>Facture en attachement</p>" +
+      "<p>Merci!</p>",
+    attachments: invoice,
+  } 
+  MailApp.sendEmail(email_options)
+}
+
 // This is what the [generate and send email] button runs.
 function GeneratePDFAndSendEmailButton() {
   var validation = validateInvoice();
   if (isEmpty(validation)) {
     return;
   }
-
   setRangeTextColor(SpreadsheetApp.getActiveSheet(),
                     coord_status, 
                     "⏳ Préparation de la facture...", "orange")
@@ -250,8 +310,8 @@ function GeneratePDFAndSendEmailButton() {
   // Generate and prepare attaching the PDF to the email
   var pdf_file = generatePDF();
   var pdf = DriveApp.getFileById(pdf_file.getId());
-  attachments = [pdf.getAs(MimeType.PDF)]
-  
+  var attachments = [pdf.getAs(MimeType.PDF)]
+
   setRangeTextColor(SpreadsheetApp.getActiveSheet(),
                     coord_status, 
                     "⏳ Préparation et envoit du dossier...", "orange")
@@ -290,7 +350,7 @@ function GeneratePDFAndSendEmailButton() {
   // Collect the personal message and add it to the mail
   var personal_message_text = getStringAt(coord_personal_message)
   if (personal_message_text != '') {
-      personal_message_text = ('<p><b>Message personnel:</b>' +
+      personal_message_text = ('<p><b>Message personnel:</b> ' +
                                personal_message_text + '</p>')
   }
   
@@ -303,7 +363,7 @@ function GeneratePDFAndSendEmailButton() {
   }
 
   var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
-  email_options = {
+  var email_options = {
     name: 'Ski Club Allevardin, gestion des inscriptions',
     to: mail_to,
     subject: subject,
@@ -344,7 +404,8 @@ function GeneratePDFAndSendEmailButton() {
     
       "<p>Des questions concernant cette facture? Répondez directement " +
       "à ce mail. Des questions concernant la saison " + season + " ? " +
-      "Envoyez un mail à " + email_loisir + "</p>" +
+      "Envoyez un mail à " + email_loisir + "(ski loisir)" +
+      "ou à " + email_comp + "(ski compétition)</p>" +
     
       "~SCA ❄️ 🏔️ ⛷️ 🏂",
     attachments: attachments
@@ -355,15 +416,13 @@ function GeneratePDFAndSendEmailButton() {
   if (cc_to != "") {
     email_options.cc = cc_to
   }
-  
-  // If this isn't a test, BCC Marie-Pierre. A test is something ran by
-  // the ALEX or TEST trigger.
-  if (spreadsheet.getName().toString().substring(0,5) != "TEST:" &&
-      spreadsheet.getName().toString().substring(0,5) != "ALEX:") {
-    email_options.bcc = "licence.sca@gmail.com"
-  }
-  
+
+  // Send the email  
   MailApp.sendEmail(email_options)
+  // If this isn't a test, send a mail to Marie-Pierre. A test is something ran by
+  // the ALEX or TEST trigger.
+  maybeEmailLicenseSCA([attachments[0]]);
+  
   setRangeTextColor(SpreadsheetApp.getActiveSheet(),
                     coord_status, 
                     "✅ Dossier envoyé", "green")  
