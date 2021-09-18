@@ -400,8 +400,8 @@ function GeneratePDFAndSendEmailButton() {
     
       "<p>Des questions concernant cette facture? Répondez directement " +
       "à ce mail. Des questions concernant la saison " + season + " ? " +
-      "Envoyez un mail à " + email_loisir + "(ski loisir)" +
-      "ou à " + email_comp + "(ski compétition)</p>" +
+      "Envoyez un mail à " + email_loisir + "(ski loisir) " +
+      "ou à " + email_comp + " (ski compétition)</p>" +
     
       "~SCA ❄️ 🏔️ ⛷️ 🏂",
     attachments: attachments
