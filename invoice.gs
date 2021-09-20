@@ -21,6 +21,7 @@ var coord_generated_pdf = [84, 6]
 
 var coords_identity_lines = [16, 17, 18, 19, 20]
 var coords_identity_cols  = [2, 3, 4, 5, 6]
+var coords_pdf_row_column_ranges = {'start': [1, 0], 'end': [82, 7]}
 
 // Some globals defined here to make changes easy:
 var parental_consent_pdf = '1LaWS0mmjE8GPeendM1c1mCGUcrsBIUFc'
@@ -94,26 +95,15 @@ function createPDF(sheet) {
   var id = sheet.getSheetId()
   var url = ss_url.replace(/\/edit.*$/,'')  
       + '/export?exportformat=pdf'
-      + '&format=pdf'
-      + '&size=7'
-      + '&portrait=true'
-      + '&fitw=true'       
-      + '&top_margin=0.1'              
-      + '&bottom_margin=0.1'          
-      + '&left_margin=0.1'             
-      + '&right_margin=0.1'           
-      + '&sheetnames=false'
-      + '&printtitle=true'
-      + '&pagenum=CENTER'
-      + '&gridlines=false'
-      + '&fzr=FALSE'
-      + '&gid=' + id
-      + '&ir=false'
-      + '&ic=false'
-      + '&r1=1'
-      + '&c1=0'
-      + '&r2=82'
-      + '&c2=7'
+      + '&format=pdf' + '&size=7' + '&portrait=true' + '&fitw=true'       
+      + '&top_margin=0.1' + '&bottom_margin=0.1' + '&left_margin=0.1' + '&right_margin=0.1'           
+      + '&sheetnames=false' + '&printtitle=true' + '&pagenum=CENTER' + '&gridlines=false'
+      // Input range
+      + '&fzr=false' + '&gid=' + id + '&ir=false' + '&ic=false'
+      + '&r1=' + coords_pdf_row_column_ranges['start'][0]
+      + '&c1=' + coords_pdf_row_column_ranges['start'][1]
+      + '&r2=' + coords_pdf_row_column_ranges['end'][0]
+      + '&c2=' + coords_pdf_row_column_ranges['end'][1]
 
   var params = {
     method: "GET",
