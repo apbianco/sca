@@ -3,6 +3,9 @@
 // This script runs with duplicates of the following shared doc: 
 // shorturl.at/dkmrH
 
+// Dev or prod?
+var dev_or_prod = "dev"
+
 // Seasonal parameters
 var season = "2021/2022"
 var season_web = "saison-2021-2022"
@@ -12,16 +15,16 @@ var coord_family_civility = [8, 3]
 var coord_family_name = [8, 4]
 var coord_family_email = [11, 3]
 var coord_cc = [11, 5]
-var coord_personal_message = [81, 3]
-var coord_family_phone = [82, 7]
-var coord_timestamp = [82, 2]
-var coord_parental_consent = [82, 5]
-var coord_status = [84, 4]
-var coord_generated_pdf = [84, 6]
+var coord_personal_message = [83, 3]
+var coord_family_phone = [84, 7]
+var coord_timestamp = [84, 2]
+var coord_parental_consent = [84, 5]
+var coord_status = [86, 4]
+var coord_generated_pdf = [86, 6]
 
 var coords_identity_lines = [16, 17, 18, 19, 20]
 var coords_identity_cols  = [2, 3, 4, 5, 6]
-var coords_pdf_row_column_ranges = {'start': [1, 0], 'end': [82, 7]}
+var coords_pdf_row_column_ranges = {'start': [1, 0], 'end': [84, 7]}
 
 // Some globals defined here to make changes easy:
 var parental_consent_pdf = '1LaWS0mmjE8GPeendM1c1mCGUcrsBIUFc'
@@ -33,7 +36,13 @@ var db_folder = '1UmSA2OIMZs_9J7kEFu0LSfAHaYFfi8Et'
 var allowed_user = 'inscriptions.sca@gmail.com'
 var email_loisir = 'sca.loisir@gmail.com'
 var email_comp = 'skicluballevardin@gmail.com'
-var email_license = 'apbianco@gmail.com'
+var email_dev = 'apbianco@gmail.com'
+var email_license = (isProd() ?
+                     'licence.sca@gmail.com': email_dev)
+
+function isProd() {
+  return dev_or_prod == 'prod'
+}
 
 function Debug(message) {
   var ui = SpreadsheetApp.getUi();
@@ -64,7 +73,12 @@ function getStringAt(coord) {
 function getFamilyDictionary() {
   var family = []
   for (var index in coords_identity_lines) {
-    var birth = new Date(getStringAt([coords_identity_lines[index], 4]))
+    if (getStringAt([coords_identity_lines[index], 4]) != '') {
+      var birth = new Date(getStringAt([coords_identity_lines[index], 4]))
+      birth = Utilities.formatDate(birth, "GMT", "dd/MM/yyyy")
+    } else {
+      birth = "??/??/????"
+    }
     var sex = getStringAt([coords_identity_lines[index], 6])
     if (sex == "") {
       sex = "?"
@@ -75,7 +89,7 @@ function getFamilyDictionary() {
     }
     family.push({'first': getStringAt([coords_identity_lines[index], 2]),
                  'last': getStringAt([coords_identity_lines[index], 3]),
-                 'birth': Utilities.formatDate(birth, "GMT", "dd/MM/yyyy"),
+                 'birth': birth,
                  'city': city,
                  'sex': sex})
   }
@@ -224,7 +238,7 @@ function validateInvoice() {
 
   return {'civility': civility,
           'family_name': family_name,
-          'mail_to': mail_to,
+          'mail_to': isProd() ? mail_to : email_dev,
           'consent': consent};
 }
 
@@ -253,9 +267,8 @@ function maybeEmailLicenseSCA(invoice) {
   var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
   var operator = spreadsheet.getName().toString().split(':')[0]
   var family_name = spreadsheet.getName().toString().split(':')[1]
-  if (operator == "TEST" || operator == "ALEX") {
-    Debug("Should normaly return");
-    // return
+  if (operator == "TEST") {
+    return
   }
   var family_dict = getFamilyDictionary() 
   var string_family_members = "<blockquote>\n"
