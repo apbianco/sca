@@ -268,6 +268,7 @@ function maybeEmailLicenseSCA(invoice) {
   var operator = spreadsheet.getName().toString().split(':')[0]
   var family_name = spreadsheet.getName().toString().split(':')[1]
   if (operator == "TEST") {
+    Debug("TEST spreadsheet, email not sent")
     return
   }
   var family_dict = getFamilyDictionary() 
@@ -406,9 +407,10 @@ function GeneratePDFAndSendEmailButton() {
       "<p>Nous vous remercions de la confiance que vous nous accordez " +
       "cette année.</p>" +
     
-      "<p>Des questions concernant cette facture? Répondez directement " +
-      "à ce mail. Des questions concernant la saison " + season + " ? " +
-      "Envoyez un mail à " + email_loisir + "(ski loisir) " +
+      "<p>Des questions concernant cette facture? Contacter Marie-Pierre: " +
+      "marie-pierreberanger@orange.fr (06 21 18 00 89). " +
+      "Des questions concernant la saison " + season + " ? " +
+      "Envoyez un mail à " + email_loisir + " (ski loisir) " +
       "ou à " + email_comp + " (ski compétition)</p>" +
     
       "~SCA ❄️ 🏔️ ⛷️ 🏂",
@@ -424,7 +426,7 @@ function GeneratePDFAndSendEmailButton() {
   // Send the email  
   MailApp.sendEmail(email_options)
   // If this isn't a test, send a mail to Marie-Pierre. A test is something ran by
-  // the ALEX or TEST trigger.
+  // the TEST trigger.
   maybeEmailLicenseSCA([attachments[0]]);
   
   setRangeTextColor(SpreadsheetApp.getActiveSheet(),
