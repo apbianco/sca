@@ -15,16 +15,17 @@ var coord_family_civility = [8, 3]
 var coord_family_name = [8, 4]
 var coord_family_email = [11, 3]
 var coord_cc = [11, 5]
-var coord_personal_message = [83, 3]
-var coord_family_phone = [84, 7]
-var coord_timestamp = [84, 2]
-var coord_parental_consent = [84, 5]
-var coord_status = [86, 4]
-var coord_generated_pdf = [86, 6]
+
+var coord_personal_message = [85, 3]
+var coord_family_phone = [86, 7]
+var coord_timestamp = [86, 2]
+var coord_parental_consent = [86, 5]
+var coord_status = [88, 4]
+var coord_generated_pdf = [88, 6]
 
 var coords_identity_lines = [16, 17, 18, 19, 20]
 var coords_identity_cols  = [2, 3, 4, 5, 6]
-var coords_pdf_row_column_ranges = {'start': [1, 0], 'end': [84, 7]}
+var coords_pdf_row_column_ranges = {'start': [1, 0], 'end': [87, 7]}
 
 // Some globals defined here to make changes easy:
 var parental_consent_pdf = '1LaWS0mmjE8GPeendM1c1mCGUcrsBIUFc'
