@@ -4,7 +4,7 @@
 // shorturl.at/dkmrH
 
 // Dev or prod?
-var dev_or_prod = "dev"
+var dev_or_prod = "prod"
 
 // Seasonal parameters
 var season = "2021/2022"
