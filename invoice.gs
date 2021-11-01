@@ -190,10 +190,12 @@ function generatePDF() {
 // to use during invoice generation.
 function validateInvoice() {
   if (! isProd()) {
-    Debug('Cette facture est en mode developpement. Rien ne sera envoyé à la ' +
-          'famile ni à ' + email_license_ + '. Contacter ' + email_dev + 
-          'pour obtenir de l\'aide. Vous pouvez néamoins continuer et ' +
-          'les possibles envois de mails se ferons à ' + email_dev)
+    Debug('Cette facture est en mode developpement. Aucun email ne sera envoyé, ' +
+          'ni à la famile ni à ' + email_license_ + '.\n\n' +
+          'Vous pouvez néamoins continuer et un dossier sera préparé et ' +
+          'les mails serons envoyés à ' + email_dev + '.\n\n' +
+          'Contacter ' + email_dev + 'pour obtenir plus d\'aide.')
+          
   }
   
   // Make sure only an allowed user runs this.
