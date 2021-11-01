@@ -315,11 +315,12 @@ function maybeEmailLicenseSCA(invoice) {
   MailApp.sendEmail(email_options)
 }
 
-// This is what the [generate and send email] button runs.
+// This is what the [generate and send invoice] button runs.
 function GeneratePDFAndSendEmailButton() {
   generatePDFAndMaybeSendEmail(true)
 }
 
+// This is what the [generate invoice] button runs.
 function GeneratePDFButton() {
   generatePDFAndMaybeSendEmail(false)
 }
