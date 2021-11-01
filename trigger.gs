@@ -174,13 +174,17 @@ function onEdit(event){
   var ui = SpreadsheetApp.getUi();
   var r = event.source.getActiveRange();
   var sheet = SpreadsheetApp.getActiveSheet();
+  setRangeTextColor(sheet, coord_status_info, "⏳ ...", "orange");
 
   // Check whether the event happened entering a new family name.
   // If that value can be validated, indicate we might proceed.
   if (activeRangeInCoord(r, coord_family_name)) {
     // Do not allow a last season entry to be present at the same time.
-    // FIXME: Display an error message
     if (getFamilyName(sheet, coord_family_last_season) != '') {
+      displayErrorPannel(sheet,
+                         'Vous ne pouvez pas définir une nouvelle famille ' +
+                         'et selectionner une famille sur la saison précédente ' +
+                         'en même temps...')
       clearRange(sheet, coord_status_info);      
       return;
     }
@@ -200,8 +204,11 @@ function onEdit(event){
   
   if (activeRangeInCoord(r, coord_family_last_season)) {
     // Do not allow an entered family name to be present at the same time.
-    // FIXME: Display and error message
     if (getFamilyName(sheet, coord_family_name) != '') {
+      displayErrorPannel(sheet,
+                         'Vous ne pouvez pas selectionner une famille ' +
+                         'sur la saison préceedente ' +
+                         'et définir une nouvelle famille en même temps...')
       clearRange(sheet, coord_status_info);      
       return;
     }
@@ -283,7 +290,9 @@ function createNewFamilySheetFromOld(sheet, family_name) {
     }
   }
   if (old_sheet_id == '') {
-    // FIXME: Error message
+    displayErrorPannel(sheet, 
+                       'Facture pour ' + family_name +
+                       ' introuvable sur la saison précédente')
     return;
   }
   
@@ -296,7 +305,10 @@ function createNewFamilySheetFromOld(sheet, family_name) {
   // Iterate over all the ranges to copy and copy the content from the
   // old to the new.
   if (ranges_previous_season.length != ranges_current_season.length) {
-    // FIXME: Error message
+    displayErrorPannel(sheet, 
+                       'Difference the range.length pour la famile ' + family_name +
+                       ': previous=' + ranges_previous_season.length +
+                       'current=' + ranges_current_season.length)
     return;
   }
   // FIXME: Add verification for the old/new sheets

@@ -4,7 +4,7 @@
 // shorturl.at/dkmrH
 
 // Dev or prod?
-var dev_or_prod = "prod"
+var dev_or_prod = "dev"
 
 // Seasonal parameters
 var season = "2021/2022"
@@ -38,8 +38,8 @@ var allowed_user = 'inscriptions.sca@gmail.com'
 var email_loisir = 'sca.loisir@gmail.com'
 var email_comp = 'skicluballevardin@gmail.com'
 var email_dev = 'apbianco@gmail.com'
-var email_license = (isProd() ?
-                     'licence.sca@gmail.com': email_dev)
+var email_license_ = 'licence.sca@gmail.com'
+var email_license = (isProd() ? email_license_: email_dev)
 
 function isProd() {
   return dev_or_prod == 'prod'
@@ -157,11 +157,18 @@ function isEmpty(obj) {
   return Object.keys(obj).length === 0;
 }
 
+function getOperator() {
+  return SpreadsheetApp.getActiveSpreadsheet().getName().toString().split(':')[0]
+}
+
+function getFamilyName() {
+  return SpreadsheetApp.getActiveSpreadsheet().getName().toString().split(':')[1]
+}
+
 // Runs when the [secure authorization] button is pressed.
 function GetAuthorization() {
   ScriptApp.getAuthorizationInfo(ScriptApp.AuthMode.FULL)
 }
-
 
 // Create the invoice as a PDF: first create a blob and then save
 // the blob as a PDF and move it to the <db>/<OPERATOR:FAMILY>
@@ -182,6 +189,13 @@ function generatePDF() {
 // Validate the invoice and return a dictionary of values
 // to use during invoice generation.
 function validateInvoice() {
+  if (! isProd()) {
+    Debug('Cette facture est en mode developpement. Rien ne sera envoyé à la ' +
+          'famile ni à ' + email_license_ + '. Contacter ' + email_dev + 
+          'pour obtenir de l\'aide. Vous pouvez néamoins continuer et ' +
+          'les possibles envois de mails se ferons à ' + email_dev)
+  }
+  
   // Make sure only an allowed user runs this.
   if (Session.getEffectiveUser() != allowed_user) {
     displayErrorPannel(
@@ -265,11 +279,10 @@ function GeneratePDFButton() {
 }
 
 function maybeEmailLicenseSCA(invoice) {
-  var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
-  var operator = spreadsheet.getName().toString().split(':')[0]
-  var family_name = spreadsheet.getName().toString().split(':')[1]
+  var operator = getOperator()
+  var family_name = getFamilyName()
   if (operator == "TEST") {
-    Debug("TEST operator, email not sent to "+email_license)
+    Debug("TEST operator, email not sent to " + email_license_)
     return
   }
   var family_dict = getFamilyDictionary() 
@@ -304,6 +317,14 @@ function maybeEmailLicenseSCA(invoice) {
 
 // This is what the [generate and send email] button runs.
 function GeneratePDFAndSendEmailButton() {
+  generatePDFAndMaybeSendEmail(true)
+}
+
+function GeneratePDFButton() {
+  generatePDFAndMaybeSendEmail(false)
+}
+
+function generatePDFAndMaybeSendEmail(send_email) {
   var validation = validateInvoice();
   if (isEmpty(validation)) {
     return;
@@ -320,7 +341,8 @@ function GeneratePDFAndSendEmailButton() {
 
   setRangeTextColor(SpreadsheetApp.getActiveSheet(),
                     coord_status, 
-                    "⏳ Préparation et envoit du dossier...", "orange")
+                    "⏳ Génération " +
+                    (send_email? "et envoit " : " ") + "du dossier...", "orange")
   SpreadsheetApp.flush()
 
   // 2021-2022: FFS sanitary pass documentation
@@ -419,22 +441,28 @@ function GeneratePDFAndSendEmailButton() {
       "~SCA ❄️ 🏔️ ⛷️ 🏂",
     attachments: attachments
   }
-   
+
   // Add CC if defined.
   var cc_to = getStringAt(coord_cc)
   if (cc_to != "") {
     email_options.cc = cc_to
   }
 
-  // Send the email  
-  MailApp.sendEmail(email_options)
-  // If this isn't a test, send a mail to Marie-Pierre. A test is something ran by
-  // the TEST trigger.
-  maybeEmailLicenseSCA([attachments[0]]);
-  
-  setRangeTextColor(SpreadsheetApp.getActiveSheet(),
-                    coord_status, 
-                    "✅ Dossier envoyé", "green")  
+  if (send_email) {
+    // Send the email  
+    MailApp.sendEmail(email_options)
+    // If this isn't a test, send a mail to Marie-Pierre. A test is something ran by
+    // the TEST trigger.
+    maybeEmailLicenseSCA([attachments[0]]);
+
+    setRangeTextColor(SpreadsheetApp.getActiveSheet(),
+                      coord_status, 
+                      "✅ Dossier envoyé", "green")  
+  } else {
+    setRangeTextColor(SpreadsheetApp.getActiveSheet(),
+                      coord_status, 
+                      "✅ Dossier généré", "green")  
+  }
   displayPDFLink(pdf_file)
   SpreadsheetApp.flush()  
 }
