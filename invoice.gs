@@ -3,37 +3,58 @@
 // This script runs with duplicates of the following shared doc: 
 // shorturl.at/dkmrH
 
-// Dev or prod?
+// Dev or prod? "dev" sends all email to email_dev. Prod is the
+// real thing: family will receive invoices, and so will email_license_.
 var dev_or_prod = "dev"
 
-// Seasonal parameters
+// Seasonal parameters - change for each season
+// 
+// - Name of the season
 var season = "2021/2022"
-var season_web = "saison-2021-2022"
-
-// Spreadsheet parameters (row, columns, etc...)
-var coord_family_civility = [8, 3]
-var coord_family_name = [8, 4]
-var coord_family_email = [11, 3]
-var coord_cc = [11, 5]
-
-var coord_personal_message = [85, 3]
-var coord_family_phone = [86, 7]
-var coord_timestamp = [86, 2]
-var coord_parental_consent = [86, 5]
-var coord_status = [88, 4]
-var coord_generated_pdf = [88, 6]
-
-var coords_identity_lines = [16, 17, 18, 19, 20]
-var coords_identity_cols  = [2, 3, 4, 5, 6]
-var coords_pdf_row_column_ranges = {'start': [1, 0], 'end': [87, 7]}
-
-// Some globals defined here to make changes easy:
+//
+// - Storage for the current season's database.
+//
+var db_folder = '1UmSA2OIMZs_9J7kEFu0LSfAHaYFfi8Et'
+//
+// - ID of attachements to be sent with the invoice - some may change
+//   from one season to an other when they are refreshed.
+//
 var parental_consent_pdf = '1LaWS0mmjE8GPeendM1c1mCGUcrsBIUFc'
 var rules_pdf = '1tNrkUkI2w_DYgXg9dRXPda_25gBh1TAG'
 var parents_note_pdf = '1zkI5NapvYyLn_vEIxyejKJ4WzAvEco6z'
 var pass_pdf = '1fsjge7JAuV3PTPXBnLbX9PGkSGW3nVHL'
 
-var db_folder = '1UmSA2OIMZs_9J7kEFu0LSfAHaYFfi8Et'
+// Spreadsheet parameters (row, columns, etc...). Adjust as necessary
+// when the master invoice is modified.
+// 
+// - Locations of family details:
+//
+var coord_family_civility = [8, 3]
+var coord_family_name = [8, 4]
+var coord_family_email = [11, 3]
+var coord_cc = [11, 5]
+//
+// - Locations of various status line and collected input, located
+//   a the bottom of the invoice.
+// 
+var coord_personal_message = [85, 3]
+var coord_callme_phone = [86, 7]
+var coord_timestamp = [86, 2]
+var coord_parental_consent = [86, 5]
+var coord_status = [88, 4]
+var coord_generated_pdf = [88, 6]
+//
+// - Parameters for copying the content from one season to an other.
+// 
+var coords_identity_lines = [16, 17, 18, 19, 20]
+var coords_identity_cols  = [2, 3, 4, 5, 6]
+//
+// - Parameters defining the valid ranges to be retained during the
+//   generation of the invoice's PDF
+//
+var coords_pdf_row_column_ranges = {'start': [1, 0], 'end': [87, 7]}
+
+// Email configuration - these shouldn't change very often
 var allowed_user = 'inscriptions.sca@gmail.com'
 var email_loisir = 'sca.loisir@gmail.com'
 var email_comp = 'skicluballevardin@gmail.com'
@@ -386,7 +407,7 @@ function generatePDFAndMaybeSendEmail(send_email) {
   }
   
   // Fetch a possible phone number
-  var phone = getStringAt(coord_family_phone)
+  var phone = getStringAt(coord_callme_phone)
   if (phone != 'Aucun') {
     phone = '<p>Merci de contacter ' + phone + '</p>'
   } else {
