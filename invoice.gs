@@ -448,7 +448,7 @@ function generatePDFAndMaybeSendEmail(send_email) {
   // Add CC if defined.
   var cc_to = getStringAt(coord_cc)
   if (cc_to != "") {
-    email_options.cc = cc_to
+    email_options.cc = isProd() ? cc_to : email_dev
   }
 
   if (send_email) {
