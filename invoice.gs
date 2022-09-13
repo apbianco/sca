@@ -1,7 +1,7 @@
 // This validates the invoice sheet (more could be done BTW) and
 // sends an email with the required attached pieces.
 // This script runs with duplicates of the following shared doc: 
-// shorturl.at/dkmrH
+// shorturl.at/EJM58
 
 // Dev or prod? "dev" sends all email to email_dev. Prod is the
 // real thing: family will receive invoices, and so will email_license_.
@@ -10,15 +10,16 @@ var dev_or_prod = "dev"
 // Seasonal parameters - change for each season
 // 
 // - Name of the season
-var season = "2021/2022"
+var season = "2022/2023"
 //
 // - Storage for the current season's database.
 //
-var db_folder = '1UmSA2OIMZs_9J7kEFu0LSfAHaYFfi8Et'
+var db_folder = '1apITLkzOIkqCI7oIxpiKA5W_QR0EM3ey'
 //
 // - ID of attachements to be sent with the invoice - some may change
 //   from one season to an other when they are refreshed.
 //
+// TODO: Change for 2022/2034
 var parental_consent_pdf = '1LaWS0mmjE8GPeendM1c1mCGUcrsBIUFc'
 var rules_pdf = '1tNrkUkI2w_DYgXg9dRXPda_25gBh1TAG'
 var parents_note_pdf = '1zkI5NapvYyLn_vEIxyejKJ4WzAvEco6z'
@@ -29,20 +30,20 @@ var pass_pdf = '1fsjge7JAuV3PTPXBnLbX9PGkSGW3nVHL'
 // 
 // - Locations of family details:
 //
-var coord_family_civility = [8, 3]
-var coord_family_name = [8, 4]
-var coord_family_email = [11, 3]
-var coord_cc = [11, 5]
+var coord_family_civility = [6, 3]
+var coord_family_name = [6, 4]
+var coord_family_email = [9, 3]
+var coord_cc = [9, 5]
 //
 // - Locations of various status line and collected input, located
 //   a the bottom of the invoice.
 // 
-var coord_personal_message = [85, 3]
-var coord_callme_phone = [86, 7]
-var coord_timestamp = [86, 2]
-var coord_parental_consent = [86, 5]
-var coord_status = [88, 4]
-var coord_generated_pdf = [88, 6]
+var coord_personal_message = [88, 3]
+var coord_callme_phone = [89, 7]
+var coord_timestamp = [89, 2]
+var coord_parental_consent = [89, 5]
+var coord_status = [91, 4]
+var coord_generated_pdf = [91, 6]
 //
 // - Parameters for copying the content from one season to an other.
 // 
@@ -52,7 +53,7 @@ var coords_identity_cols  = [2, 3, 4, 5, 6]
 // - Parameters defining the valid ranges to be retained during the
 //   generation of the invoice's PDF
 //
-var coords_pdf_row_column_ranges = {'start': [1, 0], 'end': [87, 7]}
+var coords_pdf_row_column_ranges = {'start': [1, 0], 'end': [89, 7]}
 
 // Email configuration - these shouldn't change very often
 var allowed_user = 'inscriptions.sca@gmail.com'
@@ -323,12 +324,15 @@ function maybeEmailLicenseSCA(invoice) {
   }
   string_family_members += "</blockquote>\n"
   
+  // FIXME: Add the mention of licenses only if the license columns have
+  // been filled out
+  
   var email_options = {
     name: family_name + ": nouvelle inscription",
     to: email_license,
     subject: family_name + ": nouvelle inscription",
     htmlBody:
-      "<p>Licences nécessaires pour:</p>" +
+      "<p>Licences possiblement nécessaires pour:</p>" +
       string_family_members +
       "<p>Dossier saisi par: " + operator + "</p>" +
       "<p>Facture en attachement</p>" +
@@ -490,3 +494,4 @@ function generatePDFAndMaybeSendEmail(send_email) {
   displayPDFLink(pdf_file)
   SpreadsheetApp.flush()  
 }
+
