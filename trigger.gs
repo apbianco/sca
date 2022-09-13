@@ -21,17 +21,19 @@
 //
 // The ID of the empty invoice to use to create content. Adjust
 // this ID for the new season
-var empty_invoice = '1thTPqNLroAAaa5D82IUanJSQ_JY-NJkFMsJ4E56kuwo';
+var empty_invoice = '1enIvk0cW9RtsXLzVIZmwpK8HwSB89xAZOwcjNA2t0k0';
 
-// The DB folder for the 2020/2021 season
-var previous_db_folder = '1BDEV3PQULwsrqG3QjsTj1EGcnqFp6N6r'
+// The DB folder for the PREVIOUS season
+var previous_db_folder = '1UmSA2OIMZs_9J7kEFu0LSfAHaYFfi8Et'
 // Ranges to copy from an entry filed last season:
+// /!\: Season 2023/2024: second range features one more row.
 var ranges_previous_season = ["C8:G12", "B16:G20"];
 
-// The DB folder for the current season
-var db_folder = '1UmSA2OIMZs_9J7kEFu0LSfAHaYFfi8Et';
+// The DB folder for the CURRENT season
+var db_folder = '1apITLkzOIkqCI7oIxpiKA5W_QR0EM3ey';
 // Ranges to copy to for an entry filed this season:
-var ranges_current_season = ["C8:G12", "B16:G20"];
+// /!\: Season 2023/2024: second range features one more row.
+var ranges_current_season = ["C6:G10", "B14:G19"];
 
 var allowed_user = 'inscriptions.sca@gmail.com'
 
@@ -306,7 +308,7 @@ function createNewFamilySheetFromOld(sheet, family_name) {
   // old to the new.
   if (ranges_previous_season.length != ranges_current_season.length) {
     displayErrorPannel(sheet, 
-                       'Difference the range.length pour la famile ' + family_name +
+                       'Difference de range.length pour la famile ' + family_name +
                        ': previous=' + ranges_previous_season.length +
                        'current=' + ranges_current_season.length)
     return;
@@ -316,6 +318,7 @@ function createNewFamilySheetFromOld(sheet, family_name) {
     // FIXME: Verify ranges exist.
     var old_sheet_range = old_sheet.getRange(ranges_previous_season[index]);
     var new_sheet_range = new_sheet.getRange(ranges_current_season[index]);
+    // FIXME: Sex conversion required.
     new_sheet_range.setValues(old_sheet_range.getValues());
   }
 }
