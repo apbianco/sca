@@ -26,14 +26,19 @@ var empty_invoice = '1enIvk0cW9RtsXLzVIZmwpK8HwSB89xAZOwcjNA2t0k0';
 // The DB folder for the PREVIOUS season
 var previous_db_folder = '1UmSA2OIMZs_9J7kEFu0LSfAHaYFfi8Et'
 // Ranges to copy from an entry filed last season:
-// /!\: Season 2023/2024: second range features one more row.
-var ranges_previous_season = ["C8:G12", "B16:G20"];
+// FIXME: Season 2023/2024: second range features one more row.
+//        and we will copy again up to column G.
+// NOTE: Season 2022/2023: we're not copying the level so we stop
+//       at F20
+var ranges_previous_season = ["C8:G12", "B16:F20"];
 
 // The DB folder for the CURRENT season
 var db_folder = '1apITLkzOIkqCI7oIxpiKA5W_QR0EM3ey';
 // Ranges to copy to for an entry filed this season:
-// /!\: Season 2023/2024: second range features one more row.
-var ranges_current_season = ["C6:G10", "B14:G19"];
+// FIXME: Season 2023/2024: second range will feature one more row.
+//        for the names: families will be up to 6 members and we
+//        need to copy an additional column so include column G again.
+var ranges_current_season = ["C6:G10", "B14:F18"];
 
 var allowed_user = 'inscriptions.sca@gmail.com'
 
@@ -73,6 +78,27 @@ function activeRangeInCoord(r, coord) {
 // to populate a cell and the existing entry selection is reset.
 // If data already exists, nothing happens, but the existing entry
 // selection is reset.
+//
+// Loading the folder content doesn't work directly so it's better to
+// just install the values in cell B2 as "Validation des données"
+// "List d'éléments":
+//
+// 1- Export last year db-YYYY-YYYY as a zip file from the Drive UI.
+// 2- Extract the list of registered families:
+//
+//    LC_CTYPE=C && LANG=C && \
+//    unzip -l db-2021-2022-20220914T190110Z-001.zip | \
+//    egrep db- | sed 's@^.*2022/@@g' | sort -u | sed 's/.*_//g' | \
+//    sort > LIST
+//
+// 3- Edit LIST to remove undesirable entries
+// 4- Turn the list in to a CSV list:
+//
+//    clear; for i in $(cat LIST); do echo -n "$i,"; done | \
+//    sed 's/,$//g'; echo
+//
+//  5- Install in cell B2 as previously detailed
+  
 function setLastSeasonFamilyList(sheet) {
   var x = coord_family_last_season[0];
   var y = coord_family_last_season[1];
@@ -89,7 +115,7 @@ function setLastSeasonFamilyList(sheet) {
       last_season_list.push(family)
     }
   }
-  if (last_season_list.length == 0) {
+  if (last_season_list.length != 0) {
     last_season_list.sort();
     var rule = SpreadsheetApp.newDataValidation()
       .requireValueInList(last_season_list, true).build();
@@ -313,13 +339,46 @@ function createNewFamilySheetFromOld(sheet, family_name) {
                        'current=' + ranges_current_season.length)
     return;
   }
-  // FIXME: Add verification for the old/new sheets
-  for (var index in ranges_previous_season) {
-    // FIXME: Verify ranges exist.
-    var old_sheet_range = old_sheet.getRange(ranges_previous_season[index]);
-    var new_sheet_range = new_sheet.getRange(ranges_current_season[index]);
-    // FIXME: Sex conversion required.
-    new_sheet_range.setValues(old_sheet_range.getValues());
+  // Perform a blind copy on the first range which contains the 
+  // civility object.
+  // FIXME: This is fragile - maybe this should create
+  // a map to name the ranges and pick the ranges by name instead
+  // of relying on the magic of an index...
+  var old_civility_range = old_sheet.getRange(ranges_previous_season[0]);
+  var new_civility_range = new_sheet.getRange(ranges_current_season[0]);
+  new_civility_range.setValues(old_civility_range.getValues());
+
+  // Perform a copy the second range which contains the family
+  // information. Uppercase all family names, convert M/F into
+  // Garcon/File
+  var old_member_range = old_sheet.getRange(ranges_previous_season[1]);
+  var new_member_range = new_sheet.getRange(ranges_current_season[1]);
+  const rows = old_member_range.getNumRows();
+  const columns = old_member_range.getNumColumns();
+
+  for (var row = 1; row <= rows; row++) {
+    for (let column = 1; column <= columns; column++) {
+      var source_cell = old_member_range.getCell(row, column);
+      var dest_cell = new_member_range.getCell(row, column);
+      // Second column in that range is the familly name which is
+      // upercassed for consistency
+      if (column == 2) {
+        dest_cell.setValue(source_cell.getValue().toString().toUpperCase());
+      }
+      // Fifth column is sex conversion
+      else if (column == 5) {
+        var sex = source_cell.getValue().toString().toUpperCase();
+        if (sex == 'M') {
+          dest_cell.setValue('Garçon');
+        } else if (sex == 'F') {
+          dest_cell.setValue('Fille');
+        } else {
+          dest_cell.setValue(sex);
+        }
+      } else {
+        dest_cell.setValue(source_cell.getValue());
+      }
+    }
   }
 }
 
