@@ -360,9 +360,19 @@ function createNewFamilySheetFromOld(sheet, family_name) {
     for (let column = 1; column <= columns; column++) {
       var source_cell = old_member_range.getCell(row, column);
       var dest_cell = new_member_range.getCell(row, column);
+      // First column is the first name. We should remove
+      // anything that is placed in parenthesis
+      if (column == 1) {
+        var first_name = source_cell.getValue().toString();
+        var found = first_name.indexOf('(');
+        if (found >= 0) {
+          first_name = first_name.substring(0, found);
+        }
+        dest_cell.setValue(first_name)
+      }
       // Second column in that range is the familly name which is
       // upercassed for consistency
-      if (column == 2) {
+      else if (column == 2) {
         dest_cell.setValue(source_cell.getValue().toString().toUpperCase());
       }
       // Fifth column is sex conversion
