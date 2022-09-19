@@ -196,9 +196,9 @@ function validateLicenseCrossCheck() {
     validation[key] = 0;
   });
   
+  // Collect the attributed licenses into a hash
   var attributed_licenses_row = coords_attributed_licenses_start[0];
   var col = coords_attributed_licenses_start[1];
-
   for (row = attributed_licenses_row;
        row <= attributed_licenses_row + coords_attributed_licenses_n_rows;
        row ++ ) {
@@ -209,8 +209,12 @@ function validateLicenseCrossCheck() {
     // You can't have no first/last name and an assigned license
     var first_name = getStringAt([row, 2]);
     var last_name = getStringAt([row, 3]);
-    if (first_name === '' && last_name === '' &&  value != 'Aucune') {
-      return "'" + value + "' attribuée à un membre de famile inexistant!";
+    // If there's no name on that row, the only possible value is None
+    if (first_name === '' && last_name === '') {
+      if (value != 'Aucune') {
+        return "'" + value + "' attribuée à un membre de famile inexistant!";
+      }
+      continue;
     }
     var found = false;
     attributed_licenses_values.forEach(function(key) {
@@ -223,8 +227,15 @@ function validateLicenseCrossCheck() {
     if (! found) {
       return "'" + value + "' n'est pas une license attribuée possible!";
     }
+    // Validate DoB and the type of license
+    var dob = 1900 + SpreadsheetApp.getActiveSheet().getRange(row, 4).getValue().getYear();
+    Debug(dob);
   }
   Debug(validationToString(validation));
+  
+  // Collect the selected licenses into a hash
+  
+  // The two hashes should be strictly equal
   return "Error";
 }
 
