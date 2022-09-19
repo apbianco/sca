@@ -55,6 +55,15 @@ var coords_identity_cols  = [2, 3, 4, 5, 6]
 //
 var coords_pdf_row_column_ranges = {'start': [1, 0], 'end': [89, 7]}
 
+// - Range for the attributed license validation. Please change
+//   to match both the coordinate and the cell values
+var coords_attributed_licenses_start = [14, 7];
+var coords_attributed_licenses_n_rows = 5;
+var attributed_licenses_values = [
+  'Aucune', 'CN Jeune (Loisir)', 'CN Adulte (Loisir)',
+  'CN Famille (Loisir)', 'CN Dirigeant',
+  'CN Jeune (Compétition)', 'CN Adulte (Compétition)'];
+
 // Email configuration - these shouldn't change very often
 var allowed_user = 'inscriptions.sca@gmail.com'
 var email_loisir = 'sca.loisir@gmail.com'
@@ -150,12 +159,6 @@ function createPDF(sheet) {
   return UrlFetchApp.fetch(url, params).getBlob(); 
 }
 
-function setRangeTextColor(sheet, coord, text, color) {
-  var x = coord[0];
-  var y = coord[1];
-  sheet.getRange(x,y).setValue(text);
-  sheet.getRange(x,y).setFontColor(color);
-}
 
 function displayErrorPanel(message) {
   var ui = SpreadsheetApp.getUi();
@@ -173,6 +176,56 @@ function validateAndReturnDropDownValue(coord, message) {
     return ''
   }
   return value
+}
+
+// Cross check the attributed licenses with the ones selected for payment
+function validateLicenseCrossCheck() {
+  // First count how many licenses have been attributed to the
+  // registered family. We use the values (after validation) directly
+
+  function validationToString(v) {
+    var to_return = "";
+    for (const [key, value] of Object.entries(v)) {
+      to_return += (key + ": " + value + ", ");
+    }
+    return to_return;
+  }
+  
+  validation = {}
+  attributed_licenses_values.forEach(function(key) {
+    validation[key] = 0;
+  });
+  
+  var attributed_licenses_row = coords_attributed_licenses_start[0];
+  var col = coords_attributed_licenses_start[1];
+
+  for (row = attributed_licenses_row;
+       row <= attributed_licenses_row + coords_attributed_licenses_n_rows;
+       row ++ ) {
+    var value = getStringAt([row, col]);
+    if (value === '') {
+      value = 'Aucune';
+    }
+    // You can't have no first/last name and an assigned license
+    var first_name = getStringAt([row, 2]);
+    var last_name = getStringAt([row, 3]);
+    if (first_name === '' && last_name === '' &&  value != 'Aucune') {
+      return "'" + value + "' attribuée à un membre de famile inexistant!";
+    }
+    var found = false;
+    attributed_licenses_values.forEach(function(key) {
+      if (value === key) {
+        validation[key] += 1;
+        found = true;
+        return;
+      }
+    });
+    if (! found) {
+      return "'" + value + "' n'est pas une license attribuée possible!";
+    }
+  }
+  Debug(validationToString(validation));
+  return "Error";
 }
 
 function isEmpty(obj) {
@@ -222,8 +275,7 @@ function validateInvoice() {
   
   // Make sure only an allowed user runs this.
   if (Session.getEffectiveUser() != allowed_user) {
-    displayErrorPannel(
-      SpreadsheetApp.getActiveSheet(),
+    displayErrorPanel(
       "Vous n'utilisez pas cette feuille en tant que " +
       allowed_user + ".\n\n" +
       "Veuillez vous connecter d'abord à ce compte avant " +
@@ -267,6 +319,13 @@ function validateInvoice() {
   if (consent == '') {
     return {}
   }
+  
+  var license_cross_check_error = validateLicenseCrossCheck();
+  if (license_cross_check_error) {
+    displayErrorPanel(license_cross_check_error);
+    return {}
+  }
+
 
   // Update the timestamp. 
   setRangeTextColor(SpreadsheetApp.getActiveSheet(), coord_timestamp,
@@ -494,4 +553,3 @@ function generatePDFAndMaybeSendEmail(send_email) {
   displayPDFLink(pdf_file)
   SpreadsheetApp.flush()  
 }
-
