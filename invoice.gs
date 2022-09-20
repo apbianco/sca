@@ -3,6 +3,8 @@
 // This script runs with duplicates of the following shared doc: 
 // shorturl.at/EJM58
 
+// TODO: Authorisation: à fournier, etc...
+
 // Dev or prod? "dev" sends all email to email_dev. Prod is the
 // real thing: family will receive invoices, and so will email_license.
 var dev_or_prod = "dev"
@@ -45,10 +47,10 @@ var coord_parental_consent = [79, 5]
 var coord_status = [81, 4]
 var coord_generated_pdf = [81, 6]
 //
-// - Parameters for copying the content from one season to an other.
+// - Parameters for collecting familly members
 // 
-var coords_identity_lines = [16, 17, 18, 19, 20]
-var coords_identity_cols  = [2, 3, 4, 5, 6]
+var coords_identity_lines = [14, 15, 16, 17, 18, 19];
+
 //
 // - Parameters defining the valid ranges to be retained during the
 //   generation of the invoice's PDF
@@ -57,6 +59,7 @@ var coords_pdf_row_column_ranges = {'start': [1, 0], 'end': [80, 7]}
 
 // - Range for the attributed license validation. Please change
 //   to match both the coordinate and the cell values
+//   FIXME: don't use n_rows?
 var coords_attributed_licenses_start = [14, 7];
 var coords_attributed_licenses_n_rows = 5;
 var attributed_licenses_values = [
@@ -79,6 +82,16 @@ var attributed_licenses_dob_validation = {
   'CN Dirigeant':            [1900, 2004],
   'CN Jeune (Compétition)':  [2007, 2050],
   'CN Adulte (Compétition)': [1900, 2006]};
+
+// Coordinates of where the various license purchases are indicated.
+var coord_purchased_licenses = {
+  // 'Aucune' doesn't exist.
+  'CN Jeune (Loisir)':       [34, 5],
+  'CN Adulte (Loisir)':      [35, 5],
+  'CN Famille (Loisir)':     [36, 5],
+  'CN Dirigeant':            [37, 5],
+  'CN Jeune (Compétition)':  [44, 5],
+  'CN Adulte (Compétition)': [45, 5]};
 
 // Email configuration - these shouldn't change very often
 var allowed_user = 'inscriptions.sca@gmail.com'
@@ -120,26 +133,37 @@ function getStringAt(coord) {
 
 function getFamilyDictionary() {
   var family = []
+  var no_license = attributed_licenses_values[0];
   for (var index in coords_identity_lines) {
+    
+    var first_name = getStringAt([coords_identity_lines[index], 2]);
+    var last_name = getStringAt([coords_identity_lines[index], 3]);    
+    if (first_name == "" || last_name == "") {
+      continue;
+    }
+
     if (getStringAt([coords_identity_lines[index], 4]) != '') {
       var birth = new Date(getStringAt([coords_identity_lines[index], 4]))
       birth = Utilities.formatDate(birth, "GMT", "dd/MM/yyyy")
     } else {
       birth = "??/??/????"
     }
+    var city = getStringAt([coords_identity_lines[index], 5])
+    if (city == "") {
+      city = "\\";
+    }
     var sex = getStringAt([coords_identity_lines[index], 6])
     if (sex == "") {
       sex = "?"
     }
-    var city = getStringAt([coords_identity_lines[index], 5])
-    if (city != "") {
-      city = "(" + city + ")";
+    var license = getStringAt([coords_identity_lines[index], 7]);
+    if (license == "" || license == no_license) {
+      continue;
     }
-    family.push({'first': getStringAt([coords_identity_lines[index], 2]),
-                 'last': getStringAt([coords_identity_lines[index], 3]),
-                 'birth': birth,
-                 'city': city,
-                 'sex': sex})
+    
+    family.push({'first': first_name, 'last': last_name,
+                 'birth': birth, 'city': city, 'sex': sex,
+                 'license': license})
   }
   return family
 }
@@ -175,7 +199,6 @@ function createPDF(sheet) {
   return UrlFetchApp.fetch(url, params).getBlob(); 
 }
 
-
 function displayErrorPanel(message) {
   var ui = SpreadsheetApp.getUi();
   var result = ui.alert(message, ui.ButtonSet.OK);
@@ -202,20 +225,32 @@ function validateLicenseCrossCheck() {
   function validationToString(v) {
     var to_return = "";
     for (const [key, value] of Object.entries(v)) {
-      to_return += (key + ": " + value + ", ");
+      to_return += (key + ": " + value + "\n");
     }
     return to_return;
   }
   
-  validation = {}
+  var attributed_licenses = {}
   attributed_licenses_values.forEach(function(key) {
-    validation[key] = 0;
+    attributed_licenses[key] = 0;
   });
+  
+  // Capture the no license marker, we're going to use it a lot.
+  // This is the reason why it should be the first element in 
+  // the attributed_licenses_values array.
+  var no_license = attributed_licenses_values[0];
+  var purchased_licenses = {}
+  attributed_licenses_values.forEach(function(key) {
+    // Entry indicating no license is skipped because it can't
+    // be collected.
+    if (key != no_license) {
+      purchased_licenses[key] = 0;
+    }
+  });  
   
   // Collect the attributed licenses into a hash
   var attributed_licenses_row = coords_attributed_licenses_start[0];
   var col = coords_attributed_licenses_start[1];
-  var no_license = attributed_licenses_values[0];
   for (row = attributed_licenses_row;
        row <= attributed_licenses_row + coords_attributed_licenses_n_rows;
        row ++ ) {
@@ -236,7 +271,7 @@ function validateLicenseCrossCheck() {
     var found = false;
     attributed_licenses_values.forEach(function(key) {
       if (value === key) {
-        validation[key] += 1;
+        attributed_licenses[key] += 1;
         found = true;
         return;
       }
@@ -245,25 +280,52 @@ function validateLicenseCrossCheck() {
       return "'" + value + "' n'est pas une license attribuée possible!";
     }
     // Validate DoB and the type of license
-    var dob = 1900 + SpreadsheetApp.getActiveSheet().getRange(row, 4).getValue().getYear();
+    var dob = new Date(getStringAt([row, 4]))
+    dob = Number(Utilities.formatDate(dob, "GMT", "yyyy"));
     if (dob < 1900 || dob > 2050) {
       return first_name + " " + last_name + " a une année de naissance erronnée: " + dob;
     }
     dob_start = attributed_licenses_dob_validation[value][0];
     dob_end = attributed_licenses_dob_validation[value][1];
-    Debug(first_name + " " + last_name + ": " + dob_start + " / " + dob_end + " / " + dob);
     if (dob < dob_start || dob > dob_end) {
       return (first_name + " " + last_name + ": l'année de naissance " + dob +
               " ne correspond pas à la license choisie: '" + value + "' (" +
               dob_start + "/" + dob_end + ")");
     }
   }
-  Debug(validationToString(validation));
   
   // Collect the selected licenses into a hash
+  attributed_licenses_values.forEach(function(key) {
+    // Entry indicating no license is skipped because it can't
+    // be collected.
+    if (key != no_license) {
+      var row = coord_purchased_licenses[key][0];
+      var col = coord_purchased_licenses[key][1];
+      purchased_licenses[key] = Number(SpreadsheetApp.getActiveSheet().getRange(row, col).getValue());
+    }
+  });
+
+  if (! isProd()) {
+    Debug(validationToString(attributed_licenses));
+    Debug(validationToString(purchased_licenses));
+  }
   
-  // The two hashes should be strictly equal
-  return "Error";
+  // Perform the verification
+  // FIXME: use for (var index in attributed_licenses_values)
+  for (var index in attributed_licenses_values) {
+    // Entry indicating no license is skipped because it can't
+    // be collected.
+    var key = attributed_licenses_values[index];
+    if (key != no_license) {
+      if (purchased_licenses[key] != attributed_licenses[key]) {
+        return ("Le nombre de licences '" + key + "' selectionée(s) (au nombre de " +
+                attributed_licenses[key] + ")\n" +
+                "ne correspond pas au nombre de licences achetée(s) (au nombre de " +
+                purchased_licenses[key] + ")");        
+      }
+    }
+  }
+  return "";
 }
 
 function isEmpty(obj) {
@@ -364,7 +426,6 @@ function validateInvoice() {
     return {}
   }
 
-
   // Update the timestamp. 
   setRangeTextColor(SpreadsheetApp.getActiveSheet(), coord_timestamp,
                     'Dernière MAJ le ' +
@@ -402,34 +463,30 @@ function GeneratePDFButton() {
 function maybeEmailLicenseSCA(invoice) {
   var operator = getOperator()
   var family_name = getFamilyName()
-  if (operator == "TEST") {
-    Debug("TEST operator, email not sent to " + email_license_)
-    return
-  }
+
   var family_dict = getFamilyDictionary() 
   var string_family_members = "<blockquote>\n"
   for (var index in family_dict) {
     if (family_dict[index]['last'] == "") {
       continue
     }
-    string_family_members += ("<tt><b>" +
-                              family_dict[index]['last'].toUpperCase() + "</b> " +
-                              family_dict[index]['first'] + " " +
-                              family_dict[index]['birth'] + " M/F=" +
-                              family_dict[index]['sex'] + " " +
-                              family_dict[index]['city'] + "</tt><br>\n")
+    string_family_members += ("<tt>" +
+                              "Nom: <b>" + family_dict[index]['last'].toUpperCase() + "</b><br>" +
+                              "Prénom: " + family_dict[index]['first'] + "<br>" +
+                              "Naissance: " + family_dict[index]['birth'] + "<br>" +
+                              "Fille/Garçon: " + family_dict[index]['sex'] + "<br>" +
+                              "Ville de Naissance: " + family_dict[index]['city'] + "<br>" +
+                              "Licence: " + family_dict[index]['license'] + "<br>" +
+                              "----------------------------------------------------</tt><br>\n");
   }
   string_family_members += "</blockquote>\n"
-  
-  // FIXME: Add the mention of licenses only if the license columns have
-  // been filled out
   
   var email_options = {
     name: family_name + ": nouvelle inscription",
     to: email_license,
     subject: family_name + ": nouvelle inscription",
     htmlBody:
-      "<p>Licences possiblement nécessaires pour:</p>" +
+      "<p>Licence(s) nécessaire(s) pour:</p>" +
       string_family_members +
       "<p>Dossier saisi par: " + operator + "</p>" +
       "<p>Facture en attachement</p>" +
@@ -532,20 +589,6 @@ function generatePDFAndMaybeSendEmail(send_email) {
       "est disponible en attachement. Veuillez contrôler " +
       "qu\'elle correspond à vos besoins.</p>" +
     
-      "<p>Si nécessaire, votre règlement est à retourner à:" +
-    
-      "<blockquote>" +
-      "  <b>Marie-Pierre Béranger</b>,<br>" +
-      "  44 Grange Merle.<br>" +
-      "  <b><u>38580 Allevard</u></b><br>" +
-      "</blockquote>" +
-    
-      "<p>Pour faciliter la gestion des inscriptions nous vous invitons " +
-      "à accompagner vos chèques d\'une copie de la facture en attachement " +
-      "ou de mentionner au dos de chacun de vos chèques " +
-      "la référence suivante: " +
-      "<b><code>" + spreadsheet.getName() + "</code></b></p>" +
-    
       "<p>Certificats médicaux et photos nécessaires à l\'établissement " +
       "de l\'inscription sont à faire parvenir à " + allowed_user + "</p>" +
     
@@ -576,8 +619,6 @@ function generatePDFAndMaybeSendEmail(send_email) {
   if (send_email) {
     // Send the email  
     MailApp.sendEmail(email_options)
-    // If this isn't a test, send a mail to Marie-Pierre. A test is something ran by
-    // the TEST trigger.
     maybeEmailLicenseSCA([attachments[0]]);
 
     setRangeTextColor(SpreadsheetApp.getActiveSheet(),
@@ -591,3 +632,4 @@ function generatePDFAndMaybeSendEmail(send_email) {
   displayPDFLink(pdf_file)
   SpreadsheetApp.flush()  
 }
+
