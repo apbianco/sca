@@ -4,7 +4,7 @@
 // shorturl.at/EJM58
 
 // Dev or prod? "dev" sends all email to email_dev. Prod is the
-// real thing: family will receive invoices, and so will email_license_.
+// real thing: family will receive invoices, and so will email_license.
 var dev_or_prod = "dev"
 
 // Seasonal parameters - change for each season
@@ -38,12 +38,12 @@ var coord_cc = [9, 5]
 // - Locations of various status line and collected input, located
 //   a the bottom of the invoice.
 // 
-var coord_personal_message = [88, 3]
-var coord_callme_phone = [89, 7]
-var coord_timestamp = [89, 2]
-var coord_parental_consent = [89, 5]
-var coord_status = [91, 4]
-var coord_generated_pdf = [91, 6]
+var coord_personal_message = [78, 3]
+var coord_callme_phone = [79, 7]
+var coord_timestamp = [79, 2]
+var coord_parental_consent = [79, 5]
+var coord_status = [81, 4]
+var coord_generated_pdf = [81, 6]
 //
 // - Parameters for copying the content from one season to an other.
 // 
@@ -53,16 +53,32 @@ var coords_identity_cols  = [2, 3, 4, 5, 6]
 // - Parameters defining the valid ranges to be retained during the
 //   generation of the invoice's PDF
 //
-var coords_pdf_row_column_ranges = {'start': [1, 0], 'end': [89, 7]}
+var coords_pdf_row_column_ranges = {'start': [1, 0], 'end': [80, 7]}
 
 // - Range for the attributed license validation. Please change
 //   to match both the coordinate and the cell values
 var coords_attributed_licenses_start = [14, 7];
 var coords_attributed_licenses_n_rows = 5;
 var attributed_licenses_values = [
-  'Aucune', 'CN Jeune (Loisir)', 'CN Adulte (Loisir)',
-  'CN Famille (Loisir)', 'CN Dirigeant',
-  'CN Jeune (Compétition)', 'CN Adulte (Compétition)'];
+  // This entry must always be the first one...
+  'Aucune',
+  'CN Jeune (Loisir)',
+  'CN Adulte (Loisir)',
+  'CN Famille (Loisir)',
+  'CN Dirigeant',
+  'CN Jeune (Compétition)',
+  'CN Adulte (Compétition)'];
+
+// - DoB validation for a given type of license: change the
+//   start of end of ranges not featuring a negative number
+var attributed_licenses_dob_validation = {
+  'Aucune':                  [-1,   2051],
+  'CN Jeune (Loisir)':       [2007, 2050],
+  'CN Adulte (Loisir)':      [1900, 2006],
+  'CN Famille (Loisir)':     [-1,   2051],
+  'CN Dirigeant':            [1900, 2004],
+  'CN Jeune (Compétition)':  [2007, 2050],
+  'CN Adulte (Compétition)': [1900, 2006]};
 
 // Email configuration - these shouldn't change very often
 var allowed_user = 'inscriptions.sca@gmail.com'
@@ -199,19 +215,20 @@ function validateLicenseCrossCheck() {
   // Collect the attributed licenses into a hash
   var attributed_licenses_row = coords_attributed_licenses_start[0];
   var col = coords_attributed_licenses_start[1];
+  var no_license = attributed_licenses_values[0];
   for (row = attributed_licenses_row;
        row <= attributed_licenses_row + coords_attributed_licenses_n_rows;
        row ++ ) {
     var value = getStringAt([row, col]);
     if (value === '') {
-      value = 'Aucune';
+      value = no_license;
     }
     // You can't have no first/last name and an assigned license
     var first_name = getStringAt([row, 2]);
     var last_name = getStringAt([row, 3]);
     // If there's no name on that row, the only possible value is None
     if (first_name === '' && last_name === '') {
-      if (value != 'Aucune') {
+      if (value != no_license) {
         return "'" + value + "' attribuée à un membre de famile inexistant!";
       }
       continue;
@@ -229,7 +246,17 @@ function validateLicenseCrossCheck() {
     }
     // Validate DoB and the type of license
     var dob = 1900 + SpreadsheetApp.getActiveSheet().getRange(row, 4).getValue().getYear();
-    Debug(dob);
+    if (dob < 1900 || dob > 2050) {
+      return first_name + " " + last_name + " a une année de naissance erronnée: " + dob;
+    }
+    dob_start = attributed_licenses_dob_validation[value][0];
+    dob_end = attributed_licenses_dob_validation[value][1];
+    Debug(first_name + " " + last_name + ": " + dob_start + " / " + dob_end + " / " + dob);
+    if (dob < dob_start || dob > dob_end) {
+      return (first_name + " " + last_name + ": l'année de naissance " + dob +
+              " ne correspond pas à la license choisie: '" + value + "' (" +
+              dob_start + "/" + dob_end + ")");
+    }
   }
   Debug(validationToString(validation));
   
