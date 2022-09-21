@@ -3,8 +3,6 @@
 // This script runs with duplicates of the following shared doc: 
 // shorturl.at/EJM58
 
-// TODO: Authorisation: à fournier, etc...
-
 // Dev or prod? "dev" sends all email to email_dev. Prod is the
 // real thing: family will receive invoices, and so will email_license.
 var dev_or_prod = "dev"
@@ -21,7 +19,7 @@ var db_folder = '1apITLkzOIkqCI7oIxpiKA5W_QR0EM3ey'
 // - ID of attachements to be sent with the invoice - some may change
 //   from one season to an other when they are refreshed.
 //
-// TODO: Change for 2022/2034
+// TODO: Change for 2022/2023
 var parental_consent_pdf = '1LaWS0mmjE8GPeendM1c1mCGUcrsBIUFc'
 var rules_pdf = '1tNrkUkI2w_DYgXg9dRXPda_25gBh1TAG'
 var parents_note_pdf = '1zkI5NapvYyLn_vEIxyejKJ4WzAvEco6z'
@@ -43,20 +41,20 @@ var coord_cc = [9, 5]
 var coord_personal_message = [78, 3]
 var coord_callme_phone = [79, 7]
 var coord_timestamp = [79, 2]
+var coord_version = [79, 3]
 var coord_parental_consent = [79, 5]
 var coord_status = [81, 4]
 var coord_generated_pdf = [81, 6]
 //
-// - Parameters for collecting familly members
+// - Rows where the familly names are entered
 // 
-var coords_identity_lines = [14, 15, 16, 17, 18, 19];
-
+var coords_identity_rows = [14, 15, 16, 17, 18, 19];
 //
 // - Parameters defining the valid ranges to be retained during the
 //   generation of the invoice's PDF
 //
 var coords_pdf_row_column_ranges = {'start': [1, 0], 'end': [80, 7]}
-
+//
 // - Range for the attributed license validation. Please change
 //   to match both the coordinate and the cell values
 //   FIXME: don't use n_rows?
@@ -71,9 +69,10 @@ var attributed_licenses_values = [
   'CN Dirigeant',
   'CN Jeune (Compétition)',
   'CN Adulte (Compétition)'];
-
+//
 // - DoB validation for a given type of license: change the
 //   start of end of ranges not featuring a negative number
+//
 var attributed_licenses_dob_validation = {
   'Aucune':                  [-1,   2051],
   'CN Jeune (Loisir)':       [2007, 2050],
@@ -82,8 +81,9 @@ var attributed_licenses_dob_validation = {
   'CN Dirigeant':            [1900, 2004],
   'CN Jeune (Compétition)':  [2007, 2050],
   'CN Adulte (Compétition)': [1900, 2006]};
-
+//
 // Coordinates of where the various license purchases are indicated.
+//
 var coord_purchased_licenses = {
   // 'Aucune' doesn't exist.
   'CN Jeune (Loisir)':       [34, 5],
@@ -118,7 +118,8 @@ function clearRange(sheet, coord) {
   sheet.getRange(coord[0],coord[1]).clear();
 }
 
-function setRangeTextColor(sheet, coord, text, color) {
+function setRangeTextColor(coord, text, color) {
+  var sheet = SpreadsheetApp.getActiveSheet();
   var x = coord[0];
   var y = coord[1];
   sheet.getRange(x,y).setValue(text);
@@ -134,29 +135,29 @@ function getStringAt(coord) {
 function getFamilyDictionary() {
   var family = []
   var no_license = attributed_licenses_values[0];
-  for (var index in coords_identity_lines) {
+  for (var index in coords_identity_rows) {
     
-    var first_name = getStringAt([coords_identity_lines[index], 2]);
-    var last_name = getStringAt([coords_identity_lines[index], 3]);    
+    var first_name = getStringAt([coords_identity_rows[index], 2]);
+    var last_name = getStringAt([coords_identity_rows[index], 3]);    
     if (first_name == "" || last_name == "") {
       continue;
     }
 
-    if (getStringAt([coords_identity_lines[index], 4]) != '') {
-      var birth = new Date(getStringAt([coords_identity_lines[index], 4]))
+    if (getStringAt([coords_identity_rows[index], 4]) != '') {
+      var birth = new Date(getStringAt([coords_identity_rows[index], 4]))
       birth = Utilities.formatDate(birth, "GMT", "dd/MM/yyyy")
     } else {
       birth = "??/??/????"
     }
-    var city = getStringAt([coords_identity_lines[index], 5])
+    var city = getStringAt([coords_identity_rows[index], 5])
     if (city == "") {
       city = "\\";
     }
-    var sex = getStringAt([coords_identity_lines[index], 6])
+    var sex = getStringAt([coords_identity_rows[index], 6])
     if (sex == "") {
       sex = "?"
     }
-    var license = getStringAt([coords_identity_lines[index], 7]);
+    var license = getStringAt([coords_identity_rows[index], 7]);
     if (license == "" || license == no_license) {
       continue;
     }
@@ -345,13 +346,34 @@ function GetAuthorization() {
   ScriptApp.getAuthorizationInfo(ScriptApp.AuthMode.FULL)
 }
 
+function getInvoiceNumber() {
+  var version = getStringAt(coord_version);
+  if (version == "") {
+    version = "version=0";
+  }
+  var extracted_num = Number(new RegExp("version=([0-9]+)", "gi").exec(version)[1]);
+  if (extracted_num < 0) {
+    displayErrorPannel("Problème lors de la génération du numéro de document\n" +
+                       "Insérez version=99 en 79C et recommencez l'opération");
+  }
+  return extracted_num;
+}
+
+function getAndUpdateInvoiceNumber() {
+  var extracted_num = getInvoiceNumber();
+  extracted_num++;
+  setRangeTextColor(coord_version, "version=" + extracted_num, "black");
+  return extracted_num;
+}
+
 // Create the invoice as a PDF: first create a blob and then save
 // the blob as a PDF and move it to the <db>/<OPERATOR:FAMILY>
 // directory. Return the PDF file ID.  
 function generatePDF() {
   var spreadsheet = SpreadsheetApp.getActiveSpreadsheet()
   var blob = createPDF(spreadsheet)
-  var pdf_filename = spreadsheet.getName() + '.pdf'
+  var pdf_number = getAndUpdateInvoiceNumber();
+  var pdf_filename = spreadsheet.getName() + '-' + pdf_number + '.pdf';
   var file = savePDF(blob, pdf_filename)
   
   var spreadsheet_folder_id =
@@ -427,7 +449,7 @@ function validateInvoice() {
   }
 
   // Update the timestamp. 
-  setRangeTextColor(SpreadsheetApp.getActiveSheet(), coord_timestamp,
+  setRangeTextColor(coord_timestamp,
                     'Dernière MAJ le ' +
                     Utilities.formatDate(new Date(),
                                          Session.getScriptTimeZone(),
@@ -453,8 +475,7 @@ function GeneratePDFButton() {
   if (isEmpty(validation)) {
     return;
   }
-  setRangeTextColor(SpreadsheetApp.getActiveSheet(),
-                    coord_status, 
+  setRangeTextColor(coord_status, 
                     "⏳ Préparation de la facture...", "orange")  
   SpreadsheetApp.flush()
   displayPDFLink(generatePDF());
@@ -465,7 +486,7 @@ function maybeEmailLicenseSCA(invoice) {
   var family_name = getFamilyName()
 
   var family_dict = getFamilyDictionary() 
-  var string_family_members = "<blockquote>\n"
+  var string_family_members = "";
   for (var index in family_dict) {
     if (family_dict[index]['last'] == "") {
       continue
@@ -479,40 +500,48 @@ function maybeEmailLicenseSCA(invoice) {
                               "Licence: " + family_dict[index]['license'] + "<br>" +
                               "----------------------------------------------------</tt><br>\n");
   }
-  string_family_members += "</blockquote>\n"
+  if (string_family_members) {
+    string_family_members = ("<p>Licence(s) nécessaire(s) pour:</p><blockquote>\n" +
+                             string_family_members +
+                             "</blockquote>\n");
+  }
   
   var email_options = {
     name: family_name + ": nouvelle inscription",
     to: email_license,
     subject: family_name + ": nouvelle inscription",
     htmlBody:
-      "<p>Licence(s) nécessaire(s) pour:</p>" +
       string_family_members +
       "<p>Dossier saisi par: " + operator + "</p>" +
-      "<p>Facture en attachement</p>" +
+      "<p>Facture (version " + getInvoiceNumber() + ") en attachement</p>" +
       "<p>Merci!</p>",
     attachments: invoice,
   } 
   MailApp.sendEmail(email_options)
 }
 
-// This is what the [generate and send invoice] button runs.
+// This is what the [generate and send folder] button runs.
 function GeneratePDFAndSendEmailButton() {
-  generatePDFAndMaybeSendEmail(true)
+  generatePDFAndMaybeSendEmail(/* send_email= */ true, /* just_the_invoice= */ false)
 }
 
 // This is what the [generate invoice] button runs.
 function GeneratePDFButton() {
-  generatePDFAndMaybeSendEmail(false)
+  generatePDFAndMaybeSendEmail(/* send_email= */ false, /* just_the_invoice= */ true)
 }
 
-function generatePDFAndMaybeSendEmail(send_email) {
+// This is what the [generate and send only the invoice] button runs.
+function GenerateJustPDFAndSendEmailButton() {
+  generatePDFAndMaybeSendEmail(/* send_email= */ true, /* just_the_invoice= */ true)
+
+}
+
+function generatePDFAndMaybeSendEmail(send_email, just_the_invoice) {
   var validation = validateInvoice();
   if (isEmpty(validation)) {
     return;
   }
-  setRangeTextColor(SpreadsheetApp.getActiveSheet(),
-                    coord_status, 
+  setRangeTextColor(coord_status, 
                     "⏳ Préparation de la facture...", "orange")
   SpreadsheetApp.flush()
   
@@ -521,14 +550,21 @@ function generatePDFAndMaybeSendEmail(send_email) {
   var pdf = DriveApp.getFileById(pdf_file.getId());
   var attachments = [pdf.getAs(MimeType.PDF)]
 
-  setRangeTextColor(SpreadsheetApp.getActiveSheet(),
-                    coord_status, 
-                    "⏳ Génération " +
-                    (send_email? "et envoit " : " ") + "du dossier...", "orange")
-  SpreadsheetApp.flush()
+  if (just_the_invoice) {
+    setRangeTextColor(coord_status,
+                      "⏳ Génération " +
+                      (send_email? "et envoit " : " ") + "de la facture...", "orange");
+  } else {
+    setRangeTextColor(coord_status, 
+                      "⏳ Génération " +
+                      (send_email? "et envoit " : " ") + "du dossier...", "orange");
+    SpreadsheetApp.flush()
+  }
 
   // 2021-2022: FFS sanitary pass documentation
-  attachments.push(DriveApp.getFileById(pass_pdf).getAs(MimeType.PDF))
+  if (! just_the_invoice) {
+    attachments.push(DriveApp.getFileById(pass_pdf).getAs(MimeType.PDF))
+  }
   
   var civility = validation['civility'];
   var family_name = validation['family_name'];
@@ -537,21 +573,27 @@ function generatePDFAndMaybeSendEmail(send_email) {
   
   // Determine whether parental consent needs to be generated. If
   // that's the case, we generate additional attachment content.
-  var pass, rules, parents_note, parental_consent, parental_consent_text = ''
-  if (consent == 'Nécessaire') {
-    attachments.push(DriveApp.getFileById(parental_consent_pdf).getAs(MimeType.PDF))
-    attachments.push(DriveApp.getFileById(rules_pdf).getAs(MimeType.PDF))
+  // FIXME: Should be parental_content_text
+  var parental_consent_text = ''
+  if (! just_the_invoice) {
+    if (consent == 'Nécessaire') {
+      attachments.push(DriveApp.getFileById(parental_consent_pdf).getAs(MimeType.PDF))
+      attachments.push(DriveApp.getFileById(rules_pdf).getAs(MimeType.PDF))
     
-    parental_consent_text = (
-      "<p>Il vous faut également compléter et signer l'autorisation " +
-      "parentale fournie en attachment, couvrant le droit à l'image, le " +
-      "règlement intérieur et les interventions médicales.</p>" +
-      "<p>Le règlement intérieur mentionné dans l'autorisation parentale " +
-      "est joint à ce message en attachement.</p>")
+      parental_consent_text = (
+        "<p>Il vous faut également compléter et signer l'autorisation " +
+        "parentale fournie en attachment, couvrant le droit à l'image, le " +
+        "règlement intérieur et les interventions médicales.</p>" +
+        "<p>Le règlement intérieur mentionné dans l'autorisation parentale " +
+        "est joint à ce message en attachement.</p>")
+    }
+
+    // Insert the note for the parents anyways
+    attachments.push(DriveApp.getFileById(parents_note_pdf).getAs(MimeType.PDF));
+    parental_consent_text += (
+      "<p>Vous trouverez également en attachement une note adressée aux " +
+      "parents, merçi de la lire attentivement.</p>");
   }
-  
-  // Insert the note for the parents anyways
-  attachments.push(DriveApp.getFileById(parents_note_pdf).getAs(MimeType.PDF))
   
   var subject = ("❄️ [Incription Ski Club Allevardin] " +
                  civility + ' ' + family_name +
@@ -589,16 +631,13 @@ function generatePDFAndMaybeSendEmail(send_email) {
       "est disponible en attachement. Veuillez contrôler " +
       "qu\'elle correspond à vos besoins.</p>" +
     
-      "<p>Certificats médicaux et photos nécessaires à l\'établissement " +
+      "<p>Si nécessaire, les certificats médicaux nécessaires à l\'établissement " +
       "de l\'inscription sont à faire parvenir à " + allowed_user + "</p>" +
     
       parental_consent_text +
-    
-      "<p>Vous trouverez également en attachement une note adressée aux " +
-      "parents, merçi de la lire attentivement.</p>" +
 
-      "<p>Des questions concernant cette facture? Contacter Marie-Pierre: " +
-      "marie-pierreberanger@orange.fr (06 21 18 00 89).</p>" +
+      "<p>Des questions concernant cette facture? Contacter Aissam: " +
+      "aissam.yaagoubi@sfr.fr (06-60-50-74-77).</p>" +
       "<p>Des questions concernant la saison " + season + " ? " +
       "Envoyez un mail à " + email_loisir + " (ski loisir) " +
       "ou à " + email_comp + " (ski compétition)</p>" +
@@ -621,15 +660,12 @@ function generatePDFAndMaybeSendEmail(send_email) {
     MailApp.sendEmail(email_options)
     maybeEmailLicenseSCA([attachments[0]]);
 
-    setRangeTextColor(SpreadsheetApp.getActiveSheet(),
-                      coord_status, 
+    setRangeTextColor(coord_status, 
                       "✅ Dossier envoyé", "green")  
   } else {
-    setRangeTextColor(SpreadsheetApp.getActiveSheet(),
-                      coord_status, 
+    setRangeTextColor(coord_status, 
                       "✅ Dossier généré", "green")  
   }
   displayPDFLink(pdf_file)
   SpreadsheetApp.flush()  
 }
-
