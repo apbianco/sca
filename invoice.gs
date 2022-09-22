@@ -55,11 +55,7 @@ var coords_identity_rows = [14, 15, 16, 17, 18, 19];
 //
 var coords_pdf_row_column_ranges = {'start': [1, 0], 'end': [80, 7]}
 //
-// - Range for the attributed license validation. Please change
-//   to match both the coordinate and the cell values
-//   FIXME: don't use n_rows?
-var coords_attributed_licenses_start = [14, 7];
-var coords_attributed_licenses_n_rows = 5;
+// - Definition of all possible license values
 var attributed_licenses_values = [
   'Aucune',                    // Must match getNoLicenseString() accessor
   'CN Jeune (Loisir)',
@@ -96,7 +92,8 @@ var coord_purchased_licenses = {
 var allowed_user = 'inscriptions.sca@gmail.com'
 var email_loisir = 'sca.loisir@gmail.com'
 var email_comp = 'skicluballevardin@gmail.com'
-var email_dev = 'apbianco@gmail.com'
+// var email_dev = 'apbianco@gmail.com'
+var email_dev = 'lud2138@gmail.com'
 var email_license_ = 'licence.sca@gmail.com'
 var email_license = (isProd() ? email_license_: email_dev)
 
@@ -117,8 +114,7 @@ function clearRange(sheet, coord) {
   sheet.getRange(coord[0],coord[1]).clear();
 }
 
-// FIXME: Rename setStringAt();
-function setRangeTextColor(coord, text, color) {
+function setStringAt(coord, text, color) {
   var sheet = SpreadsheetApp.getActiveSheet();
   var x = coord[0];
   var y = coord[1];
@@ -148,7 +144,12 @@ function getDoB(coords) {
     birth = new Date(getStringAt(coords));
     // Verify the format
     if (birth != undefined) {
-      return Utilities.formatDate(birth, "GMT", "dd/MM/yyyy");
+      var dob_string = Utilities.formatDate(birth, "GMT", "dd/MM/yyyy");
+      // Verify the date is reasonable
+      var yob = Number(new RegExp("[0-9]+/[0-9]+/([0-9]+)", "gi").exec(dob_string)[1]);
+      if (yob >= 1900 && yob <= 2050) {
+        return dob_string;
+      }
     }
   }
   return undefined;
@@ -256,13 +257,14 @@ function validateFamilyMembers() {
     }
     // Upcase the familly name and write it back
     last_name = last_name.toUpperCase();
-    setRangeTextColor([coords_identity_rows[index], 3], last_name, "black");
+    setStringAt([coords_identity_rows[index], 3], last_name, "black");
     // We need a DoB
     var dob = getDoB([coords_identity_rows[index], 4]);
     if (dob == undefined) {
     return ("Pas de date de naissance fournie pour " +
             first_name + " " + last_name +
-            " ou date de naissance mal formatée (JJ/MM/AAAA)");
+            " ou date de naissance mal formatée (JJ/MM/AAAA)\n" +
+            " ou année de naissance fantaisiste.");
     }
     // We need a sex
     var sex = getStringAt([coords_identity_rows[index], 6]);
@@ -304,43 +306,38 @@ function validateLicenseCrossCheck() {
   });  
   
   // Collect the attributed licenses into a hash
-  // FIXME: Use a range loop
-  var attributed_licenses_row = coords_attributed_licenses_start[0];
-  var col = coords_attributed_licenses_start[1];
-  for (row = attributed_licenses_row;
-       row <= attributed_licenses_row + coords_attributed_licenses_n_rows;
-       row ++ ) {
-    // FIXME: Rename: value is too generic
-    var value = getStringAt([row, col]);
-    if (value === '') {
-      value = no_license;
+  for (var index in coords_identity_rows) {
+    var row = coords_identity_rows[index];
+    var selected_license = getStringAt([row, 7]);
+    if (selected_license === '') {
+      selected_license = no_license;
     }
     // You can't have no first/last name and an assigned license
     var first_name = getStringAt([row, 2]);
     var last_name = getStringAt([row, 3]);
     // If there's no name on that row, the only possible value is None
     if (first_name === '' && last_name === '') {
-      if (value != no_license) {
-        return "'" + value + "' attribuée à un membre de famile inexistant!";
+      if (selected_license != no_license) {
+        return "'" + selected_license + "' attribuée à un membre de famile inexistant!";
       }
       continue;
     }
     var found = false;
     attributed_licenses_values.forEach(function(key) {
-      if (value === key) {
+      if (selected_license === key) {
         attributed_licenses[key] += 1;
         found = true;
         return;
       }
     });
     if (! found) {
-      return "'" + value + "' n'est pas une license attribuée possible!";
+      return "'" + selected_license + "' n'est pas une license attribuée possible!";
     }
     // Executive license requires a city of birth
-    if (value == exec_license) {
+    if (selected_license == exec_license) {
       var city = getStringAt([row, 5]);
       if (city == '') {
-        return (first_name + " " + last_name + ": une license " + value + "\n" +
+        return (first_name + " " + last_name + ": une license " + selected_license + "\n" +
                 "requiert de renseigner une ville et un pays de naissance");
       }
     }
@@ -348,14 +345,10 @@ function validateLicenseCrossCheck() {
     // Validate DoB against the type of license
     var dob = getDoB([row, 4]);
     dob = Number(new RegExp("[0-9]+/[0-9]+/([0-9]+)", "gi").exec(dob)[1]);
-    if (dob < 1900 || dob > 2050) {
-      return first_name + " " + last_name + " a une année de naissance erronnée.";
-    }
-    dob_start = attributed_licenses_dob_validation[value][0];
-    dob_end = attributed_licenses_dob_validation[value][1];
+    dob_start = attributed_licenses_dob_validation[selected_license][0];
+    dob_end = attributed_licenses_dob_validation[selected_license][1];
     if (dob < dob_start || dob > dob_end) {
       var date_range = '';
-      Debug(dob_start + " " + dob_end);
       if (dob_end >= 2050) {
         date_range = dob_start + " et après";
       } else if (dob_start <= 1900) {
@@ -364,7 +357,8 @@ function validateLicenseCrossCheck() {
         data_range = "de " + dob_start + " à " + dob_end;
       }
       return (first_name + " " + last_name + ": l'année de naissance " + dob + "\n" +
-              "ne correspond aux années de validité de la license choisie:\n'" + value + "': " + date_range);
+              "ne correspond aux années de validité de la license choisie:\n'" +
+              selected_license + "': " + date_range);
     }
   }
   
@@ -378,11 +372,6 @@ function validateLicenseCrossCheck() {
       purchased_licenses[key] = Number(SpreadsheetApp.getActiveSheet().getRange(row, col).getValue());
     }
   });
-
-  if (! isProd()) {
-    Debug(validationToString(attributed_licenses));
-    Debug(validationToString(purchased_licenses));
-  }
   
   // Perform the verification
   for (var index in attributed_licenses_values) {
@@ -434,7 +423,7 @@ function getInvoiceNumber() {
 function getAndUpdateInvoiceNumber() {
   var extracted_num = getInvoiceNumber();
   extracted_num++;
-  setRangeTextColor(coord_version, "version=" + extracted_num, "black");
+  setStringAt(coord_version, "version=" + extracted_num, "black");
   SpreadsheetApp.flush();
   return extracted_num;
 }
@@ -464,7 +453,7 @@ function validateInvoice() {
           'ni à la famile ni à ' + email_license_ + '.\n\n' +
           'Vous pouvez néamoins continuer et un dossier sera préparé et ' +
           'les mails serons envoyés à ' + email_dev + '.\n\n' +
-          'Contacter ' + email_dev + 'pour obtenir plus d\'aide.')
+          'Contacter ' + email_dev + ' pour obtenir plus d\'aide.')
           
   }
   
@@ -530,7 +519,7 @@ function validateInvoice() {
   }  
 
   // Update the timestamp. 
-  setRangeTextColor(coord_timestamp,
+  setStringAt(coord_timestamp,
                     'Dernière MAJ le ' +
                     Utilities.formatDate(new Date(),
                                          Session.getScriptTimeZone(),
@@ -556,7 +545,7 @@ function GeneratePDFButton() {
   if (isEmpty(validation)) {
     return;
   }
-  setRangeTextColor(coord_status, 
+  setStringAt(coord_status, 
                     "⏳ Préparation de la facture...", "orange")  
   SpreadsheetApp.flush()
   displayPDFLink(generatePDF());
@@ -622,7 +611,7 @@ function generatePDFAndMaybeSendEmail(send_email, just_the_invoice) {
   if (isEmpty(validation)) {
     return;
   }
-  setRangeTextColor(coord_status, 
+  setStringAt(coord_status, 
                     "⏳ Préparation de la facture...", "orange")
   SpreadsheetApp.flush()
   
@@ -632,11 +621,11 @@ function generatePDFAndMaybeSendEmail(send_email, just_the_invoice) {
   var attachments = [pdf.getAs(MimeType.PDF)]
 
   if (just_the_invoice) {
-    setRangeTextColor(coord_status,
+    setStringAt(coord_status,
                       "⏳ Génération " +
                       (send_email? "et envoit " : " ") + "de la facture...", "orange");
   } else {
-    setRangeTextColor(coord_status, 
+    setStringAt(coord_status, 
                       "⏳ Génération " +
                       (send_email? "et envoit " : " ") + "du dossier...", "orange");
     SpreadsheetApp.flush()
@@ -654,7 +643,6 @@ function generatePDFAndMaybeSendEmail(send_email, just_the_invoice) {
   
   // Determine whether parental consent needs to be generated. If
   // that's the case, we generate additional attachment content.
-  // FIXME: Should be parental_content_text
   var parental_consent_text = ''
   if (! just_the_invoice) {
     if (consent == 'Nécessaire') {
@@ -741,10 +729,10 @@ function generatePDFAndMaybeSendEmail(send_email, just_the_invoice) {
     MailApp.sendEmail(email_options)
     maybeEmailLicenseSCA([attachments[0]]);
 
-    setRangeTextColor(coord_status, 
+    setStringAt(coord_status, 
                       "✅ Dossier envoyé", "green")  
   } else {
-    setRangeTextColor(coord_status, 
+    setStringAt(coord_status, 
                       "✅ Dossier généré", "green")  
   }
   displayPDFLink(pdf_file)
