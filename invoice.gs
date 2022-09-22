@@ -435,6 +435,7 @@ function getAndUpdateInvoiceNumber() {
   var extracted_num = getInvoiceNumber();
   extracted_num++;
   setRangeTextColor(coord_version, "version=" + extracted_num, "black");
+  SpreadsheetApp.flush();
   return extracted_num;
 }
 
@@ -443,8 +444,8 @@ function getAndUpdateInvoiceNumber() {
 // directory. Return the PDF file ID.  
 function generatePDF() {
   var spreadsheet = SpreadsheetApp.getActiveSpreadsheet()
-  var blob = createPDF(spreadsheet)
   var pdf_number = getAndUpdateInvoiceNumber();
+  var blob = createPDF(spreadsheet)
   var pdf_filename = spreadsheet.getName() + '-' + pdf_number + '.pdf';
   var file = savePDF(blob, pdf_filename)
   
