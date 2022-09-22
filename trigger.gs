@@ -350,7 +350,7 @@ function createNewFamilySheetFromOld(sheet, family_name) {
 
   // Perform a copy the second range which contains the family
   // information. Uppercase all family names, convert M/F into
-  // Garcon/File
+  // Garcon/Fille
   var old_member_range = old_sheet.getRange(ranges_previous_season[1]);
   var new_member_range = new_sheet.getRange(ranges_current_season[1]);
   const rows = old_member_range.getNumRows();
@@ -361,10 +361,14 @@ function createNewFamilySheetFromOld(sheet, family_name) {
       var source_cell = old_member_range.getCell(row, column);
       var dest_cell = new_member_range.getCell(row, column);
       // First column is the first name. We should remove
-      // anything that is placed in parenthesis
+      // anything that is placed in parenthesis or after //
       if (column == 1) {
         var first_name = source_cell.getValue().toString();
         var found = first_name.indexOf('(');
+        if (found >= 0) {
+          first_name = first_name.substring(0, found);
+        }
+        var found = first_name.indexOf('/');
         if (found >= 0) {
           first_name = first_name.substring(0, found);
         }
