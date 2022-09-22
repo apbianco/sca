@@ -61,12 +61,11 @@ var coords_pdf_row_column_ranges = {'start': [1, 0], 'end': [80, 7]}
 var coords_attributed_licenses_start = [14, 7];
 var coords_attributed_licenses_n_rows = 5;
 var attributed_licenses_values = [
-  // This entry must always be the first one...
-  'Aucune',
+  'Aucune',                    // Must match getNoLicenseString() accessor
   'CN Jeune (Loisir)',
   'CN Adulte (Loisir)',
   'CN Famille (Loisir)',
-  'CN Dirigeant',
+  'CN Dirigeant',              // Must match getExecutiveLicenseString() accessor
   'CN Jeune (Compétition)',
   'CN Adulte (Compétition)'];
 //
@@ -118,6 +117,7 @@ function clearRange(sheet, coord) {
   sheet.getRange(coord[0],coord[1]).clear();
 }
 
+// FIXME: Rename setStringAt();
 function setRangeTextColor(coord, text, color) {
   var sheet = SpreadsheetApp.getActiveSheet();
   var x = coord[0];
@@ -132,31 +132,50 @@ function getStringAt(coord) {
   return SpreadsheetApp.getActiveSheet().getRange(x, y).getValue().toString()
 }
 
+function getNoLicenseString() {
+  return attributed_licenses_values[0];
+}
+
+function getExecutiveLicenseString() {
+  return attributed_licenses_values[4];
+}
+
+// Obtain a DoB at coords. Return an empty string if no DoB exists or if it
+// can't be parsed properly as dd/MM/yyyy
+function getDoB(coords) {
+  var birth = getStringAt(coords);
+  if (birth != "") {
+    birth = new Date(getStringAt(coords));
+    // Verify the format
+    if (birth != undefined) {
+      return Utilities.formatDate(birth, "GMT", "dd/MM/yyyy");
+    }
+  }
+  return undefined;
+}
+
 function getFamilyDictionary() {
   var family = []
-  var no_license = attributed_licenses_values[0];
-  for (var index in coords_identity_rows) {
-    
+  var no_license = getNoLicenseString();
+  for (var index in coords_identity_rows) {    
     var first_name = getStringAt([coords_identity_rows[index], 2]);
     var last_name = getStringAt([coords_identity_rows[index], 3]);    
-    if (first_name == "" || last_name == "") {
+    // After validation of the family entries, having a first name
+    // guarantees a last name. Just check the existence of a
+    // first name in order to skip that entry
+    if (first_name == "") {
       continue;
     }
-
-    if (getStringAt([coords_identity_rows[index], 4]) != '') {
-      var birth = new Date(getStringAt([coords_identity_rows[index], 4]))
-      birth = Utilities.formatDate(birth, "GMT", "dd/MM/yyyy")
-    } else {
-      birth = "??/??/????"
-    }
+    // DoB is guaranteed to be there
+    var birth = getDoB([coords_identity_rows[index], 4]);
     var city = getStringAt([coords_identity_rows[index], 5])
     if (city == "") {
       city = "\\";
     }
+    // Sex is guaranteed to be there
     var sex = getStringAt([coords_identity_rows[index], 6])
-    if (sex == "") {
-      sex = "?"
-    }
+    // We can skip that entry if no license is required. That familly
+    // member doesn't need to be reported in this dictionary.
     var license = getStringAt([coords_identity_rows[index], 7]);
     if (license == "" || license == no_license) {
       continue;
@@ -218,6 +237,41 @@ function validateAndReturnDropDownValue(coord, message) {
   return value
 }
 
+// Verify that family members have a first name, 
+// last name, a DoB and a sex assigned to them
+function validateFamilyMembers() {
+  for (var index in coords_identity_rows) {
+    var first_name = getStringAt([coords_identity_rows[index], 2]);
+    var last_name = getStringAt([coords_identity_rows[index], 3]);
+    // Entry is empty, just skip it
+    if (first_name == "" && last_name == "") {
+      continue;
+    }
+    // We need both a first name and a last name
+    if (! first_name) {
+      return "Pas de nom de prénom fournit pour " + last_name;
+    }
+    if (! last_name) {
+      return "Pas de nom de famille fournit pour " + first_name;
+    }
+    // Upcase the familly name and write it back
+    last_name = last_name.toUpperCase();
+    setRangeTextColor([coords_identity_rows[index], 3], last_name, "black");
+    // We need a DoB
+    var dob = getDoB([coords_identity_rows[index], 4]);
+    if (dob == undefined) {
+    return ("Pas de date de naissance fournie pour " + last_name +
+            " ou date de naissance mal formatée (JJ/MM/AAAA)");
+    }
+    // We need a sex
+    var sex = getStringAt([coords_identity_rows[index], 6]);
+    if (sex != "Fille" && sex != "Garçon") {
+      return "Pas de sex défini pour " + first_name + " " + last_name;
+    }
+  }
+  return "";
+}
+
 // Cross check the attributed licenses with the ones selected for payment
 function validateLicenseCrossCheck() {
   // First count how many licenses have been attributed to the
@@ -236,10 +290,9 @@ function validateLicenseCrossCheck() {
     attributed_licenses[key] = 0;
   });
   
-  // Capture the no license marker, we're going to use it a lot.
-  // This is the reason why it should be the first element in 
-  // the attributed_licenses_values array.
-  var no_license = attributed_licenses_values[0];
+  // Capture the no license and exec license string, we're going to use it a lot.
+  var no_license = getNoLicenseString();
+  var exec_license = getExecutiveLicenseString();
   var purchased_licenses = {}
   attributed_licenses_values.forEach(function(key) {
     // Entry indicating no license is skipped because it can't
@@ -250,11 +303,13 @@ function validateLicenseCrossCheck() {
   });  
   
   // Collect the attributed licenses into a hash
+  // FIXME: Use a range loop
   var attributed_licenses_row = coords_attributed_licenses_start[0];
   var col = coords_attributed_licenses_start[1];
   for (row = attributed_licenses_row;
        row <= attributed_licenses_row + coords_attributed_licenses_n_rows;
        row ++ ) {
+    // FIXME: Rename: value is too generic
     var value = getStringAt([row, col]);
     if (value === '') {
       value = no_license;
@@ -280,18 +335,35 @@ function validateLicenseCrossCheck() {
     if (! found) {
       return "'" + value + "' n'est pas une license attribuée possible!";
     }
-    // Validate DoB and the type of license
-    var dob = new Date(getStringAt([row, 4]))
-    dob = Number(Utilities.formatDate(dob, "GMT", "yyyy"));
+    // Executive license requires a city of birth
+    if (value == exec_license) {
+      var city = getStringAt([row, 5]);
+      if (city == '') {
+        return (first_name + " " + last_name + ": une license " + value + "\n" +
+                "requiert de renseigner une ville et un pays de naissance");
+      }
+    }
+    
+    // Validate DoB against the type of license
+    var dob = getDoB([row, 4]);
+    dob = Number(new RegExp("[0-9]+/[0-9]+/([0-9]+)", "gi").exec(dob)[1]);
     if (dob < 1900 || dob > 2050) {
-      return first_name + " " + last_name + " a une année de naissance erronnée: " + dob;
+      return first_name + " " + last_name + " a une année de naissance erronnée.";
     }
     dob_start = attributed_licenses_dob_validation[value][0];
     dob_end = attributed_licenses_dob_validation[value][1];
     if (dob < dob_start || dob > dob_end) {
-      return (first_name + " " + last_name + ": l'année de naissance " + dob +
-              " ne correspond pas à la license choisie: '" + value + "' (" +
-              dob_start + "/" + dob_end + ")");
+      var date_range = '';
+      Debug(dob_start + " " + dob_end);
+      if (dob_end >= 2050) {
+        date_range = dob_start + " et après";
+      } else if (dob_start <= 1900) {
+        date_range = dob_end + " et avant";
+      } else {
+        data_range = "de " + dob_start + " à " + dob_end;
+      }
+      return (first_name + " " + last_name + ": l'année de naissance " + dob + "\n" +
+              "ne correspond aux années de validité de la license choisie:\n'" + value + "': " + date_range);
     }
   }
   
@@ -312,7 +384,6 @@ function validateLicenseCrossCheck() {
   }
   
   // Perform the verification
-  // FIXME: use for (var index in attributed_licenses_values)
   for (var index in attributed_licenses_values) {
     // Entry indicating no license is skipped because it can't
     // be collected.
@@ -432,21 +503,29 @@ function validateInvoice() {
       "de valider l'adresse email par [return] ou [enter]...")
     return {}
   }
+
+  // Validate all entered familly members
+  var family_validation_error = validateFamilyMembers();
+  if (family_validation_error) {
+    displayErrorPanel(family_validation_error);
+    return {};
+  }
+
+  // Validate requested licenses
+  var license_cross_check_error = validateLicenseCrossCheck();
+  if (license_cross_check_error) {
+    displayErrorPanel(license_cross_check_error);
+    return {};
+  }
   
-  // Validation: parental consent set.
+  // Validate the parental consent.
   var consent = validateAndReturnDropDownValue(
     coord_parental_consent,
     "Vous n'avez pas renseigné la nécessitée ou non de devoir " +
     "fournir une autorisation parentale.");
   if (consent == '') {
     return {}
-  }
-  
-  var license_cross_check_error = validateLicenseCrossCheck();
-  if (license_cross_check_error) {
-    displayErrorPanel(license_cross_check_error);
-    return {}
-  }
+  }  
 
   // Update the timestamp. 
   setRangeTextColor(coord_timestamp,
