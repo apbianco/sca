@@ -260,13 +260,14 @@ function validateFamilyMembers() {
     // We need a DoB
     var dob = getDoB([coords_identity_rows[index], 4]);
     if (dob == undefined) {
-    return ("Pas de date de naissance fournie pour " + last_name +
+    return ("Pas de date de naissance fournie pour " +
+            first_name + " " + last_name +
             " ou date de naissance mal formatée (JJ/MM/AAAA)");
     }
     // We need a sex
     var sex = getStringAt([coords_identity_rows[index], 6]);
     if (sex != "Fille" && sex != "Garçon") {
-      return "Pas de sex défini pour " + first_name + " " + last_name;
+      return "Pas de sexe défini pour " + first_name + " " + last_name;
     }
   }
   return "";
