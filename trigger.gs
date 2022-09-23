@@ -347,7 +347,10 @@ function createNewFamilySheetFromOld(sheet, family_name) {
   var old_civility_range = old_sheet.getRange(ranges_previous_season[0]);
   var new_civility_range = new_sheet.getRange(ranges_current_season[0]);
   new_civility_range.setValues(old_civility_range.getValues());
-
+  // Adjustments of cell D10
+  // TODO: Remove this adjustment in 2023/2024
+  setCellValueAtCoord(new_sheet, [10, 4], "secondaire");
+  
   // Perform a copy the second range which contains the family
   // information. Uppercase all family names, convert M/F into
   // Garcon/Fille
