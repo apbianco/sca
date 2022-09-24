@@ -546,11 +546,17 @@ function validateInvoice() {
   var consent = validateAndReturnDropDownValue(
     coord_parental_consent,
     "Vous n'avez pas renseigné la nécessitée ou non de devoir " +
-    "fournir une autorisation parentale.");
+    "recevoir l'autorisation parentale.");
   if (consent == '') {
     return {}
-  }  
-
+  }
+  var consent = getStringAt(coord_parental_consent);
+  if (consent == 'Non fournie') {
+    displayErrorPanel("L'autorisation parentale doit être signée aujourd'hui pour " +
+                      "valider le dossier et terminer l'inscription");
+    return {};
+  }
+  
   // Update the timestamp. 
   setStringAt(coord_timestamp,
                     'Dernière MAJ le ' +
@@ -678,7 +684,7 @@ function generatePDFAndMaybeSendEmail(send_email, just_the_invoice) {
   // that's the case, we generate additional attachment content.
   var parental_consent_text = ''
   if (! just_the_invoice) {
-    if (consent == 'Nécessaire') {
+    if (consent == 'À fournire') {
       attachments.push(DriveApp.getFileById(parental_consent_pdf).getAs(MimeType.PDF))
       attachments.push(DriveApp.getFileById(rules_pdf).getAs(MimeType.PDF))
     
