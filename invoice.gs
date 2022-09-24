@@ -34,6 +34,8 @@ var coord_family_civility = [6, 3]
 var coord_family_name = [6, 4]
 var coord_family_email = [9, 3]
 var coord_cc = [9, 5]
+var coord_family_phone1 = [10, 3];
+var coord_family_phone2 = [10, 5];
 //
 // - Locations of various status line and collected input, located
 //   a the bottom of the invoice.
@@ -236,6 +238,24 @@ function validateAndReturnDropDownValue(coord, message) {
     return ''
   }
   return value
+}
+
+// Reformat the phone numbers
+function formatPhoneNumbers() {
+  function formatPhoneNumber(coords) {
+    var phone = getStringAt(coords);
+    if (phone != '') {
+      // Compress the phone number removing all spaces
+      phone = phone.replace(/\s/g, "") 
+      // Insert replacing groups of two digits by the digits with a space
+      var regex = new RegExp('([0-9]{2})', 'gi');
+      phone = phone.replace(regex, '$1 ');
+      setStringAt(coords, phone.replace(/\s$/, ""), "black");
+    }
+  }
+  
+  formatPhoneNumber(coord_family_phone1);
+  formatPhoneNumber(coord_family_phone2);
 }
 
 // Verify that family members have a first name, 
@@ -494,6 +514,9 @@ function validateInvoice() {
       "de valider l'adresse email par [return] ou [enter]...")
     return {}
   }
+
+  // Reformat the phone numbers  
+  formatPhoneNumbers();
 
   // Validate all entered familly members
   var family_validation_error = validateFamilyMembers();
