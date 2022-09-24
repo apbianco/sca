@@ -95,7 +95,8 @@ var allowed_user = 'inscriptions.sca@gmail.com'
 var email_loisir = 'sca.loisir@gmail.com'
 var email_comp = 'skicluballevardin@gmail.com'
 // var email_dev = 'apbianco@gmail.com'
-var email_dev = 'lud2138@gmail.com'
+// var email_dev = 'lud2138@gmail.com'
+var email_dev = 'president.skicluballevardin@gmail.com'
 var email_license_ = 'licence.sca@gmail.com'
 var email_license = (isProd() ? email_license_: email_dev)
 
@@ -169,7 +170,13 @@ function getFamilyDictionary() {
     if (first_name == "") {
       continue;
     }
-    // DoB is guaranteed to be there
+    // We can skip that entry if no license is required. That familly
+    // member doesn't need to be reported in this dictionary.
+    var license = getStringAt([coords_identity_rows[index], 7]);
+    if (license == "" || license == no_license) {
+      continue;
+    }
+    // DoB is guaranteed to be there if a license was requested
     var birth = getDoB([coords_identity_rows[index], 4]);
     var city = getStringAt([coords_identity_rows[index], 5])
     if (city == "") {
@@ -177,13 +184,7 @@ function getFamilyDictionary() {
     }
     // Sex is guaranteed to be there
     var sex = getStringAt([coords_identity_rows[index], 6])
-    // We can skip that entry if no license is required. That familly
-    // member doesn't need to be reported in this dictionary.
-    var license = getStringAt([coords_identity_rows[index], 7]);
-    if (license == "" || license == no_license) {
-      continue;
-    }
-    
+
     family.push({'first': first_name, 'last': last_name,
                  'birth': birth, 'city': city, 'sex': sex,
                  'license': license})
@@ -261,6 +262,7 @@ function formatPhoneNumbers() {
 // Verify that family members have a first name, 
 // last name, a DoB and a sex assigned to them
 function validateFamilyMembers() {
+  var no_license = getNoLicenseString();
   for (var index in coords_identity_rows) {
     var first_name = getStringAt([coords_identity_rows[index], 2]);
     var last_name = getStringAt([coords_identity_rows[index], 3]);
@@ -278,13 +280,16 @@ function validateFamilyMembers() {
     // Upcase the familly name and write it back
     last_name = last_name.toUpperCase();
     setStringAt([coords_identity_rows[index], 3], last_name, "black");
-    // We need a DoB
+    // We need a DoB but only if a license has been requested.
     var dob = getDoB([coords_identity_rows[index], 4]);
+    var license = getStringAt([coords_identity_rows[index], 7]);
     if (dob == undefined) {
-    return ("Pas de date de naissance fournie pour " +
-            first_name + " " + last_name +
-            " ou date de naissance mal formatée (JJ/MM/AAAA)\n" +
-            " ou année de naissance fantaisiste.");
+      if (license != '' && license != no_license) {
+        return ("Pas de date de naissance fournie pour " +
+                first_name + " " + last_name +
+                " ou date de naissance mal formatée (JJ/MM/AAAA)\n" +
+                " ou année de naissance fantaisiste.");
+      }
     }
     // We need a sex
     var sex = getStringAt([coords_identity_rows[index], 6]);
@@ -360,6 +365,11 @@ function validateLicenseCrossCheck() {
         return (first_name + " " + last_name + ": une license " + selected_license + "\n" +
                 "requiert de renseigner une ville et un pays de naissance");
       }
+    }
+    
+    // If we don't have a license, we can stop now. No need to validate the DoB
+    if (selected_license == no_license) {
+      continue;
     }
     
     // Validate DoB against the type of license
