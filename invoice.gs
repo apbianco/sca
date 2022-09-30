@@ -4,7 +4,8 @@
 // shorturl.at/EJM58
 
 // Dev or prod? "dev" sends all email to email_dev. Prod is the
-// real thing: family will receive invoices, and so will email_license.
+// real thing: family will receive invoices, and so will email_license,
+// unless the trigger in use is the TEST trigger.
 var dev_or_prod = "prod"
 
 // Seasonal parameters - change for each season
@@ -94,11 +95,32 @@ var allowed_user = 'inscriptions.sca@gmail.com'
 var email_loisir = 'sca.loisir@gmail.com'
 var email_comp = 'skicluballevardin@gmail.com'
 var email_dev = 'apbianco@gmail.com'
-var email_license_ = 'licence.sca@gmail.com'
-var email_license = (isProd() ? email_license_: email_dev)
+var email_license = 'licence.sca@gmail.com'
 
 function isProd() {
   return dev_or_prod == 'prod'
+}
+
+function isDev() {
+  return dev_or_prod == 'dev'
+}
+
+function isTest() {
+  return getOperator() == 'TEST'
+}
+
+// If we're in dev mode, return email_dev.
+// If we're used from the TEST trigger, return allowed_user
+// If not, return the provided email address.
+// NOTE: dev mode takes precedence over TEST
+function checkEmail(email) {
+  if (isDev()) {
+    return email_dev
+  }
+  if (isTest()) {
+    return allowed_user
+  }
+  return email
 }
 
 function Debug(message) {
@@ -477,7 +499,7 @@ function generatePDF() {
 function validateInvoice() {
   if (! isProd()) {
     Debug('Cette facture est en mode developpement. Aucun email ne sera envoyé, ' +
-          'ni à la famile ni à ' + email_license_ + '.\n\n' +
+          'ni à la famile ni à ' + email_license + '.\n\n' +
           'Vous pouvez néamoins continuer et un dossier sera préparé et ' +
           'les mails serons envoyés à ' + email_dev + '.\n\n' +
           'Contacter ' + email_dev + ' pour obtenir plus d\'aide.')
@@ -563,7 +585,7 @@ function validateInvoice() {
 
   return {'civility': civility,
           'family_name': family_name,
-          'mail_to': isProd() ? mail_to : email_dev,
+          'mail_to': checkEmail(mail_to),
           'consent': consent};
 }
 
@@ -590,7 +612,6 @@ function GeneratePDFButton() {
 function maybeEmailLicenseSCA(invoice) {
   var operator = getOperator()
   var family_name = getFamilyName()
-
   var family_dict = getFamilyDictionary() 
   var string_family_members = "";
   for (var index in family_dict) {
@@ -614,7 +635,7 @@ function maybeEmailLicenseSCA(invoice) {
   
   var email_options = {
     name: family_name + ": nouvelle inscription",
-    to: email_license,
+    to: checkEmail(email_license),
     subject: family_name + ": nouvelle inscription",
     htmlBody:
       string_family_members +
@@ -749,7 +770,7 @@ function generatePDFAndMaybeSendEmail(send_email, just_the_invoice) {
   // Add CC if defined.
   var cc_to = getStringAt(coord_cc)
   if (cc_to != "") {
-    email_options.cc = isProd() ? cc_to : email_dev
+    email_options.cc = checkEmail(cc_to)
   }
 
   if (send_email) {
