@@ -5,7 +5,7 @@
 
 // Dev or prod? "dev" sends all email to email_dev. Prod is the
 // real thing: family will receive invoices, and so will email_license.
-var dev_or_prod = "dev"
+var dev_or_prod = "prod"
 
 // Seasonal parameters - change for each season
 // 
@@ -94,8 +94,6 @@ var allowed_user = 'inscriptions.sca@gmail.com'
 var email_loisir = 'sca.loisir@gmail.com'
 var email_comp = 'skicluballevardin@gmail.com'
 var email_dev = 'apbianco@gmail.com'
-// var email_dev = 'lud2138@gmail.com'
-// var email_dev = 'president.skicluballevardin@gmail.com'
 var email_license_ = 'licence.sca@gmail.com'
 var email_license = (isProd() ? email_license_: email_dev)
 
