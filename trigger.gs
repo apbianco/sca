@@ -445,8 +445,8 @@ function GenerateEntry() {
     var sheet_id = getSheetFromFolderID(already_exists[1], already_exists[0]);
     var extra_text = '';
     if (sheet_id) {
-      extra_text = ("\nVous pouvez directement l'ouvrir en copiant lien et et le " +
-                    "collant dans la barre de navigation du navitateur web:\n\n" +
+      extra_text = ("\n\nVous pouvez directement l'ouvrir en copiant le lien ci-dessous " +
+                    "et en le collant dans la barre de navigation du navitateur web:\n\n" +
                     "https://docs.google.com/spreadsheets/d/" + sheet_id + "/edit#gid=0");
     }
     displayErrorPannel(
@@ -479,4 +479,3 @@ function GenerateEntry() {
   setLastSeasonFamilyList(sheet);
   SpreadsheetApp.flush();
 }
-
