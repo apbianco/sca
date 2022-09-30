@@ -100,6 +100,9 @@ function activeRangeInCoord(r, coord) {
 //  5- Install in cell B2 as previously detailed
   
 function setLastSeasonFamilyList(sheet) {
+  return;
+
+  // The rest of this code never runs and that's fine.  
   var x = coord_family_last_season[0];
   var y = coord_family_last_season[1];
   if (sheet.getRange(x, y).getDataValidation() != null) {
@@ -301,22 +304,27 @@ function createNewFamilySheet(sheet, family_name) {
   return document_id;
 }
 
+function getSheetFromFolderID(folder_id, sheet_name) {
+  var old_sheet_id = ''
+  var files = DriveApp.getFolderById(folder_id).getFiles()
+  while (files.hasNext()) {
+    file = files.next();
+    if (file.getName() == sheet_name) {
+      old_sheet_id = file.getId();
+      break;
+    }
+  }
+  return old_sheet_id;
+}
+
 function createNewFamilySheetFromOld(sheet, family_name) {
   var new_sheet_id = createNewFamilySheet(sheet, family_name);
   var old = checkAlreadyExists(previous_db_folder, family_name);
   var old_sheet_name = old[0];
   var old_folder_id = old[1];
-  var old_sheet_id = '';
-  
   // Inside the old folder, search the sheet and determine its id
-  var files = DriveApp.getFolderById(old_folder_id).getFiles()
-  while (files.hasNext()) {
-    file = files.next();
-    if (file.getName() == old_sheet_name) {
-      old_sheet_id = file.getId();
-      break;
-    }
-  }
+  var old_sheet_id = getSheetFromFolderID(old_folder_id, old_sheet_name);
+
   if (old_sheet_id == '') {
     displayErrorPannel(sheet, 
                        'Facture pour ' + family_name +
@@ -435,10 +443,17 @@ function GenerateEntry() {
   
   var already_exists = checkAlreadyExists(db_folder, family_name);
   if (already_exists[0] != '') {
-      displayErrorPannel(
-        sheet,
-        "⚠️ Un dossier d'inscription existe déjà sous cette dénomination: " +
-        already_exists[0]);
+    var sheet_id = getSheetFromFolderID(already_exists[1], already_exists[0]);
+    var extra_text = '';
+    if (sheet_id) {
+      extra_text = ("\nVous pouvez directement l'ouvrir en copiant lien et et le " +
+                    "collant dans la barre de navigation du navitateur web:\n\n" +
+                    "https://docs.google.com/spreadsheets/d/" + sheet_id + "/edit#gid=0");
+    }
+    displayErrorPannel(
+      sheet,
+      "⚠️ Un dossier d'inscription existe déjà sous cette dénomination: " +
+      already_exists[0] + extra_text);
     return;
   }
   
@@ -465,3 +480,4 @@ function GenerateEntry() {
   setLastSeasonFamilyList(sheet);
   SpreadsheetApp.flush();
 }
+
