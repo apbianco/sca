@@ -320,10 +320,9 @@ function getSheetFromFolderID(folder_id, sheet_name) {
 function createNewFamilySheetFromOld(sheet, family_name) {
   var new_sheet_id = createNewFamilySheet(sheet, family_name);
   var old = checkAlreadyExists(previous_db_folder, family_name);
-  var old_sheet_name = old[0];
-  var old_folder_id = old[1];
-  // Inside the old folder, search the sheet and determine its id
-  var old_sheet_id = getSheetFromFolderID(old_folder_id, old_sheet_name);
+  // Inside the old folder, search the sheet and determine its id.
+  // old[0] is the (old) sheet name, old[1] is  the (old) folder id.
+  var old_sheet_id = getSheetFromFolderID(old[1], old[0]);
 
   if (old_sheet_id == '') {
     displayErrorPannel(sheet, 
