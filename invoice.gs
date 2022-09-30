@@ -20,10 +20,9 @@ var db_folder = '1apITLkzOIkqCI7oIxpiKA5W_QR0EM3ey'
 //   from one season to an other when they are refreshed.
 //
 // TODO: Change for 2022/2023
-var parental_consent_pdf = '1LaWS0mmjE8GPeendM1c1mCGUcrsBIUFc'
-var rules_pdf = '1tNrkUkI2w_DYgXg9dRXPda_25gBh1TAG'
-var parents_note_pdf = '1zkI5NapvYyLn_vEIxyejKJ4WzAvEco6z'
-var pass_pdf = '1fsjge7JAuV3PTPXBnLbX9PGkSGW3nVHL'
+var parental_consent_pdf = '1TzWFmJUpp7eHdQTcWxGdW5Vze9XILw2e'
+var rules_pdf = '1JKsqHWBIQc9PJrPesX3GkM9u22DSNVJN'
+var parents_note_pdf = '10xRJwUWS_eJApxNgUJOfOAnAilNDdnWj'
 
 // Spreadsheet parameters (row, columns, etc...). Adjust as necessary
 // when the master invoice is modified.
@@ -94,9 +93,9 @@ var coord_purchased_licenses = {
 var allowed_user = 'inscriptions.sca@gmail.com'
 var email_loisir = 'sca.loisir@gmail.com'
 var email_comp = 'skicluballevardin@gmail.com'
-// var email_dev = 'apbianco@gmail.com'
+var email_dev = 'apbianco@gmail.com'
 // var email_dev = 'lud2138@gmail.com'
-var email_dev = 'president.skicluballevardin@gmail.com'
+// var email_dev = 'president.skicluballevardin@gmail.com'
 var email_license_ = 'licence.sca@gmail.com'
 var email_license = (isProd() ? email_license_: email_dev)
 
@@ -669,11 +668,6 @@ function generatePDFAndMaybeSendEmail(send_email, just_the_invoice) {
                       (send_email? "et envoit " : " ") + "du dossier...", "orange");
     SpreadsheetApp.flush()
   }
-
-  // 2021-2022: FFS sanitary pass documentation
-  if (! just_the_invoice) {
-    attachments.push(DriveApp.getFileById(pass_pdf).getAs(MimeType.PDF))
-  }
   
   var civility = validation['civility'];
   var family_name = validation['family_name'];
@@ -686,21 +680,20 @@ function generatePDFAndMaybeSendEmail(send_email, just_the_invoice) {
   if (! just_the_invoice) {
     if (consent == 'À fournire') {
       attachments.push(DriveApp.getFileById(parental_consent_pdf).getAs(MimeType.PDF))
-      attachments.push(DriveApp.getFileById(rules_pdf).getAs(MimeType.PDF))
     
       parental_consent_text = (
-        "<p>Il vous faut également compléter et signer l'autorisation " +
+        "<p>Il vous faut compléter et signer et nous retourner l'autorisation " +
         "parentale fournie en attachment, couvrant le droit à l'image, le " +
-        "règlement intérieur et les interventions médicales.</p>" +
-        "<p>Le règlement intérieur mentionné dans l'autorisation parentale " +
-        "est joint à ce message en attachement.</p>")
+        "règlement intérieur et les interventions médicales.</p>");
     }
 
-    // Insert the note for the parents anyways
+    // Insert the note and rules for the parents anyways
+    attachments.push(DriveApp.getFileById(rules_pdf).getAs(MimeType.PDF))
     attachments.push(DriveApp.getFileById(parents_note_pdf).getAs(MimeType.PDF));
     parental_consent_text += (
       "<p>Vous trouverez également en attachement une note adressée aux " +
-      "parents, merçi de la lire attentivement.</p>");
+      "parents, ainsi que le règelement intérieur. Merçi de lire ces deux " +
+      "documents attentivement.</p>");
   }
   
   var subject = ("❄️ [Incription Ski Club Allevardin] " +
@@ -739,13 +732,11 @@ function generatePDFAndMaybeSendEmail(send_email, just_the_invoice) {
       "est disponible en attachement. Veuillez contrôler " +
       "qu\'elle correspond à vos besoins.</p>" +
     
-      "<p>Si nécessaire, les certificats médicaux nécessaires à l\'établissement " +
-      "de l\'inscription sont à faire parvenir à " + allowed_user + "</p>" +
-    
       parental_consent_text +
 
       "<p>Des questions concernant cette facture? Contacter Aissam: " +
-      "aissam.yaagoubi@sfr.fr (06-60-50-74-77).</p>" +
+      "aissam.yaagoubi@sfr.fr (06-60-50-74-77) pour le ski loisir ou " +
+      "Ludivine: tresorerie.sca@gmail.com pour le ski compétition.</p>" +
       "<p>Des questions concernant la saison " + season + " ? " +
       "Envoyez un mail à " + email_loisir + " (ski loisir) " +
       "ou à " + email_comp + " (ski compétition)</p>" +
