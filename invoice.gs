@@ -701,7 +701,7 @@ function generatePDFAndMaybeSendEmail(send_email, just_the_invoice) {
       attachments.push(DriveApp.getFileById(parental_consent_pdf).getAs(MimeType.PDF))
     
       parental_consent_text = (
-        "<p>Il vous faut compléter et signer et nous retourner l'autorisation " +
+        "<p>Il vous faut compléter, signer et nous retourner l'autorisation " +
         "parentale fournie en attachment, couvrant le droit à l'image, le " +
         "règlement intérieur et les interventions médicales.</p>");
     }
@@ -711,7 +711,7 @@ function generatePDFAndMaybeSendEmail(send_email, just_the_invoice) {
     attachments.push(DriveApp.getFileById(parents_note_pdf).getAs(MimeType.PDF));
     parental_consent_text += (
       "<p>Vous trouverez également en attachement une note adressée aux " +
-      "parents, ainsi que le règelement intérieur. Merçi de lire ces deux " +
+      "parents, ainsi que le règlement intérieur. Merci de lire ces deux " +
       "documents attentivement.</p>");
   }
   
@@ -749,7 +749,7 @@ function generatePDFAndMaybeSendEmail(send_email, just_the_invoice) {
 
       "<p>Votre facture pour la saison " + season + " " +
       "est disponible en attachement. Veuillez contrôler " +
-      "qu\'elle correspond à vos besoins.</p>" +
+      "qu\'elle corresponde à vos besoins.</p>" +
     
       parental_consent_text +
 
