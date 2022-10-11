@@ -76,8 +76,8 @@ var attributed_licenses_dob_validation = {
   'CN Adulte (Loisir)':      [1900, 2006],
   'CN Famille (Loisir)':     [-1,   2051],
   'CN Dirigeant':            [1900, 2004],
-  'CN Jeune (Compétition)':  [2007, 2050],
-  'CN Adulte (Compétition)': [1900, 2006]};
+  'CN Jeune (Compétition)':  [2008, 2050],
+  'CN Adulte (Compétition)': [1900, 2007]};
 //
 // Coordinates of where the various license purchases are indicated.
 //
@@ -99,6 +99,26 @@ var coord_purchased_subscriptions_non_comp = [
   [41, 5],  // Child 3
   [42, 5]   // Child 4
 ];
+
+var ski_pass_dob_validation = {
+  'Family4':   [-1,   2051],
+  'Family5':   [-1,   2051],
+  'Senior':    [1900, 1958],
+  'Adult':     [1959, 2004],
+  'Student':   [1993, 2004],
+  'Junior':    [2005, 2013],
+  'Child':     [2014, 2016],
+  'Preschool': [2017, 2050]};
+
+var coord_purchased_ski_pass = {
+  'Family4':   [23, 5],
+  'Family5':   [24, 5],
+  'Senior':    [25, 5],
+  'Adult':     [26, 5],
+  'Student':   [27, 5],
+  'Junior':    [28, 5],
+  'Child':     [29, 5],
+  'Preschool': [30, 5]};
 
 // Email configuration - these shouldn't change very often
 var allowed_user = 'inscriptions.sca@gmail.com'
@@ -391,6 +411,9 @@ function validateLicenseSubscription(attributed_licenses) {
             total_non_comp + ".");
   }
   return "";
+}
+
+function validateLicenseSkiPass(attributed_licenses) {
 }
 
 // Cross check the attributed licenses with the ones selected for payment
@@ -890,3 +913,4 @@ function generatePDFAndMaybeSendEmail(send_email, just_the_invoice) {
   displayPDFLink(pdf_file)
   SpreadsheetApp.flush()  
 }
+`
