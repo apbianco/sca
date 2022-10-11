@@ -286,7 +286,7 @@ function displayErrorPanel(message) {
   ui.alert(message, ui.ButtonSet.OK);
 }
 
-// Display a OK/Cancel pannel, returns true if OK was pressed.
+// Display a OK/Cancel panel, returns true if OK was pressed.
 function displayYesNoPanel(message) {
   var ui = SpreadsheetApp.getUi();
   var response = ui.alert(message, ui.ButtonSet.OK_CANCEL);
@@ -313,6 +313,8 @@ function formatPhoneNumbers() {
     if (phone != '') {
       // Compress the phone number removing all spaces
       phone = phone.replace(/\s/g, "") 
+      // Compress the phone number removing all hyphens
+      phone = phone.replace(/-/g, "")
       // Insert replacing groups of two digits by the digits with a space
       var regex = new RegExp('([0-9]{2})', 'gi');
       phone = phone.replace(regex, '$1 ');
@@ -655,8 +657,8 @@ function validateInvoice() {
   var subscription_validation_error = validateLicenseSubscription(attributed_licenses_values);
   if (subscription_validation_error) {
     subscription_validation_error += ("\n\nChoisissez 'OK' pour continuer à générer la facture.\n" +
-                                      "Choisissez 'Annuler' pour ne pas générer la facture et vérifier les " + 
-                                      "valeurs saisies...");
+                                      "Choisissez 'Annuler' pour ne pas générer la facture et " +
+                                      "vérifier les valeurs saisies...");
     if (! displayYesNoPanel(subscription_validation_error)) {
       return {};
     }
