@@ -382,12 +382,12 @@ function validateLicenseSubscription(attributed_licenses) {
   var family = attributed_licenses[getNonCompFamilyLicenseString()];
   var total_attributed_licenses = juniors + adults + family;
   if (total_attributed_licenses != total_non_comp) {
-    detail = ("• \t" + getNonCompJuniorLicenseString() + ": " + juniors + "\n" +
+    detail = ("• " + getNonCompJuniorLicenseString() + ": " + juniors + "\n" +
               "• " + getNonCompAdultLicenseString() + ": " + adults + "\n" +
-              "• " + getNonCompFamilyLicenseString() + ": " + family + "\n\n" +
+              "• " + getNonCompFamilyLicenseString() + ": " + family + "\n" +
               "• TOTAL: " + total_attributed_licenses) + "\n";
-    return ("Le nombre total de license(s) loisir attribuée(s):\n\n" + detail + 
-            "\nne correspond pas au nombre d'adhésion(s) loisr saisie(s) qui est de " +
+    return ("Le nombre total de license(s) Loisir attribuée(s):\n\n" + detail + 
+            "\nne correspond pas au nombre d'adhésion(s) Loisir saisie(s) qui est de " +
             total_non_comp + ".");
   }
   return "";
