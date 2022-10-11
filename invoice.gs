@@ -89,6 +89,16 @@ var coord_purchased_licenses = {
   'CN Dirigeant':            [37, 5],
   'CN Jeune (Compétition)':  [44, 5],
   'CN Adulte (Compétition)': [45, 5]};
+//
+// Coordinates of where subscription purchases are indicated.
+//
+var coord_purchased_subscriptions_non_comp = [
+  [38, 5],  // Riders
+  [39, 5],  // Child 1
+  [40, 5],  // Child 2
+  [41, 5],  // Child 3
+  [42, 5]   // Child 4
+];
 
 // Email configuration - these shouldn't change very often
 var allowed_user = 'inscriptions.sca@gmail.com'
@@ -107,6 +117,15 @@ function isDev() {
 
 function isTest() {
   return getOperator() == 'TEST'
+}
+
+// Issue a key/value string followed by a carriage return
+function hashToString(v) {
+  var to_return = "";
+  for (const [key, value] of Object.entries(v)) {
+    to_return += (key + ": " + value + "\n");
+  }
+  return to_return;
 }
 
 // If we're in dev mode, return email_dev.
@@ -154,8 +173,28 @@ function getNoLicenseString() {
   return attributed_licenses_values[0];
 }
 
+function getNonCompJuniorLicenseString() {
+  return attributed_licenses_values[1];
+}
+
+function getNonCompAdultLicenseString() {
+  return attributed_licenses_values[2];
+}
+
+function getNonCompFamilyLicenseString() {
+  return attributed_licenses_values[3];
+}
+
 function getExecutiveLicenseString() {
   return attributed_licenses_values[4];
+}
+
+function getCompJuniorLicenseString() {
+  return attributed_licenses_values[5];
+}
+
+function getCompAdultLicenseString() {
+  return attributed_licenses_values[6];
 }
 
 // Obtain a DoB at coords. Return an empty string if no DoB exists or if it
@@ -244,7 +283,14 @@ function createPDF(sheet) {
 
 function displayErrorPanel(message) {
   var ui = SpreadsheetApp.getUi();
-  var result = ui.alert(message, ui.ButtonSet.OK);
+  ui.alert(message, ui.ButtonSet.OK);
+}
+
+// Display a OK/Cancel pannel, returns true if OK was pressed.
+function displayYesNoPanel(message) {
+  var ui = SpreadsheetApp.getUi();
+  var response = ui.alert(message, ui.ButtonSet.OK_CANCEL);
+  return response == ui.Button.OK;
 }
 
 // Validate a cell at (x, y) whose value is set via a drop-down
@@ -319,19 +365,41 @@ function validateFamilyMembers() {
   return "";
 }
 
+// Loosely cross checks attributed licenses with delivered subscriptions...
+function validateLicenseSubscription(attributed_licenses) {
+  var total_non_comp = 0;
+  for (var index in coord_purchased_subscriptions_non_comp) {
+    var row = coord_purchased_subscriptions_non_comp[index][0];
+    var col = coord_purchased_subscriptions_non_comp[index][1];
+    total_non_comp += Number(SpreadsheetApp.getActiveSheet().getRange(row, col).getValue());
+  }
+  // The number of non competition registrations should be equal to the 
+  // number of non competition CNs purchased
+  var juniors = attributed_licenses[getNonCompJuniorLicenseString()];
+  var adults = attributed_licenses[getNonCompAdultLicenseString()];
+  var family = attributed_licenses[getNonCompFamilyLicenseString()];
+  var total_attributed_licenses = juniors + adults + family;
+  if (total_attributed_licenses != total_non_comp) {
+    detail = ("• \t" + getNonCompJuniorLicenseString() + ": " + juniors + "\n" +
+              "• " + getNonCompAdultLicenseString() + ": " + adults + "\n" +
+              "• " + getNonCompFamilyLicenseString() + ": " + family + "\n\n" +
+              "• TOTAL: " + total_attributed_licenses) + "\n";
+    return ("Le nombre total de license(s) loisir attribuée(s):\n\n" + detail + 
+            "\nne correspond pas au nombre d'adhésion(s) loisr saisie(s) qui est de " +
+            total_non_comp + ".");
+  }
+  return "";
+}
+
 // Cross check the attributed licenses with the ones selected for payment
 function validateLicenseCrossCheck() {
   // First count how many licenses have been attributed to the
   // registered family. We use the values (after validation) directly
 
-  function validationToString(v) {
-    var to_return = "";
-    for (const [key, value] of Object.entries(v)) {
-      to_return += (key + ": " + value + "\n");
-    }
-    return to_return;
+  function returnError(v) {
+    return [v, {}];
   }
-  
+
   var attributed_licenses = {}
   attributed_licenses_values.forEach(function(key) {
     attributed_licenses[key] = 0;
@@ -362,7 +430,7 @@ function validateLicenseCrossCheck() {
     // If there's no name on that row, the only possible value is None
     if (first_name === '' && last_name === '') {
       if (selected_license != no_license) {
-        return "'" + selected_license + "' attribuée à un membre de famile inexistant!";
+        return returnError("'" + selected_license + "' attribuée à un membre de famile inexistant!");
       }
       continue;
     }
@@ -375,14 +443,14 @@ function validateLicenseCrossCheck() {
       }
     });
     if (! found) {
-      return "'" + selected_license + "' n'est pas une license attribuée possible!";
+      return returnError("'" + selected_license + "' n'est pas une license attribuée possible!");
     }
     // Executive license requires a city of birth
     if (selected_license == exec_license) {
       var city = getStringAt([row, 5]);
       if (city == '') {
-        return (first_name + " " + last_name + ": une license " + selected_license + "\n" +
-                "requiert de renseigner une ville et un pays de naissance");
+        return returnError(first_name + " " + last_name + ": une license " + selected_license + "\n" +
+                           "requiert de renseigner une ville et un pays de naissance");
       }
     }
     
@@ -405,13 +473,13 @@ function validateLicenseCrossCheck() {
       } else {
         data_range = "de " + dob_start + " à " + dob_end;
       }
-      return (first_name + " " + last_name + ": l'année de naissance " + dob + "\n" +
-              "ne correspond aux années de validité de la license choisie:\n'" +
-              selected_license + "': " + date_range);
+      return returnError(first_name + " " + last_name + ": l'année de naissance " + dob + "\n" +
+                         "ne correspond aux années de validité de la license choisie:\n'" +
+                         selected_license + "': " + date_range);
     }
   }
   
-  // Collect the selected licenses into a hash
+  // Collect the amount of purchased licenses into a hash
   attributed_licenses_values.forEach(function(key) {
     // Entry indicating no license is skipped because it can't
     // be collected.
@@ -423,20 +491,41 @@ function validateLicenseCrossCheck() {
   });
   
   // Perform the verification
+  
+  // First verify the family non comp license because it's special.
+  // 1- Family license requires at last four declared family members selecting it
+  // 2- One family license should have been purchased
+  // 3- Other checks are carried out still as they can be determined valid or not
+  //    even with a family license purchased.
+  var family_license = getNonCompFamilyLicenseString();
+  if (attributed_licenses[family_license] != 0) {
+    // A least four declared participants
+    if (attributed_licenses[family_license] < 4) {
+      return returnError("Il faut attribuer une license famille à au moins 4 membres " +
+                         "d'une même famille. Seulement " + attributed_licenses[family_license] +
+                         " ont été attribuées.");
+    }
+    // Check that one family license was purchased.
+    if (purchased_licenses[family_license] != 1) {
+      return returnError("Vous devez acheter une license loisir famille, vous en avez " +
+                         "acheté pour l'instant " + purchased_licenses[family_license]);
+    }
+  }
   for (var index in attributed_licenses_values) {
     // Entry indicating no license is skipped because it can't
-    // be collected.
+    // be collected. Entry indicating a family license skipped because
+    // it's been already verified
     var key = attributed_licenses_values[index];
-    if (key != no_license) {
+    if (key != no_license && key != family_license) {
       if (purchased_licenses[key] != attributed_licenses[key]) {
-        return ("Le nombre de licences '" + key + "' selectionée(s) (au nombre de " +
-                attributed_licenses[key] + ")\n" +
-                "ne correspond pas au nombre de licences achetée(s) (au nombre de " +
-                purchased_licenses[key] + ")");        
+        return returnError("Le nombre de licences '" + key + "' selectionée(s) (au nombre de " +
+                           attributed_licenses[key] + ")\n" +
+                           "ne correspond pas au nombre de licences achetée(s) (au nombre de " +
+                           purchased_licenses[key] + ")");        
       }
     }
   }
-  return "";
+  return ["", attributed_licenses];
 }
 
 function isEmpty(obj) {
@@ -463,8 +552,8 @@ function getInvoiceNumber() {
   }
   var extracted_num = Number(new RegExp("version=([0-9]+)", "gi").exec(version)[1]);
   if (extracted_num < 0) {
-    displayErrorPannel("Problème lors de la génération du numéro de document\n" +
-                       "Insérez version=99 en 79C et recommencez l'opération");
+    displayErrorPanel("Problème lors de la génération du numéro de document\n" +
+                      "Insérez version=99 en 79C et recommencez l'opération");
   }
   return extracted_num;
 }
@@ -555,10 +644,22 @@ function validateInvoice() {
   }
 
   // Validate requested licenses
-  var license_cross_check_error = validateLicenseCrossCheck();
+  var ret = validateLicenseCrossCheck();
+  var license_cross_check_error = ret[0]
   if (license_cross_check_error) {
     displayErrorPanel(license_cross_check_error);
     return {};
+  }
+  var attributed_licenses_values = ret[1];
+  // Validate requeted licenses and subscriptions
+  var subscription_validation_error = validateLicenseSubscription(attributed_licenses_values);
+  if (subscription_validation_error) {
+    subscription_validation_error += ("\n\nChoisissez 'OK' pour continuer à générer la facture.\n" +
+                                      "Choisissez 'Annuler' pour ne pas générer la facture et vérifier les " + 
+                                      "valeurs saisies...");
+    if (! displayYesNoPanel(subscription_validation_error)) {
+      return {};
+    }
   }
   
   // Validate the parental consent.
