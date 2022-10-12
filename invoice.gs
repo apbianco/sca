@@ -414,7 +414,7 @@ function validateFamilyMembers() {
 }
 
 // Loosely cross checks attributed licenses with delivered subscriptions...
-function validateLicenseSubscription(attributed_licenses, dobs) {
+function validateLicenseSubscription(attributed_licenses) {
   var total_non_comp = 0;
   for (var index in coord_purchased_subscriptions_non_comp) {
     var row = coord_purchased_subscriptions_non_comp[index][0];
@@ -439,7 +439,28 @@ function validateLicenseSubscription(attributed_licenses, dobs) {
   return "";
 }
 
-function validateLicenseSkiPass(attributed_licenses) {
+function validateSkiPassPurchase(dobs) {
+  function numberOfDoBsInRange(dobs, min, max) {
+    var count = 0;
+    for (var index in dobs) {
+      if (dobs[index] >= min &&  dobs[index] <= max) {
+        count += 1;
+      }
+    }
+    return count;
+  }
+  // Match the number of reserved ski pass entries for a given age range with
+  // the number of entries in that age range.
+  for (var index in ski_pass_values) {
+    if (index == 0 || index == 1) {
+      continue;
+    }
+    var ski_pass_type = ski_pass_values[index];
+    var ski_pass_purchased = Number(getStringAt(
+      [coord_purchased_ski_pass[ski_pass_type][0],
+       coord_purchased_ski_pass[ski_pass_type][1]]));
+    displayErrorPanel(ski_pass_type + ": " + ski_pass_purchased);
+  }
 }
 
 // Cross check the attributed licenses with the ones selected for payment
@@ -705,7 +726,7 @@ function validateInvoice() {
   }
   var attributed_licenses_values = ret[1];
   // Validate requeted licenses and subscriptions
-  var subscription_validation_error = validateLicenseSubscription(attributed_licenses_values, dobs);
+  var subscription_validation_error = validateLicenseSubscription(attributed_licenses_values);
   if (subscription_validation_error) {
     subscription_validation_error += ("\n\nChoisissez 'OK' pour continuer à générer la facture.\n" +
                                       "Choisissez 'Annuler' pour ne pas générer la facture et " +
@@ -714,6 +735,8 @@ function validateInvoice() {
       return {};
     }
   }
+  var skipass_validation_error = validateSkiPassPurchase(dobs);
+  displayErrorPanel(skipass_validation_error);
   
   // Validate the parental consent.
   var consent = validateAndReturnDropDownValue(
