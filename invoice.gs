@@ -166,6 +166,18 @@ function arrayToString(v) {
   return to_return;
 }
 
+function dobRangeToString(dob_start, dob_end) {
+  var date_range = '';
+  if (dob_end >= 2050) {
+    date_range = dob_start + " et après";
+  } else if (dob_start <= 1900) {
+    date_range = dob_end + " et avant";
+  } else {
+    date_range = "de " + dob_start + " à " + dob_end;
+  }
+  return date_range;
+}
+
 // If we're in dev mode, return email_dev.
 // If we're used from the TEST trigger, return allowed_user
 // If not, return the provided email address.
@@ -451,6 +463,7 @@ function validateSkiPassPurchase(dobs) {
   }
   // Match the number of reserved ski pass entries for a given age range with
   // the number of entries in that age range.
+  error = ""
   for (var index in ski_pass_values) {
     if (index == 0 || index == 1) {
       continue;
@@ -459,8 +472,16 @@ function validateSkiPassPurchase(dobs) {
     var ski_pass_purchased = Number(getStringAt(
       [coord_purchased_ski_pass[ski_pass_type][0],
        coord_purchased_ski_pass[ski_pass_type][1]]));
-    displayErrorPanel(ski_pass_type + ": " + ski_pass_purchased);
+    var dob_start = ski_pass_dob_validation[ski_pass_type][0];
+    var dob_end = ski_pass_dob_validation[ski_pass_type][1]
+    var dobs_found = numberOfDoBsInRange(dobs, dob_start, dob_end);
+    if (dobs_found != ski_pass_purchased) {
+      error += (ski_pass_purchased + " forfait(s) acheté(s) pour " +
+                dobs_found + " individu(s) né(s) " + 
+                dobRangeToString(dob_start, dob_end) + "\n");
+    }
   }
+  displayErrorPanel(error);
 }
 
 // Cross check the attributed licenses with the ones selected for payment
@@ -537,14 +558,7 @@ function validateLicenseCrossCheck() {
     dob_start = attributed_licenses_dob_validation[selected_license][0];
     dob_end = attributed_licenses_dob_validation[selected_license][1];
     if (dob < dob_start || dob > dob_end) {
-      var date_range = '';
-      if (dob_end >= 2050) {
-        date_range = dob_start + " et après";
-      } else if (dob_start <= 1900) {
-        date_range = dob_end + " et avant";
-      } else {
-        data_range = "de " + dob_start + " à " + dob_end;
-      }
+      var date_range = dobRangeToString(dob_start, dob_end);
       return returnError(first_name + " " + last_name + ": l'année de naissance " + dob + "\n" +
                          "ne correspond aux années de validité de la license choisie:\n'" +
                          selected_license + "': " + date_range);
