@@ -100,6 +100,16 @@ var coord_purchased_subscriptions_non_comp = [
   [42, 5]   // Child 4
 ];
 
+var ski_pass_values = [
+  'Family4',
+  'Family5',
+  'Senior',
+  'Adult',
+  'Student',
+  'Junior',
+  'Child',
+  'Preschool'];
+
 var ski_pass_dob_validation = {
   'Family4':   [-1,   2051],
   'Family5':   [-1,   2051],
@@ -144,6 +154,14 @@ function hashToString(v) {
   var to_return = "";
   for (const [key, value] of Object.entries(v)) {
     to_return += (key + ": " + value + "\n");
+  }
+  return to_return;
+}
+
+function arrayToString(v) {
+  var to_return = "";
+  for (var index in v) {
+    to_return += index + ": " + v[index] + "\n";
   }
   return to_return;
 }
@@ -347,8 +365,14 @@ function formatPhoneNumbers() {
 }
 
 // Verify that family members have a first name, 
-// last name, a DoB and a sex assigned to them
+// last name, a DoB and a sex assigned to them.
+// Return an error and also a list of collected DoBs.
 function validateFamilyMembers() {
+  function returnError(m) {
+    return [m, []]
+  }
+
+  dobs = [];
   var no_license = getNoLicenseString();
   for (var index in coords_identity_rows) {
     var first_name = getStringAt([coords_identity_rows[index], 2]);
@@ -359,10 +383,10 @@ function validateFamilyMembers() {
     }
     // We need both a first name and a last name
     if (! first_name) {
-      return "Pas de nom de prénom fournit pour " + last_name;
+      return returnError("Pas de nom de prénom fournit pour " + last_name);
     }
     if (! last_name) {
-      return "Pas de nom de famille fournit pour " + first_name;
+      return returnError("Pas de nom de famille fournit pour " + first_name);
     }
     // Upcase the familly name and write it back
     last_name = last_name.toUpperCase();
@@ -372,23 +396,25 @@ function validateFamilyMembers() {
     var license = getStringAt([coords_identity_rows[index], 7]);
     if (dob == undefined) {
       if (license != '' && license != no_license) {
-        return ("Pas de date de naissance fournie pour " +
-                first_name + " " + last_name +
-                " ou date de naissance mal formatée (JJ/MM/AAAA)\n" +
-                " ou année de naissance fantaisiste.");
+        return returnError("Pas de date de naissance fournie pour " +
+                           first_name + " " + last_name +
+                           " ou date de naissance mal formatée (JJ/MM/AAAA)\n" +
+                           " ou année de naissance fantaisiste.");
       }
+    } else {
+      dobs.push(Number(new RegExp("[0-9]+/[0-9]+/([0-9]+)", "gi").exec(dob)[1]));
     }
     // We need a sex
     var sex = getStringAt([coords_identity_rows[index], 6]);
     if (sex != "Fille" && sex != "Garçon") {
-      return "Pas de sexe défini pour " + first_name + " " + last_name;
+      return returnError("Pas de sexe défini pour " + first_name + " " + last_name);
     }
   }
-  return "";
+  return ["", dobs];
 }
 
 // Loosely cross checks attributed licenses with delivered subscriptions...
-function validateLicenseSubscription(attributed_licenses) {
+function validateLicenseSubscription(attributed_licenses, dobs) {
   var total_non_comp = 0;
   for (var index in coord_purchased_subscriptions_non_comp) {
     var row = coord_purchased_subscriptions_non_comp[index][0];
@@ -662,11 +688,13 @@ function validateInvoice() {
   formatPhoneNumbers();
 
   // Validate all entered familly members
-  var family_validation_error = validateFamilyMembers();
+  var ret = validateFamilyMembers();
+  var family_validation_error = ret[0];
   if (family_validation_error) {
     displayErrorPanel(family_validation_error);
     return {};
   }
+  var dobs = ret[1];
 
   // Validate requested licenses
   var ret = validateLicenseCrossCheck();
@@ -677,7 +705,7 @@ function validateInvoice() {
   }
   var attributed_licenses_values = ret[1];
   // Validate requeted licenses and subscriptions
-  var subscription_validation_error = validateLicenseSubscription(attributed_licenses_values);
+  var subscription_validation_error = validateLicenseSubscription(attributed_licenses_values, dobs);
   if (subscription_validation_error) {
     subscription_validation_error += ("\n\nChoisissez 'OK' pour continuer à générer la facture.\n" +
                                       "Choisissez 'Annuler' pour ne pas générer la facture et " +
@@ -913,4 +941,3 @@ function generatePDFAndMaybeSendEmail(send_email, just_the_invoice) {
   displayPDFLink(pdf_file)
   SpreadsheetApp.flush()  
 }
-`
