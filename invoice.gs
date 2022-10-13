@@ -101,34 +101,34 @@ var coord_purchased_subscriptions_non_comp = [
 ];
 
 var ski_pass_values = [
-  'Family4',
-  'Family5',
+  'Famille 4',
+  'Famille 5',
   'Senior',
-  'Adult',
-  'Student',
+  'Adulte',
+  'Étudiant',
   'Junior',
-  'Child',
-  'Preschool'];
+  'Enfant',
+  'Peluche'];
 
 var ski_pass_dob_validation = {
-  'Family4':   [-1,   2051],
-  'Family5':   [-1,   2051],
+  'Famille 4': [-1,   2051],
+  'Famille 5': [-1,   2051],
   'Senior':    [1900, 1958],
-  'Adult':     [1959, 2004],
-  'Student':   [1993, 2004],
+  'Adulte':    [1959, 2004],
+  'Étudiant':  [1993, 2004],
   'Junior':    [2005, 2013],
-  'Child':     [2014, 2016],
-  'Preschool': [2017, 2050]};
+  'Enfant':    [2014, 2016],
+  'Peluche':   [2017, 2050]};
 
 var coord_purchased_ski_pass = {
-  'Family4':   [23, 5],
-  'Family5':   [24, 5],
+  'Famille 4': [23, 5],
+  'Famille 5': [24, 5],
   'Senior':    [25, 5],
-  'Adult':     [26, 5],
-  'Student':   [27, 5],
+  'Adulte':    [26, 5],
+  'Étudiant':  [27, 5],
   'Junior':    [28, 5],
-  'Child':     [29, 5],
-  'Preschool': [30, 5]};
+  'Enfant':    [29, 5],
+  'Peluche':   [30, 5]};
 
 // Email configuration - these shouldn't change very often
 var allowed_user = 'inscriptions.sca@gmail.com'
@@ -169,9 +169,9 @@ function arrayToString(v) {
 function dobRangeToString(dob_start, dob_end) {
   var date_range = '';
   if (dob_end >= 2050) {
-    date_range = dob_start + " et après";
+    date_range = "en " + dob_start + " et après";
   } else if (dob_start <= 1900) {
-    date_range = dob_end + " et avant";
+    date_range = "en " + dob_end + " et avant";
   } else {
     date_range = "de " + dob_start + " à " + dob_end;
   }
@@ -245,6 +245,18 @@ function getCompJuniorLicenseString() {
 
 function getCompAdultLicenseString() {
   return attributed_licenses_values[6];
+}
+
+function getSkiPassFamily4String() {
+  return ski_pass_values[0];
+}
+
+function getSkiPassFamily5String() {
+  return ski_pass_values[1];
+}
+
+function getSkiPassStudentString() {
+  return ski_pass_values[4];
 }
 
 // Obtain a DoB at coords. Return an empty string if no DoB exists or if it
@@ -463,12 +475,16 @@ function validateSkiPassPurchase(dobs) {
   }
   // Match the number of reserved ski pass entries for a given age range with
   // the number of entries in that age range.
-  error = ""
+  var error = ""
+  var family4 = getSkiPassFamily4String();
+  var family5 = getSkiPassFamily5String();
+  var student = getSkiPassStudentString();
   for (var index in ski_pass_values) {
-    if (index == 0 || index == 1) {
+    var ski_pass_type = ski_pass_values[index];
+    // Family passes have already been verified
+    if (ski_pass_type == family4 || ski_pass_type == family5) {
       continue;
     }
-    var ski_pass_type = ski_pass_values[index];
     var ski_pass_purchased = Number(getStringAt(
       [coord_purchased_ski_pass[ski_pass_type][0],
        coord_purchased_ski_pass[ski_pass_type][1]]));
@@ -476,12 +492,16 @@ function validateSkiPassPurchase(dobs) {
     var dob_end = ski_pass_dob_validation[ski_pass_type][1]
     var dobs_found = numberOfDoBsInRange(dobs, dob_start, dob_end);
     if (dobs_found != ski_pass_purchased) {
-      error += (ski_pass_purchased + " forfait(s) acheté(s) pour " +
-                dobs_found + " individu(s) né(s) " + 
-                dobRangeToString(dob_start, dob_end) + "\n");
+      error += (ski_pass_purchased + " forfait(s) " + ski_pass_type +
+                " acheté(s) pour " + dobs_found + " individu(s) né(s) " + 
+                dobRangeToString(dob_start, dob_end));
+      if (ski_pass_type == student) {
+        error += " (Avez vous un adulte étudiant?)";
+      }
+      error += "\n";
     }
   }
-  displayErrorPanel(error);
+  return error;
 }
 
 // Cross check the attributed licenses with the ones selected for payment
@@ -750,7 +770,14 @@ function validateInvoice() {
     }
   }
   var skipass_validation_error = validateSkiPassPurchase(dobs);
-  displayErrorPanel(skipass_validation_error);
+  if (skipass_validation_error) {
+    skipass_validation_error += ("\n\nChoisissez 'OK' pour continuer à générer la facture.\n" +
+                                 "Choisissez 'Annuler' pour ne pas générer la facture et " +
+                                 "vérifier les valeurs saisies...");
+    if (! displayYesNoPanel(skipass_validation_error)) {
+      return {};
+    }    
+  }
   
   // Validate the parental consent.
   var consent = validateAndReturnDropDownValue(
