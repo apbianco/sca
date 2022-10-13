@@ -560,7 +560,7 @@ function validateLicenseSubscription(attributed_licenses) {
     return ("Le nombre total de license(s) Loisir attribuée(s):\n\n" + detail + 
             "\nne correspond pas au nombre d'adhésion(s) Loisir saisie(s) qui est de " +
             total_non_comp + ".\n\n" +
-            "Un ou plusieurs personnes (enfants, adultes) prennent une license mais pas d'adhésion?");
+            "Une ou plusieurs personnes (enfants, adultes) prennent une license mais pas d'adhésion?");
   }
   return "";
 }
@@ -1041,12 +1041,12 @@ function generatePDFAndMaybeSendEmail(send_email, just_the_invoice) {
   var validation = validateInvoice();
   if (isEmpty(validation)) {
     setStringAt(coord_status, 
-                      "❌ La validation de la facture a échouée", "red")      
+                "❌ La validation de la facture a échouée", "red")      
     SpreadsheetApp.flush()
     return;
   }
   setStringAt(coord_status, 
-                    "⏳ Préparation de la facture...", "orange")
+              "⏳ Préparation de la facture...", "orange")
   SpreadsheetApp.flush()
   
   // Generate and prepare attaching the PDF to the email
@@ -1156,10 +1156,10 @@ function generatePDFAndMaybeSendEmail(send_email, just_the_invoice) {
     maybeEmailLicenseSCA([attachments[0]]);
 
     setStringAt(coord_status, 
-                      "✅ Dossier envoyé", "green")  
+                "✅ " + (just_the_invoice ? "Facture envoyée" : "dossier envoyé"), "green")  
   } else {
     setStringAt(coord_status, 
-                      "✅ Dossier généré", "green")  
+                "✅ " + (just_the_invoice ? "Facture générée" : "dossier généré"), "green")  
   }
   displayPDFLink(pdf_file)
   SpreadsheetApp.flush()  
