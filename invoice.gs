@@ -198,7 +198,7 @@ function getSkiPassStudentString() {
 //
 
 ///////////////////////////////////////////////////////////////////////////////
-// Utility methods controllingthe execution environment
+// Utility methods controlling the execution environment
 ///////////////////////////////////////////////////////////////////////////////
 
 function isProd() {
@@ -410,6 +410,7 @@ function countAdultsAndKids(dobs) {
   return [count_adults, count_children];
 }
 
+// Given a dd/MM/YYYY dob, return the YoB.
 function getDoBYear(dob) {
   return Number(new RegExp("[0-9]+/[0-9]+/([0-9]+)", "gi").exec(dob)[1]);
 }
@@ -444,13 +445,13 @@ function formatPhoneNumbers() {
 
 function displayErrorPanel(message) {
   var ui = SpreadsheetApp.getUi();
-  ui.alert("🛑 ✋\n\n" + message, ui.ButtonSet.OK);
+  ui.alert("❌\n\n" + message, ui.ButtonSet.OK);
 }
 
 // Display a OK/Cancel panel, returns true if OK was pressed.
 function displayYesNoPanel(message) {
   var ui = SpreadsheetApp.getUi();
-  var response = ui.alert(message, ui.ButtonSet.OK_CANCEL);
+  var response = ui.alert("⚠️\n\n" + message, ui.ButtonSet.OK_CANCEL);
   return response == ui.Button.OK;
 }
 
@@ -945,7 +946,7 @@ function validateInvoice() {
       subscription_validation_error += ("\n\nChoisissez 'OK' pour continuer à générer la facture.\n" +
                                         "Choisissez 'Annuler' pour ne pas générer la facture et " +
                                         "vérifier les valeurs saisies...");
-      if (! displayYesNoPanel("⚠️\n\n" + subscription_validation_error)) {
+      if (! displayYesNoPanel(subscription_validation_error)) {
         return {};
       }
     }
@@ -958,7 +959,7 @@ function validateInvoice() {
       skipass_validation_error += ("\n\nChoisissez 'OK' pour continuer à générer la facture.\n" +
                                    "Choisissez 'Annuler' pour ne pas générer la facture et " +
                                    "vérifier les valeurs saisies...");
-      if (! displayYesNoPanel("⚠️\n\n" + skipass_validation_error)) {
+      if (! displayYesNoPanel(skipass_validation_error)) {
         return {};
       }    
     }
