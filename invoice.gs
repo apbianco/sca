@@ -6,7 +6,7 @@
 // Dev or prod? "dev" sends all email to email_dev. Prod is the
 // real thing: family will receive invoices, and so will email_license,
 // unless the trigger in use is the TEST trigger.
-var dev_or_prod = "prod"
+dev_or_prod = "prod"
 
 // Enable/disable new features - first entry set to false
 // requires all following entries set to false.
@@ -36,23 +36,23 @@ var parents_note_pdf = '10xRJwUWS_eJApxNgUJOfOAnAilNDdnWj'
 // 
 // - Locations of family details:
 //
-var coord_family_civility = [6, 3]
-var coord_family_name = [6, 4]
-var coord_family_email = [9, 3]
-var coord_cc = [9, 5]
-var coord_family_phone1 = [10, 3];
-var coord_family_phone2 = [10, 5];
+var coord_family_civility = [6,  3]
+var coord_family_name =     [6,  4]
+var coord_family_email =    [9,  3]
+var coord_cc =              [9,  5]
+var coord_family_phone1 =   [10, 3]
+var coord_family_phone2 =   [10, 5]
 //
 // - Locations of various status line and collected input, located
 //   a the bottom of the invoice.
 // 
 var coord_personal_message = [78, 3]
-var coord_callme_phone = [79, 7]
-var coord_timestamp = [79, 2]
-var coord_version = [79, 3]
+var coord_callme_phone =     [79, 7]
+var coord_timestamp =        [79, 2]
+var coord_version =          [79, 3]
 var coord_parental_consent = [79, 5]
-var coord_status = [81, 4]
-var coord_generated_pdf = [81, 6]
+var coord_status =           [81, 4]
+var coord_generated_pdf =    [81, 6]
 //
 // - Rows where the familly names are entered
 // 
@@ -105,7 +105,9 @@ var coord_purchased_subscriptions_non_comp = [
   [41, 5],  // Child 3
   [42, 5]   // Child 4
 ];
-
+//
+// Skipass values
+//
 var ski_pass_values = [
   'Famille 4',
   'Famille 5',
@@ -115,7 +117,9 @@ var ski_pass_values = [
   'Junior',
   'Enfant',
   'Peluche'];
-
+//
+// Skipass DoB validations per type
+//
 var ski_pass_dob_validation = {
   'Famille 4': [-1,   2051],
   'Famille 5': [-1,   2051],
@@ -125,7 +129,9 @@ var ski_pass_dob_validation = {
   'Junior':    [2005, 2013],
   'Enfant':    [2014, 2016],
   'Peluche':   [2017, 2050]};
-
+//
+// Skipass purchase indicator coordinates
+//
 var coord_purchased_ski_pass = {
   'Famille 4': [23, 5],
   'Famille 5': [24, 5],
@@ -143,87 +149,9 @@ var email_comp = 'skicluballevardin@gmail.com'
 var email_dev = 'apbianco@gmail.com'
 var email_license = 'licence.sca@gmail.com'
 
-function isProd() {
-  return dev_or_prod == 'prod'
-}
-
-function isDev() {
-  return dev_or_prod == 'dev'
-}
-
-function isTest() {
-  return getOperator() == 'TEST'
-}
-
-// Issue a key/value string followed by a carriage return
-function hashToString(v) {
-  var to_return = "";
-  for (const [key, value] of Object.entries(v)) {
-    to_return += (key + ": " + value + "\n");
-  }
-  return to_return;
-}
-
-function arrayToString(v) {
-  var to_return = "";
-  for (var index in v) {
-    to_return += index + ": " + v[index] + "\n";
-  }
-  return to_return;
-}
-
-function dobRangeToString(dob_start, dob_end) {
-  var date_range = '';
-  if (dob_end >= 2050) {
-    date_range = "en " + dob_start + " et après";
-  } else if (dob_start <= 1900) {
-    date_range = "en " + dob_end + " et avant";
-  } else {
-    date_range = "de " + dob_start + " à " + dob_end;
-  }
-  return date_range;
-}
-
-// If we're in dev mode, return email_dev.
-// If we're used from the TEST trigger, return allowed_user
-// If not, return the provided email address.
-// NOTE: dev mode takes precedence over TEST
-function checkEmail(email) {
-  if (isDev()) {
-    return email_dev
-  }
-  if (isTest()) {
-    return allowed_user
-  }
-  return email
-}
-
-function Debug(message) {
-  var ui = SpreadsheetApp.getUi();
-  ui.alert(message, ui.ButtonSet.OK);
-}
-
-function createHyperLinkFromURL(url, link_text) {
-  return '=HYPERLINK("' + url + '"; "' + link_text + '")';
-}
-
-function clearRange(sheet, coord) {
-  sheet.getRange(coord[0],coord[1]).clear();
-}
-
-function setStringAt(coord, text, color) {
-  var sheet = SpreadsheetApp.getActiveSheet();
-  var x = coord[0];
-  var y = coord[1];
-  sheet.getRange(x,y).setValue(text);
-  sheet.getRange(x,y).setFontColor(color);
-}
-
-function getStringAt(coord) {
-  var x = coord[0];
-  var y = coord[1];
-  return SpreadsheetApp.getActiveSheet().getRange(x, y).getValue().toString()
-}
+///////////////////////////////////////////////////////////////////////////////
+// Accessors to the data defined above
+///////////////////////////////////////////////////////////////////////////////
 
 function getNoLicenseString() {
   return attributed_licenses_values[0];
@@ -265,72 +193,101 @@ function getSkiPassStudentString() {
   return ski_pass_values[4];
 }
 
-// Obtain a DoB at coords. Return an empty string if no DoB exists or if it
-// can't be parsed properly as dd/MM/yyyy
-function getDoB(coords) {
-  var birth = getStringAt(coords);
-  if (birth != "") {
-    birth = new Date(getStringAt(coords));
-    // Verify the format
-    if (birth != undefined) {
-      var dob_string = Utilities.formatDate(birth, "GMT", "dd/MM/yyyy");
-      // Verify the date is reasonable
-      var yob = Number(new RegExp("[0-9]+/[0-9]+/([0-9]+)", "gi").exec(dob_string)[1]);
-      if (yob >= 1900 && yob <= 2050) {
-        return dob_string;
-      }
-    }
+//
+// There's nothing else to configure past that point
+//
+
+///////////////////////////////////////////////////////////////////////////////
+// Utility methods controllingthe execution environment
+///////////////////////////////////////////////////////////////////////////////
+
+function isProd() {
+  return dev_or_prod == 'prod'
+}
+
+function isDev() {
+  return dev_or_prod == 'dev'
+}
+
+function isTest() {
+  return getOperator() == 'TEST'
+}
+
+// If we're in dev mode, return email_dev.
+// If we're used from the TEST trigger, return allowed_user
+// If not, return the provided email address.
+// NOTE: dev mode takes precedence over TEST
+function checkEmail(email) {
+  if (isDev()) {
+    return email_dev
   }
-  return undefined;
-}
-
-// Determine whether someone is an adult (17 years old as of December 1st)
-function isAdult(dob) {
-  // Compare to December first of this year - the date at which folks are
-  // adults. 11 is for December - thank you JavaScript...)
-  var adult_date = new Date(new Date().getFullYear()+"-12-01");
-  // Converting dob to a date and using getters doesn't work very well
-  // so we're parsing the date instead.
-  var res = new RegExp("([0-9]+)/([0-9]+)/([0-9]+)", "gi").exec(dob);
-  var anniversary = new Date(Number(res[3])+17, Number(res[2])-1, Number(res[1])+1);
-  // Use millisecond since epoch to determine wether someone is past
-  // 17 as of December 1st.
-  return anniversary.valueOf() <= adult_date.valueOf();
-}
-
-function getFamilyDictionary() {
-  var family = []
-  var no_license = getNoLicenseString();
-  for (var index in coords_identity_rows) {    
-    var first_name = getStringAt([coords_identity_rows[index], 2]);
-    var last_name = getStringAt([coords_identity_rows[index], 3]);    
-    // After validation of the family entries, having a first name
-    // guarantees a last name. Just check the existence of a
-    // first name in order to skip that entry
-    if (first_name == "") {
-      continue;
-    }
-    // We can skip that entry if no license is required. That familly
-    // member doesn't need to be reported in this dictionary.
-    var license = getStringAt([coords_identity_rows[index], 7]);
-    if (license == "" || license == no_license) {
-      continue;
-    }
-    // DoB is guaranteed to be there if a license was requested
-    var birth = getDoB([coords_identity_rows[index], 4]);
-    var city = getStringAt([coords_identity_rows[index], 5])
-    if (city == "") {
-      city = "\\";
-    }
-    // Sex is guaranteed to be there
-    var sex = getStringAt([coords_identity_rows[index], 6])
-
-    family.push({'first': first_name, 'last': last_name,
-                 'birth': birth, 'city': city, 'sex': sex,
-                 'license': license})
+  if (isTest()) {
+    return allowed_user
   }
-  return family
+  return email
 }
+
+///////////////////////////////////////////////////////////////////////////////
+// Debugging methods
+///////////////////////////////////////////////////////////////////////////////
+
+// Issue a key/value string followed by a carriage return
+function hashToString(v) {
+  var to_return = "";
+  for (const [key, value] of Object.entries(v)) {
+    to_return += (key + ": " + value + "\n");
+  }
+  return to_return;
+}
+
+function arrayToString(v) {
+  var to_return = "";
+  for (var index in v) {
+    to_return += index + ": " + v[index] + "\n";
+  }
+  return to_return;
+}
+
+function dobRangeToString(dob_start, dob_end) {
+  var date_range = '';
+  if (dob_end >= 2050) {
+    date_range = "en " + dob_start + " et après";
+  } else if (dob_start <= 1900) {
+    date_range = "en " + dob_end + " et avant";
+  } else {
+    date_range = "de " + dob_start + " à " + dob_end;
+  }
+  return date_range;
+}
+
+function isEmpty(obj) {
+  return Object.keys(obj).length === 0;
+}
+
+function Debug(message) {
+  var ui = SpreadsheetApp.getUi();
+  ui.alert(message, ui.ButtonSet.OK);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// Link management
+///////////////////////////////////////////////////////////////////////////////
+
+function createHyperLinkFromURL(url, link_text) {
+  return '=HYPERLINK("' + url + '"; "' + link_text + '")';
+}
+
+function displayPDFLink(pdf_file, offset) {
+  var link = createHyperLinkFromURL(pdf_file.getUrl(),
+                                    "📁 Ouvrir " + pdf_file.getName())
+  x = coord_generated_pdf[0]
+  y = coord_generated_pdf[1]
+  SpreadsheetApp.getActiveSheet().getRange(x, y).setFormula(link); 
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// PDF generation methods
+///////////////////////////////////////////////////////////////////////////////
 
 function savePDF(blob, fileName) {
   blob = blob.setName(fileName)
@@ -363,30 +320,103 @@ function createPDF(sheet) {
   return UrlFetchApp.fetch(url, params).getBlob(); 
 }
 
-function displayErrorPanel(message) {
-  var ui = SpreadsheetApp.getUi();
-  ui.alert("🛑 ✋\n\n" + message, ui.ButtonSet.OK);
+// Create the invoice as a PDF: first create a blob and then save
+// the blob as a PDF and move it to the <db>/<OPERATOR:FAMILY>
+// directory. Return the PDF file ID.  
+function generatePDF() {
+  var spreadsheet = SpreadsheetApp.getActiveSpreadsheet()
+  var pdf_number = getAndUpdateInvoiceNumber();
+  var blob = createPDF(spreadsheet)
+  var pdf_filename = spreadsheet.getName() + '-' + pdf_number + '.pdf';
+  var file = savePDF(blob, pdf_filename)
+  
+  var spreadsheet_folder_id =
+    DriveApp.getFolderById(spreadsheet.getId()).getParents().next().getId()
+  DriveApp.getFileById(file.getId()).moveTo(
+    DriveApp.getFolderById(spreadsheet_folder_id))
+  return file;
 }
 
-// Display a OK/Cancel panel, returns true if OK was pressed.
-function displayYesNoPanel(message) {
-  var ui = SpreadsheetApp.getUi();
-  var response = ui.alert(message, ui.ButtonSet.OK_CANCEL);
-  return response == ui.Button.OK;
+///////////////////////////////////////////////////////////////////////////////
+// Spreadsheet data access methods
+///////////////////////////////////////////////////////////////////////////////
+
+function clearRange(sheet, coord) {
+  sheet.getRange(coord[0],coord[1]).clear();
 }
 
-// Validate a cell at (x, y) whose value is set via a drop-down
-// menu. We rely on the fact that a cell not yet set a proper value
-// always has the same value.  When the value is valid, it is
-// returned. Otherwise, '' is returned.
-function validateAndReturnDropDownValue(coord, message) {
-  var value = getStringAt(coord)
-  if (value == 'Choix non renseigné' || value == '') {
-    displayErrorPanel(message)
-    return ''
+function setStringAt(coord, text, color) {
+  var sheet = SpreadsheetApp.getActiveSheet();
+  var x = coord[0];
+  var y = coord[1];
+  sheet.getRange(x,y).setValue(text);
+  sheet.getRange(x,y).setFontColor(color);
+}
+
+function getStringAt(coord) {
+  var x = coord[0];
+  var y = coord[1];
+  return SpreadsheetApp.getActiveSheet().getRange(x, y).getValue().toString()
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// Date of Birth (DoB) management
+///////////////////////////////////////////////////////////////////////////////
+
+// Obtain a DoB at coords. Return an empty string if no DoB exists or if it
+// can't be parsed properly as dd/MM/yyyy
+function getDoB(coords) {
+  var birth = getStringAt(coords);
+  if (birth != "") {
+    birth = new Date(getStringAt(coords));
+    // Verify the format
+    if (birth != undefined) {
+      var dob_string = Utilities.formatDate(birth, "GMT", "dd/MM/yyyy");
+      // Verify the date is reasonable
+      var yob = getDoBYear(dob_string);
+      if (yob >= 1900 && yob <= 2050) {
+        return dob_string;
+      }
+    }
   }
-  return value
+  return undefined;
 }
+
+// Determine whether someone is an adult (17 years old as of December 1st)
+function isAdult(dob) {
+  // Compare to December first of this year - the date at which folks are
+  // adults. 11 is for December - thank you JavaScript...)
+  var adult_date = new Date(new Date().getFullYear()+"-12-01");
+  // Converting dob to a date and using getters doesn't work very well
+  // so we're parsing the date instead.
+  var res = new RegExp("([0-9]+)/([0-9]+)/([0-9]+)", "gi").exec(dob);
+  var anniversary = new Date(Number(res[3])+17, Number(res[2])-1, Number(res[1])+1);
+  // Use millisecond since epoch to determine wether someone is past
+  // 17 as of December 1st.
+  return anniversary.valueOf() <= adult_date.valueOf();
+}
+
+// Given a list of DoBs, count the number of adults and kids in it.
+function countAdultsAndKids(dobs) {
+  var count_adults = 0;
+  var count_children = 0;
+  for (var index in dobs) {
+    if (isAdult(dobs[index])) {
+      count_adults += 1;
+    } else {
+      count_children += 1;
+    }
+  }
+  return [count_adults, count_children];
+}
+
+function getDoBYear(dob) {
+  return Number(new RegExp("[0-9]+/[0-9]+/([0-9]+)", "gi").exec(dob)[1]);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// Input formating
+///////////////////////////////////////////////////////////////////////////////
 
 // Reformat the phone numbers
 function formatPhoneNumbers() {
@@ -406,6 +436,39 @@ function formatPhoneNumbers() {
   
   formatPhoneNumber(coord_family_phone1);
   formatPhoneNumber(coord_family_phone2);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// Alerting
+///////////////////////////////////////////////////////////////////////////////
+
+function displayErrorPanel(message) {
+  var ui = SpreadsheetApp.getUi();
+  ui.alert("🛑 ✋\n\n" + message, ui.ButtonSet.OK);
+}
+
+// Display a OK/Cancel panel, returns true if OK was pressed.
+function displayYesNoPanel(message) {
+  var ui = SpreadsheetApp.getUi();
+  var response = ui.alert(message, ui.ButtonSet.OK_CANCEL);
+  return response == ui.Button.OK;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// Validation methods
+///////////////////////////////////////////////////////////////////////////////
+
+// Validate a cell at (x, y) whose value is set via a drop-down
+// menu. We rely on the fact that a cell not yet set a proper value
+// always has the same value.  When the value is valid, it is
+// returned. Otherwise, '' is returned.
+function validateAndReturnDropDownValue(coord, message) {
+  var value = getStringAt(coord)
+  if (value == 'Choix non renseigné' || value == '') {
+    displayErrorPanel(message)
+    return ''
+  }
+  return value
 }
 
 // Verify that family members have a first name, 
@@ -460,9 +523,27 @@ function validateFamilyMembers() {
 // Loosely cross checks attributed licenses with delivered subscriptions...
 function validateLicenseSubscription(attributed_licenses) {
   var total_non_comp = 0;
+  var reached_zero = false;
   for (var index in coord_purchased_subscriptions_non_comp) {
     var row = coord_purchased_subscriptions_non_comp[index][0];
     var col = coord_purchased_subscriptions_non_comp[index][1];
+    value = Number(SpreadsheetApp.getActiveSheet().getRange(row, col).getValue());
+    // When we get past the rider category, that value can only be 1
+    // and when it reaches 0, it can't be 1 again :)
+    if (index > 0) {
+      if (value != 1 && value != 0) {
+        return ("La valeur du champ 'Adhésion / Stage / Transport - enfant " + index +
+                "' ne peut prendre que la valeur 0 ou 1.");
+      }
+      if (value == 1 && reached_zero) {
+        return ("La valeur du champ 'Adhésion / Stage / Transport - enfant " + index +
+                "' ne peut pas prendre la valeur 1 alors que la valeur du champ " +
+                "'Adhésion / Stage / Transport - enfant " + (index-1) + "' est de 0.");
+      }
+      if (value == 0) {
+        reached_zero = true;
+      }
+    }
     total_non_comp += Number(SpreadsheetApp.getActiveSheet().getRange(row, col).getValue());
   }
   // The number of non competition registrations should be equal to the 
@@ -478,7 +559,8 @@ function validateLicenseSubscription(attributed_licenses) {
               "• TOTAL: " + total_attributed_licenses) + "\n";
     return ("Le nombre total de license(s) Loisir attribuée(s):\n\n" + detail + 
             "\nne correspond pas au nombre d'adhésion(s) Loisir saisie(s) qui est de " +
-            total_non_comp + ".");
+            total_non_comp + ".\n\n" +
+            "Un ou plusieurs personnes (enfants, adultes) prennent une license mais pas d'adhésion?");
   }
   return "";
 }
@@ -487,7 +569,8 @@ function validateSkiPassPurchase(dobs) {
   function numberOfDoBsInRange(dobs, min, max) {
     var count = 0;
     for (var index in dobs) {
-      if (dobs[index] >= min &&  dobs[index] <= max) {
+      var yob = getDoBYear(dobs[index]);
+      if (yob >= min && yob <= max) {
         count += 1;
       }
     }
@@ -498,19 +581,6 @@ function validateSkiPassPurchase(dobs) {
     return Number(getStringAt([
       coord_purchased_ski_pass[ski_pass_type][0],
       coord_purchased_ski_pass[ski_pass_type][1]]));
-  }
-  
-  function countAdultsKids(dobs) {
-    var count_adults = 0;
-    var count_children = 0;
-    for (var index in dobs) {
-      if (isAdult(dobs[index])) {
-        count_adults += 1;
-      } else {
-        count_children += 1;
-      }
-    }
-    return [count_adults, count_children];
   }
 
   var family4 = getSkiPassFamily4String();
@@ -523,7 +593,7 @@ function validateSkiPassPurchase(dobs) {
               " forfaits Annuel Famille 4 personnes sélectionnés.");
       // Verify that we have two adults and two child
     }
-    var res = countAdultsKids(dobs);
+    var res = countAdultsAndKids(dobs);
     var count_adults = res[0];
     var count_children = res[1];
     Debug("adults: "+count_adults+" kids:"+count_children);
@@ -553,6 +623,12 @@ function validateSkiPassPurchase(dobs) {
   }
   
   var error = ""
+  // If we validated a family pass, return now. The rest of the validation is
+  // going to be too complicated.
+  if (ski_pass_type == family4 || ski_pass_type == family5) {
+    return error;
+  }
+  
   var student = getSkiPassStudentString();
   // Match the number of reserved ski pass entries for a given age range with
   // the number of entries in that age range.
@@ -637,8 +713,8 @@ function validateLicenseCrossCheck() {
     if (selected_license == exec_license) {
       var city = getStringAt([row, 5]);
       if (city == '') {
-        return returnError(first_name + " " + last_name + ": une license " + selected_license + "\n" +
-                           "requiert de renseigner une ville et un pays de naissance");
+        return returnError(first_name + " " + last_name + ": une license " + selected_license +
+                           " requiert de renseigner une ville et un pays de naissance");
       }
     }
     
@@ -648,15 +724,14 @@ function validateLicenseCrossCheck() {
     }
     
     // Validate DoB against the type of license
-    var dob = getDoB([row, 4]);
-    dob = Number(new RegExp("[0-9]+/[0-9]+/([0-9]+)", "gi").exec(dob)[1]);
+    var yob = getDoBYear(getDoB([row, 4]));
     dob_start = attributed_licenses_dob_validation[selected_license][0];
     dob_end = attributed_licenses_dob_validation[selected_license][1];
-    if (dob < dob_start || dob > dob_end) {
+    if (yob < dob_start || yob > dob_end) {
       var date_range = dobRangeToString(dob_start, dob_end);
-      return returnError(first_name + " " + last_name + ": l'année de naissance " + dob + "\n" +
-                         "ne correspond aux années de validité de la license choisie:\n'" +
-                         selected_license + "': " + date_range);
+      return returnError(first_name + " " + last_name + ": l'année de naissance " + yob +
+                         " ne correspond aux années de validité de la license choisie: '" +
+                         selected_license + "', années de validité: '" + date_range + "'");
     }
   }
   
@@ -682,14 +757,23 @@ function validateLicenseCrossCheck() {
   if (attributed_licenses[family_license] != 0) {
     // A least four declared participants
     if (attributed_licenses[family_license] < 4) {
-      return returnError("Il faut attribuer une license famille à au moins 4 membres " +
+      return returnError("Il faut attribuer une licence famille à au moins 4 membres " +
                          "d'une même famille. Seulement " + attributed_licenses[family_license] +
                          " ont été attribuées.");
     }
     // Check that one family license was purchased.
     if (purchased_licenses[family_license] != 1) {
-      return returnError("Vous devez acheter une license loisir famille, vous en avez " +
+      return returnError("Vous devez acheter une licence loisir famille, vous en avez " +
                          "acheté pour l'instant " + purchased_licenses[family_license]);
+    }
+    // Last verification: two adults and two+ kids
+    var res = countAdultsAndKids(dobs);
+    var count_adults = res[0];
+    var count_children = res[1];
+    if (count_adults != 2 || count_children < 2) {
+      return returnError("Seulement " + count_adults + " adulte(s) déclaré(s) et " +
+              count_children + " enfants(s) de moins de 17 ans déclaré(s) " +
+              "pour la license famille.");
     }
   }
   for (var index in attributed_licenses_values) {
@@ -699,7 +783,7 @@ function validateLicenseCrossCheck() {
     var key = attributed_licenses_values[index];
     if (key != no_license && key != family_license) {
       if (purchased_licenses[key] != attributed_licenses[key]) {
-        return returnError("Le nombre de licence(s) '" + key + "' selectionée(s) (au nombre de " +
+        return returnError("Le nombre de licence(s) '" + key + "' attribuée(s) (au nombre de " +
                            attributed_licenses[key] + ")\n" +
                            "ne correspond pas au nombre de licence(s) achetée(s) (au nombre de " +
                            purchased_licenses[key] + ")");        
@@ -709,9 +793,9 @@ function validateLicenseCrossCheck() {
   return ["", attributed_licenses];
 }
 
-function isEmpty(obj) {
-  return Object.keys(obj).length === 0;
-}
+///////////////////////////////////////////////////////////////////////////////
+// Invoice meta information management
+///////////////////////////////////////////////////////////////////////////////
 
 function getOperator() {
   return SpreadsheetApp.getActiveSpreadsheet().getName().toString().split(':')[0]
@@ -719,11 +803,6 @@ function getOperator() {
 
 function getFamilyName() {
   return SpreadsheetApp.getActiveSpreadsheet().getName().toString().split(':')[1]
-}
-
-// Runs when the [secure authorization] button is pressed.
-function GetAuthorization() {
-  ScriptApp.getAuthorizationInfo(ScriptApp.AuthMode.FULL)
 }
 
 function getInvoiceNumber() {
@@ -747,22 +826,43 @@ function getAndUpdateInvoiceNumber() {
   return extracted_num;
 }
 
-// Create the invoice as a PDF: first create a blob and then save
-// the blob as a PDF and move it to the <db>/<OPERATOR:FAMILY>
-// directory. Return the PDF file ID.  
-function generatePDF() {
-  var spreadsheet = SpreadsheetApp.getActiveSpreadsheet()
-  var pdf_number = getAndUpdateInvoiceNumber();
-  var blob = createPDF(spreadsheet)
-  var pdf_filename = spreadsheet.getName() + '-' + pdf_number + '.pdf';
-  var file = savePDF(blob, pdf_filename)
-  
-  var spreadsheet_folder_id =
-    DriveApp.getFolderById(spreadsheet.getId()).getParents().next().getId()
-  DriveApp.getFileById(file.getId()).moveTo(
-    DriveApp.getFolderById(spreadsheet_folder_id))
-  return file;
+function getFamilyDictionary() {
+  var family = []
+  var no_license = getNoLicenseString();
+  for (var index in coords_identity_rows) {    
+    var first_name = getStringAt([coords_identity_rows[index], 2]);
+    var last_name = getStringAt([coords_identity_rows[index], 3]);    
+    // After validation of the family entries, having a first name
+    // guarantees a last name. Just check the existence of a
+    // first name in order to skip that entry
+    if (first_name == "") {
+      continue;
+    }
+    // We can skip that entry if no license is required. That familly
+    // member doesn't need to be reported in this dictionary.
+    var license = getStringAt([coords_identity_rows[index], 7]);
+    if (license == "" || license == no_license) {
+      continue;
+    }
+    // DoB is guaranteed to be there if a license was requested
+    var birth = getDoB([coords_identity_rows[index], 4]);
+    var city = getStringAt([coords_identity_rows[index], 5])
+    if (city == "") {
+      city = "\\";
+    }
+    // Sex is guaranteed to be there
+    var sex = getStringAt([coords_identity_rows[index], 6])
+
+    family.push({'first': first_name, 'last': last_name,
+                 'birth': birth, 'city': city, 'sex': sex,
+                 'license': license})
+  }
+  return family
 }
+
+///////////////////////////////////////////////////////////////////////////////
+// Top level invoice validation
+///////////////////////////////////////////////////////////////////////////////
 
 // Validate the invoice and return a dictionary of values
 // to use during invoice generation.
@@ -828,7 +928,7 @@ function validateInvoice() {
     var dobs = ret[1];
 
     // Validate requested licenses
-    var ret = validateLicenseCrossCheck();
+    var ret = validateLicenseCrossCheck(dobs);
     var license_cross_check_error = ret[0]
     if (license_cross_check_error) {
       displayErrorPanel(license_cross_check_error);
@@ -892,25 +992,9 @@ function validateInvoice() {
           'consent': consent};
 }
 
-function displayPDFLink(pdf_file, offset) {
-  var link = createHyperLinkFromURL(pdf_file.getUrl(),
-                                    "📁 Ouvrir " + pdf_file.getName())
-  x = coord_generated_pdf[0]
-  y = coord_generated_pdf[1]
-  SpreadsheetApp.getActiveSheet().getRange(x, y).setFormula(link); 
-}
-
-// This is what the [generate] button runs
-function GeneratePDFButton() {
-  var validation = validateInvoice();
-  if (isEmpty(validation)) {
-    return;
-  }
-  setStringAt(coord_status, 
-                    "⏳ Préparation de la facture...", "orange")  
-  SpreadsheetApp.flush()
-  displayPDFLink(generatePDF());
-}
+///////////////////////////////////////////////////////////////////////////////
+// Invoice emailing
+///////////////////////////////////////////////////////////////////////////////
 
 function maybeEmailLicenseSCA(invoice) {
   var operator = getOperator()
@@ -948,22 +1032,6 @@ function maybeEmailLicenseSCA(invoice) {
     attachments: invoice,
   } 
   MailApp.sendEmail(email_options)
-}
-
-// This is what the [generate and send folder] button runs.
-function GeneratePDFAndSendEmailButton() {
-  generatePDFAndMaybeSendEmail(/* send_email= */ true, /* just_the_invoice= */ false)
-}
-
-// This is what the [generate invoice] button runs.
-function GeneratePDFButton() {
-  generatePDFAndMaybeSendEmail(/* send_email= */ false, /* just_the_invoice= */ true)
-}
-
-// This is what the [generate and send only the invoice] button runs.
-function GenerateJustPDFAndSendEmailButton() {
-  generatePDFAndMaybeSendEmail(/* send_email= */ true, /* just_the_invoice= */ true)
-
 }
 
 function generatePDFAndMaybeSendEmail(send_email, just_the_invoice) {
@@ -1089,4 +1157,40 @@ function generatePDFAndMaybeSendEmail(send_email, just_the_invoice) {
   }
   displayPDFLink(pdf_file)
   SpreadsheetApp.flush()  
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// Button callbacks
+///////////////////////////////////////////////////////////////////////////////
+
+// Runs when the [secure authorization] button is pressed.
+function GetAuthorization() {
+  ScriptApp.getAuthorizationInfo(ScriptApp.AuthMode.FULL)
+}
+
+// This is what the [generate] button runs
+function GeneratePDFButton() {
+  var validation = validateInvoice();
+  if (isEmpty(validation)) {
+    return;
+  }
+  setStringAt(coord_status, 
+                    "⏳ Préparation de la facture...", "orange")  
+  SpreadsheetApp.flush()
+  displayPDFLink(generatePDF());
+}
+
+// This is what the [generate and send folder] button runs.
+function GeneratePDFAndSendEmailButton() {
+  generatePDFAndMaybeSendEmail(/* send_email= */ true, /* just_the_invoice= */ false)
+}
+
+// This is what the [generate invoice] button runs.
+function GeneratePDFButton() {
+  generatePDFAndMaybeSendEmail(/* send_email= */ false, /* just_the_invoice= */ true)
+}
+
+// This is what the [generate and send only the invoice] button runs.
+function GenerateJustPDFAndSendEmailButton() {
+  generatePDFAndMaybeSendEmail(/* send_email= */ true, /* just_the_invoice= */ true)
 }
