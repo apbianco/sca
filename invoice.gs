@@ -8,6 +8,12 @@
 // unless the trigger in use is the TEST trigger.
 var dev_or_prod = "prod"
 
+// Enable/disable new features - first entry set to false
+// requires all following entries set to false.
+var advanced_verification_family_licenses = true;
+var advanced_verification_subscriptions = true;
+var advanced_verification_skipass = true;
+
 // Seasonal parameters - change for each season
 // 
 // - Name of the season
@@ -278,6 +284,20 @@ function getDoB(coords) {
   return undefined;
 }
 
+// Determine whether someone is an adult (17 years old as of December 1st)
+function isAdult(dob) {
+  // Compare to December first of this year - the date at which folks are
+  // adults. 11 is for December - thank you JavaScript...)
+  var adult_date = new Date(new Date().getFullYear()+"-12-01");
+  // Converting dob to a date and using getters doesn't work very well
+  // so we're parsing the date instead.
+  var res = new RegExp("([0-9]+)/([0-9]+)/([0-9]+)", "gi").exec(dob);
+  var anniversary = new Date(Number(res[3])+17, Number(res[2])-1, Number(res[1])+1);
+  // Use millisecond since epoch to determine wether someone is past
+  // 17 as of December 1st.
+  return anniversary.valueOf() <= adult_date.valueOf();
+}
+
 function getFamilyDictionary() {
   var family = []
   var no_license = getNoLicenseString();
@@ -345,7 +365,7 @@ function createPDF(sheet) {
 
 function displayErrorPanel(message) {
   var ui = SpreadsheetApp.getUi();
-  ui.alert(message, ui.ButtonSet.OK);
+  ui.alert("🛑 ✋\n\n" + message, ui.ButtonSet.OK);
 }
 
 // Display a OK/Cancel panel, returns true if OK was pressed.
@@ -426,7 +446,7 @@ function validateFamilyMembers() {
                            " ou année de naissance fantaisiste.");
       }
     } else {
-      dobs.push(Number(new RegExp("[0-9]+/[0-9]+/([0-9]+)", "gi").exec(dob)[1]));
+      dobs.push(dob);
     }
     // We need a sex
     var sex = getStringAt([coords_identity_rows[index], 6]);
@@ -473,21 +493,76 @@ function validateSkiPassPurchase(dobs) {
     }
     return count;
   }
-  // Match the number of reserved ski pass entries for a given age range with
-  // the number of entries in that age range.
-  var error = ""
+  
+  function getSkiPassTypeQuantity(ski_pass_type) {
+    return Number(getStringAt([
+      coord_purchased_ski_pass[ski_pass_type][0],
+      coord_purchased_ski_pass[ski_pass_type][1]]));
+  }
+  
+  function countAdultsKids(dobs) {
+    var count_adults = 0;
+    var count_children = 0;
+    for (var index in dobs) {
+      if (isAdult(dobs[index])) {
+        count_adults += 1;
+      } else {
+        count_children += 1;
+      }
+    }
+    return [count_adults, count_children];
+  }
+
   var family4 = getSkiPassFamily4String();
   var family5 = getSkiPassFamily5String();
+  // Verify the family passes first
+  family4_quantity = getSkiPassTypeQuantity(family4);
+  if (family4_quantity != 0) {
+    if (family4_quantity != 1) {
+      return (family4_quantity +
+              " forfaits Annuel Famille 4 personnes sélectionnés.");
+      // Verify that we have two adults and two child
+    }
+    var res = countAdultsKids(dobs);
+    var count_adults = res[0];
+    var count_children = res[1];
+    Debug("adults: "+count_adults+" kids:"+count_children);
+    if (count_adults != 2 || count_children != 2) {
+      return ("Seulement " + count_adults + " adulte(s) déclaré(s) et " +
+              count_children + " enfants(s) de moins de 17 ans déclaré(s) " +
+              "pour le forfait Annuel Famille 4 personnes sélectionné.");
+    }
+  }
+
+  family5_quantity = getSkiPassTypeQuantity(family5);
+  if (family5_quantity != 0) {
+    if (family5_quantity != 1) {
+      return (family5_quantity +
+              " forfaits Annuel Famille 5 personnes sélectionné");
+      // Verify that we have two adults and two child
+    }
+    var res = countAdultsKids(dobs);
+    var count_adults = res[0];
+    var count_children = res[1];
+    Debug("adults: "+count_adults+" kids:"+count_children);
+    if (count_adults != 2 || count_children != 3) {
+      return ("Seulement " + count_adults + " adulte(s) déclaré(s) et " +
+              count_children + " enfants(s) de moins de 17 ans déclaré(s) " +
+              "pour le forfait Annuel Famille 5 personnes sélectionné.");
+    }
+  }
+  
+  var error = ""
   var student = getSkiPassStudentString();
+  // Match the number of reserved ski pass entries for a given age range with
+  // the number of entries in that age range.
   for (var index in ski_pass_values) {
     var ski_pass_type = ski_pass_values[index];
     // Family passes have already been verified
     if (ski_pass_type == family4 || ski_pass_type == family5) {
       continue;
     }
-    var ski_pass_purchased = Number(getStringAt(
-      [coord_purchased_ski_pass[ski_pass_type][0],
-       coord_purchased_ski_pass[ski_pass_type][1]]));
+    var ski_pass_purchased = getSkiPassTypeQuantity(ski_pass_type);
     var dob_start = ski_pass_dob_validation[ski_pass_type][0];
     var dob_end = ski_pass_dob_validation[ski_pass_type][1]
     var dobs_found = numberOfDoBsInRange(dobs, dob_start, dob_end);
@@ -624,9 +699,9 @@ function validateLicenseCrossCheck() {
     var key = attributed_licenses_values[index];
     if (key != no_license && key != family_license) {
       if (purchased_licenses[key] != attributed_licenses[key]) {
-        return returnError("Le nombre de licences '" + key + "' selectionée(s) (au nombre de " +
+        return returnError("Le nombre de licence(s) '" + key + "' selectionée(s) (au nombre de " +
                            attributed_licenses[key] + ")\n" +
-                           "ne correspond pas au nombre de licences achetée(s) (au nombre de " +
+                           "ne correspond pas au nombre de licence(s) achetée(s) (au nombre de " +
                            purchased_licenses[key] + ")");        
       }
     }
@@ -742,41 +817,51 @@ function validateInvoice() {
   // Reformat the phone numbers  
   formatPhoneNumbers();
 
-  // Validate all entered familly members
-  var ret = validateFamilyMembers();
-  var family_validation_error = ret[0];
-  if (family_validation_error) {
-    displayErrorPanel(family_validation_error);
-    return {};
-  }
-  var dobs = ret[1];
+  if (advanced_verification_family_licenses) {
+    // Validate all entered familly members
+    var ret = validateFamilyMembers();
+    var family_validation_error = ret[0];
+    if (family_validation_error) {
+      displayErrorPanel(family_validation_error);
+      return {};
+    }
+    var dobs = ret[1];
 
-  // Validate requested licenses
-  var ret = validateLicenseCrossCheck();
-  var license_cross_check_error = ret[0]
-  if (license_cross_check_error) {
-    displayErrorPanel(license_cross_check_error);
-    return {};
-  }
-  var attributed_licenses_values = ret[1];
-  // Validate requeted licenses and subscriptions
-  var subscription_validation_error = validateLicenseSubscription(attributed_licenses_values);
-  if (subscription_validation_error) {
-    subscription_validation_error += ("\n\nChoisissez 'OK' pour continuer à générer la facture.\n" +
-                                      "Choisissez 'Annuler' pour ne pas générer la facture et " +
-                                      "vérifier les valeurs saisies...");
-    if (! displayYesNoPanel(subscription_validation_error)) {
+    // Validate requested licenses
+    var ret = validateLicenseCrossCheck();
+    var license_cross_check_error = ret[0]
+    if (license_cross_check_error) {
+      displayErrorPanel(license_cross_check_error);
       return {};
     }
   }
-  var skipass_validation_error = validateSkiPassPurchase(dobs);
-  if (skipass_validation_error) {
-    skipass_validation_error += ("\n\nChoisissez 'OK' pour continuer à générer la facture.\n" +
-                                 "Choisissez 'Annuler' pour ne pas générer la facture et " +
-                                 "vérifier les valeurs saisies...");
-    if (! displayYesNoPanel(skipass_validation_error)) {
-      return {};
-    }    
+  
+  if (advanced_verification_family_licenses &&
+      advanced_verification_subscriptions) {
+    var attributed_licenses_values = ret[1];
+    // Validate requeted licenses and subscriptions
+    var subscription_validation_error = validateLicenseSubscription(attributed_licenses_values);
+    if (subscription_validation_error) {
+      subscription_validation_error += ("\n\nChoisissez 'OK' pour continuer à générer la facture.\n" +
+                                        "Choisissez 'Annuler' pour ne pas générer la facture et " +
+                                        "vérifier les valeurs saisies...");
+      if (! displayYesNoPanel("⚠️\n\n" + subscription_validation_error)) {
+        return {};
+      }
+    }
+  }
+  if (advanced_verification_family_licenses &&
+      advanced_verification_subscriptions &&
+      advanced_verification_skipass) {
+    var skipass_validation_error = validateSkiPassPurchase(dobs);
+    if (skipass_validation_error) {
+      skipass_validation_error += ("\n\nChoisissez 'OK' pour continuer à générer la facture.\n" +
+                                   "Choisissez 'Annuler' pour ne pas générer la facture et " +
+                                   "vérifier les valeurs saisies...");
+      if (! displayYesNoPanel("⚠️\n\n" + skipass_validation_error)) {
+        return {};
+      }    
+    }
   }
   
   // Validate the parental consent.
