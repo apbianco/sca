@@ -1035,8 +1035,14 @@ function maybeEmailLicenseSCA(invoice) {
 }
 
 function generatePDFAndMaybeSendEmail(send_email, just_the_invoice) {
+  setStringAt(coord_status, 
+              "⏳ Validation de la facture...", "orange")      
+  SpreadsheetApp.flush()
   var validation = validateInvoice();
   if (isEmpty(validation)) {
+    setStringAt(coord_status, 
+                      "❌ La validation de la facture a échouée", "red")      
+    SpreadsheetApp.flush()
     return;
   }
   setStringAt(coord_status, 
@@ -1166,18 +1172,6 @@ function generatePDFAndMaybeSendEmail(send_email, just_the_invoice) {
 // Runs when the [secure authorization] button is pressed.
 function GetAuthorization() {
   ScriptApp.getAuthorizationInfo(ScriptApp.AuthMode.FULL)
-}
-
-// This is what the [generate] button runs
-function GeneratePDFButton() {
-  var validation = validateInvoice();
-  if (isEmpty(validation)) {
-    return;
-  }
-  setStringAt(coord_status, 
-                    "⏳ Préparation de la facture...", "orange")  
-  SpreadsheetApp.flush()
-  displayPDFLink(generatePDF());
 }
 
 // This is what the [generate and send folder] button runs.
