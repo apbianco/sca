@@ -837,7 +837,10 @@ function getAndUpdateInvoiceNumber() {
   return extracted_num;
 }
 
-function getFamilyDictionary() {
+// Produce a dictionary of family members that as purchasing a license.
+// This assumes that some verification of first/last name, DoB and sex
+// has already been performed.
+function getDictionaryOfFamilyPurchasingALicense() {
   var family = []
   var no_license = getNoLicenseString();
   for (var index in coords_identity_rows) {    
@@ -878,6 +881,9 @@ function getFamilyDictionary() {
 // Validate the invoice and return a dictionary of values
 // to use during invoice generation.
 function validateInvoice() {
+  // Reformat the phone numbers  
+  formatPhoneNumbers();
+
   if (! isProd()) {
     Debug('Cette facture est en mode developpement. Aucun email ne sera envoyé, ' +
           'ni à la famile ni à ' + email_license + '.\n\n' +
@@ -924,21 +930,21 @@ function validateInvoice() {
       "de valider l'adresse email par [return] ou [enter]...")
     return {}
   }
-
-  // Reformat the phone numbers  
-  formatPhoneNumbers();
-
+  
+  // Validate all the entered family members
+  
+  var ret = validateFamilyMembers();
+  var family_validation_error = ret[0];
+  var dobs = ret[1];
+  if (family_validation_error) {
+    displayErrorPanel(family_validation_error);
+    return {};
+  }
+  
+  // Now performing the optional/advanced validations... 
+  //
+  // 1- Validate the licenses requested by this family
   if (advanced_verification_family_licenses) {
-    // Validate all entered familly members
-    var ret = validateFamilyMembers();
-    var family_validation_error = ret[0];
-    if (family_validation_error) {
-      displayErrorPanel(family_validation_error);
-      return {};
-    }
-    var dobs = ret[1];
-
-    // Validate requested licenses
     var ret = validateLicenseCrossCheck(dobs);
     var license_cross_check_error = ret[0]
     if (license_cross_check_error) {
@@ -946,7 +952,9 @@ function validateInvoice() {
       return {};
     }
   }
-  
+
+  // 2- Verify the subscriptions. The operator may choose to continue
+  //    as some situation are un-verifiable automatically.
   if (advanced_verification_family_licenses &&
       advanced_verification_subscriptions) {
     var attributed_licenses_values = ret[1];
@@ -961,8 +969,9 @@ function validateInvoice() {
       }
     }
   }
-  
 
+  // 3- Verify the ski pass purchases. The operator may choose to continue
+  //    as some situation are un-verifiable automatically.
   if (advanced_verification_family_licenses &&
       advanced_verification_subscriptions &&
       advanced_verification_skipass) {
@@ -977,7 +986,7 @@ function validateInvoice() {
     }
   }
   
-  // Validate the parental consent.
+  // Finally, validate the parental consent.
   var consent = validateAndReturnDropDownValue(
     coord_parental_consent,
     "Vous n'avez pas renseigné la nécessitée ou non de devoir " +
@@ -1012,7 +1021,7 @@ function validateInvoice() {
 function maybeEmailLicenseSCA(invoice) {
   var operator = getOperator()
   var family_name = getFamilyName()
-  var family_dict = getFamilyDictionary() 
+  var family_dict = getDictionaryOfFamilyPurchasingALicense() 
   var string_family_members = "";
   for (var index in family_dict) {
     if (family_dict[index]['last'] == "") {
@@ -1201,4 +1210,3 @@ function GeneratePDFButton() {
 function GenerateJustPDFAndSendEmailButton() {
   generatePDFAndMaybeSendEmail(/* send_email= */ true, /* just_the_invoice= */ true)
 }
-
