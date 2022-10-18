@@ -19,9 +19,12 @@ if ((!advanced_verification_subscriptions &&
     (!advanced_verification_family_licenses &&
     advanced_verification_subscriptions)) {
   displayErrorPanel(
-    "advanced_verification_family_licenses: " + advanced_verification_family_licenses +
-    "\nadvanced_verification_subscriptions: " + advanced_verification_subscriptions +
-    "\nadvanced_verification_skipass: " + advanced_verification_skipass);
+    "advanced_verification_family_licenses: " +
+    advanced_verification_family_licenses +
+    "\nadvanced_verification_subscriptions: " +
+    advanced_verification_subscriptions +
+    "\nadvanced_verification_skipass: " +
+    advanced_verification_skipass);
 }
 
 // Seasonal parameters - change for each season
@@ -313,8 +316,10 @@ function createPDF(sheet) {
   var url = ss_url.replace(/\/edit.*$/,'')  
       + '/export?exportformat=pdf'
       + '&format=pdf' + '&size=7' + '&portrait=true' + '&fitw=true'       
-      + '&top_margin=0.1' + '&bottom_margin=0.1' + '&left_margin=0.1' + '&right_margin=0.1'           
-      + '&sheetnames=false' + '&printtitle=true' + '&pagenum=CENTER' + '&gridlines=false'
+      + '&top_margin=0.1' + '&bottom_margin=0.1'
+      + '&left_margin=0.1' + '&right_margin=0.1'           
+      + '&sheetnames=false' + '&printtitle=true'
+      + '&pagenum=CENTER' + '&gridlines=false'
       // Input range
       + '&fzr=false' + '&gid=' + id + '&ir=false' + '&ic=false'
       + '&r1=' + coords_pdf_row_column_ranges['start'][0]
@@ -369,6 +374,12 @@ function getStringAt(coord) {
   return SpreadsheetApp.getActiveSheet().getRange(x, y).getValue().toString()
 }
 
+function getNumberAt(coord) {
+  var x = coord[0];
+  var y = coord[1];
+  Number(SpreadsheetApp.getActiveSheet().getRange(x, y).getValue())
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 // Date of Birth (DoB) management
 ///////////////////////////////////////////////////////////////////////////////
@@ -400,7 +411,9 @@ function isAdult(dob) {
   // Converting dob to a date and using getters doesn't work very well
   // so we're parsing the date instead.
   var res = new RegExp("([0-9]+)/([0-9]+)/([0-9]+)", "gi").exec(dob);
-  var anniversary = new Date(Number(res[3])+17, Number(res[2])-1, Number(res[1])+1);
+  var anniversary = new Date(Number(res[3])+17,
+                             Number(res[2])-1,
+                             Number(res[1])+1);
   // Use millisecond since epoch to determine wether someone is past
   // 17 as of December 1st.
   return anniversary.valueOf() <= adult_date.valueOf();
@@ -514,10 +527,11 @@ function validateFamilyMembers() {
     var license = getStringAt([coords_identity_rows[index], 7]);
     if (dob == undefined) {
       if (license != '' && license != no_license) {
-        return returnError("Pas de date de naissance fournie pour " +
-                           first_name + " " + last_name +
-                           " ou date de naissance mal formatée (JJ/MM/AAAA)\n" +
-                           " ou année de naissance fantaisiste.");
+        return returnError(
+          "Pas de date de naissance fournie pour " +
+          first_name + " " + last_name +
+          " ou date de naissance mal formatée (JJ/MM/AAAA)\n" +
+          " ou année de naissance fantaisiste.");
       }
     } else {
       dobs.push(dob);
@@ -525,7 +539,8 @@ function validateFamilyMembers() {
     // We need a sex
     var sex = getStringAt([coords_identity_rows[index], 6]);
     if (sex != "Fille" && sex != "Garçon") {
-      return returnError("Pas de sexe défini pour " + first_name + " " + last_name);
+      return returnError("Pas de sexe défini pour " +
+                         first_name + " " + last_name);
     }
   }
   return ["", dobs];
@@ -538,24 +553,27 @@ function validateLicenseSubscription(attributed_licenses) {
   for (var index in coord_purchased_subscriptions_non_comp) {
     var row = coord_purchased_subscriptions_non_comp[index][0];
     var col = coord_purchased_subscriptions_non_comp[index][1];
-    value = Number(SpreadsheetApp.getActiveSheet().getRange(row, col).getValue());
+    value = getNumberAt([row, col]);
     // When we get past the rider category, that value can only be 1
     // and when it reaches 0, it can't be 1 again :)
     if (index > 0) {
       if (value != 1 && value != 0) {
-        return ("La valeur du champ 'Adhésion / Stage / Transport - enfant " + index +
-                "' ne peut prendre que la valeur 0 ou 1.");
+        return ("La valeur du champ 'Adhésion / Stage / Transport - enfant " +
+                index + "' ne peut prendre que la valeur 0 ou 1.");
       }
       if (value == 1 && reached_zero) {
-        return ("La valeur du champ 'Adhésion / Stage / Transport - enfant " + index +
-                "' ne peut pas prendre la valeur 1 alors que la valeur du champ " +
-                "'Adhésion / Stage / Transport - enfant " + (index-1) + "' est de 0.");
+        return (
+          "La valeur du champ 'Adhésion / Stage / Transport - enfant " +
+          index +
+          "' ne peut pas prendre la valeur 1 alors que la valeur du champ " +
+          "'Adhésion / Stage / Transport - enfant " +
+          (index-1) + "' est de 0.");
       }
       if (value == 0) {
         reached_zero = true;
       }
     }
-    total_non_comp += Number(SpreadsheetApp.getActiveSheet().getRange(row, col).getValue());
+    total_non_comp += getNumberAt([row, col]);
   }
   // The number of non competition registrations should be equal to the 
   // number of non competition CNs purchased
@@ -569,9 +587,10 @@ function validateLicenseSubscription(attributed_licenses) {
               "• " + getNonCompFamilyLicenseString() + ": " + family + "\n" +
               "• TOTAL: " + total_attributed_licenses) + "\n";
     return ("Le nombre total de license(s) Loisir attribuée(s):\n\n" + detail + 
-            "\nne correspond pas au nombre d'adhésion(s) Loisir saisie(s) qui est de " +
-            total_non_comp + ".\n\n" +
-            "Une ou plusieurs personnes (enfants, adultes) prennent une license mais pas d'adhésion?");
+            "\nne correspond pas au nombre d'adhésion(s) Loisir saisie(s) " +
+            "qui est de " + total_non_comp + ".\n\n" +
+            "Une ou plusieurs personnes (enfants, adultes) prennent une " +
+            "license mais pas d'adhésion?");
   }
   return "";
 }
@@ -589,9 +608,9 @@ function validateSkiPassPurchase(dobs) {
   }
   
   function getSkiPassTypeQuantity(ski_pass_type) {
-    return Number(getStringAt([
+    return getNumberAt([
       coord_purchased_ski_pass[ski_pass_type][0],
-      coord_purchased_ski_pass[ski_pass_type][1]]));
+      coord_purchased_ski_pass[ski_pass_type][1]]);
   }
 
   var family4 = getSkiPassFamily4String();
@@ -668,9 +687,6 @@ function validateSkiPassPurchase(dobs) {
 
 // Cross check the attributed licenses with the ones selected for payment
 function validateLicenseCrossCheck() {
-  // First count how many licenses have been attributed to the
-  // registered family. We use the values (after validation) directly
-
   function returnError(v) {
     return [v, {}];
   }
@@ -680,7 +696,8 @@ function validateLicenseCrossCheck() {
     attributed_licenses[key] = 0;
   });
   
-  // Capture the no license and exec license string, we're going to use it a lot.
+  // Capture the "no license" and exec license string, we're going to
+  // use it a lot.
   var no_license = getNoLicenseString();
   var exec_license = getExecutiveLicenseString();
   var purchased_licenses = {}
@@ -705,7 +722,8 @@ function validateLicenseCrossCheck() {
     // If there's no name on that row, the only possible value is None
     if (first_name === '' && last_name === '') {
       if (selected_license != no_license) {
-        return returnError("'" + selected_license + "' attribuée à un membre de famile inexistant!");
+        return returnError("'" + selected_license +
+                           "' attribuée à un membre de famile inexistant!");
       }
       continue;
     }
@@ -718,18 +736,22 @@ function validateLicenseCrossCheck() {
       }
     });
     if (! found) {
-      return returnError("'" + selected_license + "' n'est pas une license attribuée possible!");
+      return returnError("'" + selected_license +
+                         "' n'est pas une license attribuée possible!");
     }
     // Executive license requires a city of birth
     if (selected_license == exec_license) {
       var city = getStringAt([row, 5]);
       if (city == '') {
-        return returnError(first_name + " " + last_name + ": une license " + selected_license +
-                           " requiert de renseigner une ville et un pays de naissance");
+        return returnError(first_name + " " + last_name + ": une license " +
+                           selected_license +
+                           " requiert de renseigner une ville et un pays de " +
+                           "naissance");
       }
     }
     
-    // If we don't have a license, we can stop now. No need to validate the DoB
+    // If we don't have a license, we can stop now. No need to
+    // validate the DoB
     if (selected_license == no_license) {
       continue;
     }
@@ -740,9 +762,11 @@ function validateLicenseCrossCheck() {
     dob_end = attributed_licenses_dob_validation[selected_license][1];
     if (yob < dob_start || yob > dob_end) {
       var date_range = dobRangeToString(dob_start, dob_end);
-      return returnError(first_name + " " + last_name + ": l'année de naissance " + yob +
-                         " ne correspond aux années de validité de la license choisie: '" +
-                         selected_license + "', années de validité: '" + date_range + "'");
+      return returnError(first_name + " " + last_name +
+                         ": l'année de naissance " + yob +
+                         " ne correspond aux années de validité de la " +
+                         "license choisie: '" + selected_license + 
+                         "', années de validité: '" + date_range + "'");
     }
   }
   
@@ -753,38 +777,43 @@ function validateLicenseCrossCheck() {
     if (key != no_license) {
       var row = coord_purchased_licenses[key][0];
       var col = coord_purchased_licenses[key][1];
-      purchased_licenses[key] = Number(SpreadsheetApp.getActiveSheet().getRange(row, col).getValue());
+      purchased_licenses[key] = getNumberAt([row, col]);
     }
   });
   
   // Perform the verification
   
   // First verify the family non comp license because it's special.
-  // 1- Family license requires at last four declared family members selecting it
+  // 1- Family license requires at last four declared family members
+  //    selecting it
   // 2- One family license should have been purchased
-  // 3- Other checks are carried out still as they can be determined valid or not
+  // 3- Other checks are carried out still as they can be determined
+  //    valid or not
   //    even with a family license purchased.
   var family_license = getNonCompFamilyLicenseString();
   if (attributed_licenses[family_license] != 0) {
     // A least four declared participants
     if (attributed_licenses[family_license] < 4) {
-      return returnError("Il faut attribuer une licence famille à au moins 4 membres " +
-                         "d'une même famille. Seulement " + attributed_licenses[family_license] +
-                         " ont été attribuées.");
+      return returnError(
+        "Il faut attribuer une licence famille à au moins 4 membres " +
+        "d'une même famille. Seulement " + attributed_licenses[family_license] +
+        " ont été attribuées.");
     }
     // Check that one family license was purchased.
     if (purchased_licenses[family_license] != 1) {
-      return returnError("Vous devez acheter une licence loisir famille, vous en avez " +
-                         "acheté pour l'instant " + purchased_licenses[family_license]);
+      return returnError(
+        "Vous devez acheter une licence loisir famille, vous en avez " +
+        "acheté pour l'instant " + purchased_licenses[family_license]);
     }
     // Last verification: two adults and two+ kids
     var res = countAdultsAndKids(dobs);
     var count_adults = res[0];
     var count_children = res[1];
     if (count_adults != 2 || count_children < 2) {
-      return returnError("Seulement " + count_adults + " adulte(s) déclaré(s) et " +
-              count_children + " enfants(s) de moins de 17 ans déclaré(s) " +
-              "pour la license famille.");
+      return returnError(
+        "Seulement " + count_adults + " adulte(s) déclaré(s) et " +
+        count_children + " enfants(s) de moins de 17 ans déclaré(s) " +
+        "pour la license famille.");
     }
   }
   for (var index in attributed_licenses_values) {
@@ -794,10 +823,11 @@ function validateLicenseCrossCheck() {
     var key = attributed_licenses_values[index];
     if (key != no_license && key != family_license) {
       if (purchased_licenses[key] != attributed_licenses[key]) {
-        return returnError("Le nombre de licence(s) '" + key + "' attribuée(s) (au nombre de " +
-                           attributed_licenses[key] + ")\n" +
-                           "ne correspond pas au nombre de licence(s) achetée(s) (au nombre de " +
-                           purchased_licenses[key] + ")");        
+        return returnError(
+          "Le nombre de licence(s) '" + key + "' attribuée(s) (au nombre de " +
+          attributed_licenses[key] + ")\n" +
+          "ne correspond pas au nombre de licence(s) achetée(s) (au nombre de " +
+          purchased_licenses[key] + ")");        
       }
     }
   }
@@ -809,11 +839,13 @@ function validateLicenseCrossCheck() {
 ///////////////////////////////////////////////////////////////////////////////
 
 function getOperator() {
-  return SpreadsheetApp.getActiveSpreadsheet().getName().toString().split(':')[0]
+  return SpreadsheetApp.getActiveSpreadsheet().getName().
+    toString().split(':')[0]
 }
 
 function getFamilyName() {
-  return SpreadsheetApp.getActiveSpreadsheet().getName().toString().split(':')[1]
+  return SpreadsheetApp.getActiveSpreadsheet().getName().
+    toString().split(':')[1]
 }
 
 function getInvoiceNumber() {
@@ -821,7 +853,8 @@ function getInvoiceNumber() {
   if (version == "") {
     version = "version=0";
   }
-  var extracted_num = Number(new RegExp("version=([0-9]+)", "gi").exec(version)[1]);
+  var extracted_num = Number(
+    new RegExp("version=([0-9]+)", "gi").exec(version)[1]);
   if (extracted_num < 0) {
     displayErrorPanel("Problème lors de la génération du numéro de document\n" +
                       "Insérez version=99 en 79C et recommencez l'opération");
@@ -885,11 +918,12 @@ function validateInvoice() {
   formatPhoneNumbers();
 
   if (! isProd()) {
-    Debug('Cette facture est en mode developpement. Aucun email ne sera envoyé, ' +
-          'ni à la famile ni à ' + email_license + '.\n\n' +
-          'Vous pouvez néamoins continuer et un dossier sera préparé et ' +
-          'les mails serons envoyés à ' + email_dev + '.\n\n' +
-          'Contacter ' + email_dev + ' pour obtenir plus d\'aide.')
+    Debug("Cette facture est en mode developpement. " +
+          "Aucun email ne sera envoyé, " +
+          "ni à la famile ni à " + email_license + ".\n\n" +
+          "Vous pouvez néamoins continuer et un dossier sera préparé et " +
+          "les mails serons envoyés à " + email_dev + ".\n\n" +
+          "Contacter " + email_dev + " pour obtenir plus d\'aide.")
           
   }
   
@@ -959,11 +993,13 @@ function validateInvoice() {
       advanced_verification_subscriptions) {
     var attributed_licenses_values = ret[1];
     // Validate requeted licenses and subscriptions
-    var subscription_validation_error = validateLicenseSubscription(attributed_licenses_values);
+    var subscription_validation_error = 
+        validateLicenseSubscription(attributed_licenses_values);
     if (subscription_validation_error) {
-      subscription_validation_error += ("\n\nChoisissez 'OK' pour continuer à générer la facture.\n" +
-                                        "Choisissez 'Annuler' pour ne pas générer la facture et " +
-                                        "vérifier les valeurs saisies...");
+      subscription_validation_error += (
+        "\n\nChoisissez 'OK' pour continuer à générer la facture.\n" +
+        "Choisissez 'Annuler' pour ne pas générer la facture et " +
+        "vérifier les valeurs saisies...");
       if (! displayYesNoPanel(subscription_validation_error)) {
         return {};
       }
@@ -977,9 +1013,10 @@ function validateInvoice() {
       advanced_verification_skipass) {
     var skipass_validation_error = validateSkiPassPurchase(dobs);
     if (skipass_validation_error) {
-      skipass_validation_error += ("\n\nChoisissez 'OK' pour continuer à générer la facture.\n" +
-                                   "Choisissez 'Annuler' pour ne pas générer la facture et " +
-                                   "vérifier les valeurs saisies...");
+      skipass_validation_error += (
+        "\n\nChoisissez 'OK' pour continuer à générer la facture.\n" +
+        "Choisissez 'Annuler' pour ne pas générer la facture et " +
+        "vérifier les valeurs saisies...");
       if (! displayYesNoPanel(skipass_validation_error)) {
         return {};
       }    
@@ -996,17 +1033,18 @@ function validateInvoice() {
   }
   var consent = getStringAt(coord_parental_consent);
   if (consent == 'Non fournie') {
-    displayErrorPanel("L'autorisation parentale doit être signée aujourd'hui pour " +
-                      "valider le dossier et terminer l'inscription");
+    displayErrorPanel(
+      "L'autorisation parentale doit être signée aujourd'hui pour " +
+      "valider le dossier et terminer l'inscription");
     return {};
   }
   
   // Update the timestamp. 
   setStringAt(coord_timestamp,
-                    'Dernière MAJ le ' +
-                    Utilities.formatDate(new Date(),
-                                         Session.getScriptTimeZone(),
-                                         "dd-MM-YY, HH:mm"), 'black')
+              'Dernière MAJ le ' +
+              Utilities.formatDate(new Date(),
+                                   Session.getScriptTimeZone(),
+                                   "dd-MM-YY, HH:mm"), 'black')
 
   return {'civility': civility,
           'family_name': family_name,
@@ -1027,19 +1065,21 @@ function maybeEmailLicenseSCA(invoice) {
     if (family_dict[index]['last'] == "") {
       continue
     }
-    string_family_members += ("<tt>" +
-                              "Nom: <b>" + family_dict[index]['last'].toUpperCase() + "</b><br>" +
-                              "Prénom: " + family_dict[index]['first'] + "<br>" +
-                              "Naissance: " + family_dict[index]['birth'] + "<br>" +
-                              "Fille/Garçon: " + family_dict[index]['sex'] + "<br>" +
-                              "Ville de Naissance: " + family_dict[index]['city'] + "<br>" +
-                              "Licence: " + family_dict[index]['license'] + "<br>" +
-                              "----------------------------------------------------</tt><br>\n");
+    string_family_members += (
+      "<tt>" +
+      "Nom: <b>" + family_dict[index]['last'].toUpperCase() + "</b><br>" +
+      "Prénom: " + family_dict[index]['first'] + "<br>" +
+      "Naissance: " + family_dict[index]['birth'] + "<br>" +
+      "Fille/Garçon: " + family_dict[index]['sex'] + "<br>" +
+      "Ville de Naissance: " + family_dict[index]['city'] + "<br>" +
+      "Licence: " + family_dict[index]['license'] + "<br>" +
+      "----------------------------------------------------</tt><br>\n");
   }
   if (string_family_members) {
-    string_family_members = ("<p>Licence(s) nécessaire(s) pour:</p><blockquote>\n" +
-                             string_family_members +
-                             "</blockquote>\n");
+    string_family_members = (
+      "<p>Licence(s) nécessaire(s) pour:</p><blockquote>\n" +
+      string_family_members +
+      "</blockquote>\n");
   }
   
   var email_options = {
@@ -1078,12 +1118,12 @@ function generatePDFAndMaybeSendEmail(send_email, just_the_invoice) {
 
   if (just_the_invoice) {
     setStringAt(coord_status,
-                      "⏳ Génération " +
-                      (send_email? "et envoit " : " ") + "de la facture...", "orange");
+                "⏳ Génération " +
+                (send_email? "et envoit " : " ") + "de la facture...", "orange");
   } else {
     setStringAt(coord_status, 
-                      "⏳ Génération " +
-                      (send_email? "et envoit " : " ") + "du dossier...", "orange");
+                "⏳ Génération " +
+                (send_email? "et envoit " : " ") + "du dossier...", "orange");
     SpreadsheetApp.flush()
   }
   
@@ -1097,7 +1137,8 @@ function generatePDFAndMaybeSendEmail(send_email, just_the_invoice) {
   var parental_consent_text = ''
   if (! just_the_invoice) {
     if (consent == 'À fournire') {
-      attachments.push(DriveApp.getFileById(parental_consent_pdf).getAs(MimeType.PDF))
+      attachments.push(
+        DriveApp.getFileById(parental_consent_pdf).getAs(MimeType.PDF))
     
       parental_consent_text = (
         "<p>Il vous faut compléter, signer et nous retourner l'autorisation " +
@@ -1178,10 +1219,12 @@ function generatePDFAndMaybeSendEmail(send_email, just_the_invoice) {
     maybeEmailLicenseSCA([attachments[0]]);
 
     setStringAt(coord_status, 
-                "✅ " + (just_the_invoice ? "Facture envoyée" : "dossier envoyé"), "green")  
+                "✅ " + (just_the_invoice ? 
+                         "Facture envoyée" : "dossier envoyé"), "green")  
   } else {
     setStringAt(coord_status, 
-                "✅ " + (just_the_invoice ? "Facture générée" : "dossier généré"), "green")  
+                "✅ " + (just_the_invoice ?
+                         "Facture générée" : "dossier généré"), "green")  
   }
   displayPDFLink(pdf_file)
   SpreadsheetApp.flush()  
@@ -1198,15 +1241,19 @@ function GetAuthorization() {
 
 // This is what the [generate and send folder] button runs.
 function GeneratePDFAndSendEmailButton() {
-  generatePDFAndMaybeSendEmail(/* send_email= */ true, /* just_the_invoice= */ false)
+  generatePDFAndMaybeSendEmail(/* send_email= */ true,
+                               /* just_the_invoice= */ false)
 }
 
 // This is what the [generate invoice] button runs.
 function GeneratePDFButton() {
-  generatePDFAndMaybeSendEmail(/* send_email= */ false, /* just_the_invoice= */ true)
+  generatePDFAndMaybeSendEmail(/* send_email= */ false,
+                               /* just_the_invoice= */ true)
 }
 
 // This is what the [generate and send only the invoice] button runs.
 function GenerateJustPDFAndSendEmailButton() {
-  generatePDFAndMaybeSendEmail(/* send_email= */ true, /* just_the_invoice= */ true)
+  generatePDFAndMaybeSendEmail(/* send_email= */ true,
+                               /* just_the_invoice= */ true)
 }
+
