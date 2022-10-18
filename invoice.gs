@@ -14,6 +14,16 @@ var advanced_verification_family_licenses = true;
 var advanced_verification_subscriptions = true;
 var advanced_verification_skipass = true;
 
+if ((!advanced_verification_subscriptions &&
+     advanced_verification_skipass) ||
+    (!advanced_verification_family_licenses &&
+    advanced_verification_subscriptions)) {
+  displayErrorPanel(
+    "advanced_verification_family_licenses: " + advanced_verification_family_licenses +
+    "\nadvanced_verification_subscriptions: " + advanced_verification_subscriptions +
+    "\nadvanced_verification_skipass: " + advanced_verification_skipass);
+}
+
 // Seasonal parameters - change for each season
 // 
 // - Name of the season
@@ -951,6 +961,8 @@ function validateInvoice() {
       }
     }
   }
+  
+
   if (advanced_verification_family_licenses &&
       advanced_verification_subscriptions &&
       advanced_verification_skipass) {
@@ -1189,3 +1201,4 @@ function GeneratePDFButton() {
 function GenerateJustPDFAndSendEmailButton() {
   generatePDFAndMaybeSendEmail(/* send_email= */ true, /* just_the_invoice= */ true)
 }
+
