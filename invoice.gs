@@ -377,7 +377,7 @@ function getStringAt(coord) {
 function getNumberAt(coord) {
   var x = coord[0];
   var y = coord[1];
-  Number(SpreadsheetApp.getActiveSheet().getRange(x, y).getValue())
+  return Number(SpreadsheetApp.getActiveSheet().getRange(x, y).getValue())
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -468,13 +468,14 @@ function formatPhoneNumbers() {
 
 function displayErrorPanel(message) {
   var ui = SpreadsheetApp.getUi();
-  ui.alert("❌\n\n" + message, ui.ButtonSet.OK);
+  ui.alert("❌ Erreur:\n\n" + message, ui.ButtonSet.OK);
 }
 
 // Display a OK/Cancel panel, returns true if OK was pressed.
 function displayYesNoPanel(message) {
   var ui = SpreadsheetApp.getUi();
-  var response = ui.alert("⚠️\n\n" + message, ui.ButtonSet.OK_CANCEL);
+  var response = ui.alert("⚠️ Attention:\n\n" +
+      message, ui.ButtonSet.OK_CANCEL);
   return response == ui.Button.OK;
 }
 
@@ -551,9 +552,7 @@ function validateLicenseSubscription(attributed_licenses) {
   var total_non_comp = 0;
   var reached_zero = false;
   for (var index in coord_purchased_subscriptions_non_comp) {
-    var row = coord_purchased_subscriptions_non_comp[index][0];
-    var col = coord_purchased_subscriptions_non_comp[index][1];
-    value = getNumberAt([row, col]);
+    value = getNumberAt(coord_purchased_subscriptions_non_comp[index]);
     // When we get past the rider category, that value can only be 1
     // and when it reaches 0, it can't be 1 again :)
     if (index > 0) {
@@ -573,7 +572,7 @@ function validateLicenseSubscription(attributed_licenses) {
         reached_zero = true;
       }
     }
-    total_non_comp += getNumberAt([row, col]);
+    total_non_comp += value;
   }
   // The number of non competition registrations should be equal to the 
   // number of non competition CNs purchased
@@ -608,9 +607,7 @@ function validateSkiPassPurchase(dobs) {
   }
   
   function getSkiPassTypeQuantity(ski_pass_type) {
-    return getNumberAt([
-      coord_purchased_ski_pass[ski_pass_type][0],
-      coord_purchased_ski_pass[ski_pass_type][1]]);
+    return getNumberAt(coord_purchased_ski_pass[ski_pass_type]);
   }
 
   var family4 = getSkiPassFamily4String();
@@ -775,9 +772,7 @@ function validateLicenseCrossCheck() {
     // Entry indicating no license is skipped because it can't
     // be collected.
     if (key != no_license) {
-      var row = coord_purchased_licenses[key][0];
-      var col = coord_purchased_licenses[key][1];
-      purchased_licenses[key] = getNumberAt([row, col]);
+      purchased_licenses[key] = getNumberAt(coord_purchased_licenses[key]);
     }
   });
   
