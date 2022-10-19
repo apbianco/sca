@@ -9,7 +9,9 @@
 dev_or_prod = "prod"
 
 // Enable/disable new features - first entry set to false
-// requires all following entries set to false.
+// requires all following entries set to false. Note that
+// a validation is carried out immediately after these
+// definitions.
 var advanced_verification_family_licenses = true;
 var advanced_verification_subscriptions = true;
 var advanced_verification_skipass = true;
@@ -406,7 +408,7 @@ function getDoB(coords) {
 // Determine whether someone is an adult (17 years old as of December 1st)
 function isAdult(dob) {
   // Compare to December first of this year - the date at which folks are
-  // adults. 11 is for December - thank you JavaScript...)
+  // adults.
   var adult_date = new Date(new Date().getFullYear()+"-12-01");
   // Converting dob to a date and using getters doesn't work very well
   // so we're parsing the date instead.
@@ -414,7 +416,7 @@ function isAdult(dob) {
   var anniversary = new Date(Number(res[3])+17,
                              Number(res[2])-1,
                              Number(res[1])+1);
-  // Use millisecond since epoch to determine wether someone is past
+  // Use millisecond since epoch to determine whether someone is past
   // 17 as of December 1st.
   return anniversary.valueOf() <= adult_date.valueOf();
 }
@@ -865,9 +867,9 @@ function getAndUpdateInvoiceNumber() {
   return extracted_num;
 }
 
-// Produce a dictionary of family members that as purchasing a license.
+// Produce a dictionary of family members that has purchased a license.
 // This assumes that some verification of first/last name, DoB and sex
-// has already been performed.
+// have already been performed.
 function getDictionaryOfFamilyPurchasingALicense() {
   var family = []
   var no_license = getNoLicenseString();
