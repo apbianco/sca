@@ -16,6 +16,7 @@ var advanced_verification_family_licenses = true;
 var advanced_verification_subscriptions = true;
 var advanced_verification_skipass = true;
 
+// Boolean expression generated from a truth table.
 if ((!advanced_verification_subscriptions &&
      advanced_verification_skipass) ||
     (!advanced_verification_family_licenses &&
@@ -79,6 +80,7 @@ var coords_identity_rows = [14, 15, 16, 17, 18, 19];
 var coords_pdf_row_column_ranges = {'start': [1, 0], 'end': [80, 7]}
 //
 // - Definition of all possible license values
+//
 var attributed_licenses_values = [
   'Aucune',                    // Must match getNoLicenseString() accessor
   'CN Jeune (Loisir)',
@@ -111,7 +113,7 @@ var coord_purchased_licenses = {
   'CN Jeune (Compétition)':  [44, 5],
   'CN Adulte (Compétition)': [45, 5]};
 //
-// Coordinates of where subscription purchases are indicated.
+// - Coordinates of where subscription purchases are indicated.
 //
 var coord_purchased_subscriptions_non_comp = [
   [38, 5],  // Riders
@@ -121,7 +123,9 @@ var coord_purchased_subscriptions_non_comp = [
   [42, 5]   // Child 4
 ];
 //
-// Skipass values
+// Skipass section:
+//
+// - Skipass values
 //
 var ski_pass_values = [
   'Famille 4',
@@ -133,7 +137,8 @@ var ski_pass_values = [
   'Enfant',
   'Peluche'];
 //
-// Skipass DoB validations per type
+// - Skipass DoB validations per type. change the
+//   start of end of ranges not featuring a negative number
 //
 var ski_pass_dob_validation = {
   'Famille 4': [-1,   2051],
@@ -145,7 +150,7 @@ var ski_pass_dob_validation = {
   'Enfant':    [2014, 2016],
   'Peluche':   [2017, 2050]};
 //
-// Skipass purchase indicator coordinates
+// - Skipass purchase indicator coordinates
 //
 var coord_purchased_ski_pass = {
   'Famille 4': [23, 5],
