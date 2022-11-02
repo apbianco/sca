@@ -34,6 +34,8 @@ if ((!advanced_verification_subscriptions &&
 // 
 // - Name of the season
 var season = "2022/2023"
+// - Date at which we consider a licensee is adult
+var adult_date = new Date("2007-01-01");
 //
 // - Storage for the current season's database.
 //
@@ -410,19 +412,16 @@ function getDoB(coords) {
   return undefined;
 }
 
-// Determine whether someone is an adult (17 years old as of December 1st)
+// Determine whether someone is an adult. adult_date is a global that needs to
+// be adjusted for each season.
 function isAdult(dob) {
-  // Compare to December first of this year - the date at which folks are
-  // adults.
-  var adult_date = new Date(new Date().getFullYear()+"-12-01");
   // Converting dob to a date and using getters doesn't work very well
   // so we're parsing the date instead.
   var res = new RegExp("([0-9]+)/([0-9]+)/([0-9]+)", "gi").exec(dob);
-  var anniversary = new Date(Number(res[3])+17,
-                             Number(res[2])-1,
-                             Number(res[1])+1);
-  // Use millisecond since epoch to determine whether someone is past
-  // 17 as of December 1st.
+  var anniversary = new Date(res[3]+"-"+res[2]+"-"+res[1]);
+  // Use millisecond since epoch to determine whether someone was born
+  // before or at the adult date, which qualifies the person as being
+  // an adult.
   return anniversary.valueOf() <= adult_date.valueOf();
 }
 
