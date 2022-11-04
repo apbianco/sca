@@ -1,4 +1,4 @@
-// Code implementing the trigger for the 2022/2023 seasons
+// Code implementing the trigger.
 //
 // The goal of the trigger is to generate a new fresh sheet from
 // template, performing some minimal validation of the input.
@@ -11,10 +11,9 @@
 // 4- A link to that sheet is inserted back into the sheet from which
 //    this script runs, so that the user can start directly interacting
 //    with it.
-// 5- Previous season data can be loaded and converted into a new
-//    sheet.
 
 // TODO:
+//  - When exist, list the link?
 //  - All FIXMEs
 //  - On click on link replaces the status with a ready message
 
@@ -480,3 +479,4 @@ function GenerateEntry() {
   setLastSeasonFamilyList(sheet);
   SpreadsheetApp.flush();
 }
+
