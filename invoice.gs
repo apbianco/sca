@@ -619,6 +619,7 @@ function validateSkiPassPurchase(dobs) {
   var family4 = getSkiPassFamily4String();
   var family5 = getSkiPassFamily5String();
   // Verify the family passes first
+  // For a family pass of four, verify that we have two adults and two childs
   family4_quantity = getSkiPassTypeQuantity(family4);
   if (family4_quantity != 0) {
     if (family4_quantity != 1) {
@@ -636,18 +637,16 @@ function validateSkiPassPurchase(dobs) {
               "pour le forfait Annuel Famille 4 personnes sélectionné.");
     }
   }
-
+  // For a family pass of five, verify that we have two adults and three childs
   family5_quantity = getSkiPassTypeQuantity(family5);
   if (family5_quantity != 0) {
     if (family5_quantity != 1) {
       return (family5_quantity +
               " forfaits Annuel Famille 5 personnes sélectionné");
-      // Verify that we have two adults and two child
     }
-    var res = countAdultsKids(dobs);
+    var res = countAdultsAndKids(dobs);
     var count_adults = res[0];
     var count_children = res[1];
-    Debug("adults: "+count_adults+" kids:"+count_children);
     if (count_adults != 2 || count_children != 3) {
       return ("Seulement " + count_adults + " adulte(s) déclaré(s) et " +
               count_children + " enfants(s) de moins de 17 ans déclaré(s) " +
