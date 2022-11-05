@@ -97,8 +97,8 @@ var attributed_licenses_values = [
 //
 var attributed_licenses_dob_validation = {
   'Aucune':                  [-1,   2051],
-  'CN Jeune (Loisir)':       [2007, 2050],
-  'CN Adulte (Loisir)':      [1900, 2006],
+  'CN Jeune (Loisir)':       [2008, 2050],
+  'CN Adulte (Loisir)':      [1900, 2007],
   'CN Famille (Loisir)':     [-1,   2051],
   'CN Dirigeant':            [1900, 2004],
   'CN Jeune (Compétition)':  [2008, 2050],
