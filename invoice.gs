@@ -485,6 +485,12 @@ function displayYesNoPanel(message) {
   return response == ui.Button.OK;
 }
 
+function displayWarningPanel(message) {
+  var ui = SpreadsheetApp.getUi();
+  var response = ui.alert("⚠️ Attention:\n\n" +
+      message, ui.ButtonSet.OK);
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 // Validation methods
 ///////////////////////////////////////////////////////////////////////////////
@@ -1080,6 +1086,8 @@ function maybeEmailLicenseSCA(invoice) {
       "<p>Licence(s) nécessaire(s) pour:</p><blockquote>\n" +
       string_family_members +
       "</blockquote>\n");
+  } else {
+    return;
   }
   
   var email_options = {
@@ -1213,18 +1221,32 @@ function generatePDFAndMaybeSendEmail(send_email, just_the_invoice) {
     email_options.cc = checkEmail(cc_to)
   }
 
+  // For a more precise quota computation, we would need to be able
+  // to tell here that we're going to send an email to the license
+  // email address.
+  var quota_threshold = 2 + (cc_to == "" ? 0 : 1);
   if (send_email) {
-    // Send the email  
-    MailApp.sendEmail(email_options)
-    maybeEmailLicenseSCA([attachments[0]]);
+    var emailQuotaRemaining = MailApp.getRemainingDailyQuota();
+    if (emailQuotaRemaining < quota_threshold) {
+      displayWarningPanel("Quota email insuffisant. Envoi " +
+                          (just_the_invoice ? "de la facture" : "du dossier") +
+                          " retardé. Quota restant: " + emailQuotaRemaining +
+                          ". Nécessaire: " + quota_threshold);
+      setStringAt(coord_status,
+                  "⚠️ Quota email insuffisant. Envoi retardé", "orange");
+    } else {
+      // Send the email  
+      MailApp.sendEmail(email_options)
+      maybeEmailLicenseSCA([attachments[0]]);
 
-    setStringAt(coord_status, 
-                "✅ " + (just_the_invoice ? 
-                         "Facture envoyée" : "dossier envoyé"), "green")  
+      setStringAt(coord_status, 
+                  "✅ " + (just_the_invoice ? 
+                           "Facture envoyée" : "dossier envoyé"), "green")  
+    }
   } else {
-    setStringAt(coord_status, 
-                "✅ " + (just_the_invoice ?
-                         "Facture générée" : "dossier généré"), "green")  
+      setStringAt(coord_status, 
+                  "✅ " + (just_the_invoice ?
+                           "Facture générée" : "dossier généré"), "green")  
   }
   displayPDFLink(pdf_file)
   SpreadsheetApp.flush()  
