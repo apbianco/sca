@@ -636,7 +636,6 @@ function validateSkiPassPurchase(dobs) {
     var res = countAdultsAndKids(dobs);
     var count_adults = res[0];
     var count_children = res[1];
-    Debug("adults: "+count_adults+" kids:"+count_children);
     if (count_adults != 2 || count_children != 2) {
       return ("Seulement " + count_adults + " adulte(s) déclaré(s) et " +
               count_children + " enfants(s) de moins de 17 ans déclaré(s) " +
@@ -659,11 +658,15 @@ function validateSkiPassPurchase(dobs) {
               "pour le forfait Annuel Famille 5 personnes sélectionné.");
     }
   }
+
+  if (family4_quantity == 1 && family5_quantity == 1) {
+    return ("Deux forfaits annuels Famille 4 personnes et 5 personnes sélectionnés.")
+  }
   
   var error = ""
   // If we validated a family pass, return now. The rest of the validation is
   // going to be too complicated.
-  if (ski_pass_type == family4 || ski_pass_type == family5) {
+  if (family4_quantity != 0 || family5_quantity != 0) {
     return error;
   }
   
