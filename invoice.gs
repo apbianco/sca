@@ -34,8 +34,9 @@ if ((!advanced_verification_subscriptions &&
 // 
 // - Name of the season
 var season = "2022/2023"
-// - Date at which we consider a licensee is adult
-var adult_date = new Date("2007-01-01");
+// - Date at which we consider a licensee is adult. An adult is
+//   an individual born on that year or before
+var adult_yob = 2007
 //
 // - Storage for the current season's database.
 //
@@ -97,12 +98,12 @@ var attributed_licenses_values = [
 //
 var attributed_licenses_dob_validation = {
   'Aucune':                  [-1,   2051],
-  'CN Jeune (Loisir)':       [2008, 2050],
-  'CN Adulte (Loisir)':      [1900, 2007],
+  'CN Jeune (Loisir)':       [adult_yob+1, 2050],
+  'CN Adulte (Loisir)':      [1900, adult_yob],
   'CN Famille (Loisir)':     [-1,   2051],
   'CN Dirigeant':            [1900, 2004],
-  'CN Jeune (Compétition)':  [2008, 2050],
-  'CN Adulte (Compétition)': [1900, 2007]};
+  'CN Jeune (Compétition)':  [adult_yob+1, 2050],
+  'CN Adulte (Compétition)': [1900, adult_yob]};
 //
 // Coordinates of where the various license purchases are indicated.
 //
@@ -118,7 +119,7 @@ var coord_purchased_licenses = {
 // - Coordinates of where subscription purchases are indicated.
 //
 var coord_purchased_subscriptions_non_comp = [
-  [38, 5],  // Riders
+  [38, 5],  // First Rider. We will only accept one rider
   [39, 5],  // Child 1
   [40, 5],  // Child 2
   [41, 5],  // Child 3
@@ -213,6 +214,14 @@ function getSkiPassFamily5String() {
 
 function getSkiPassStudentString() {
   return ski_pass_values[4];
+}
+
+function getRiderSubscriptionCoordinates() {
+  return coord_purchased_subscriptions_non_comp[0];
+}
+
+function getFirstNonRiderSubscriptionCoordinate() {
+  return coord_purchased_subscriptions_non_comp[1];
 }
 
 //
@@ -415,14 +424,8 @@ function getDoB(coords) {
 // Determine whether someone is an adult. adult_date is a global that needs to
 // be adjusted for each season.
 function isAdult(dob) {
-  // Converting dob to a date and using getters doesn't work very well
-  // so we're parsing the date instead.
   var res = new RegExp("([0-9]+)/([0-9]+)/([0-9]+)", "gi").exec(dob);
-  var anniversary = new Date(res[3]+"-"+res[2]+"-"+res[1]);
-  // Use millisecond since epoch to determine whether someone was born
-  // before or at the adult date, which qualifies the person as being
-  // an adult.
-  return anniversary.valueOf() <= adult_date.valueOf();
+  return Number(res[3]) <= adult_yob;
 }
 
 // Given a list of DoBs, count the number of adults and kids in it.
@@ -561,16 +564,54 @@ function validateFamilyMembers() {
 
 // Loosely cross checks attributed licenses with delivered subscriptions...
 function validateLicenseSubscription(attributed_licenses) {
+
+  function errorMessageBadSubscriptionValue(index) {
+    return ("La valeur du champ 'Adhésion / Stage / Transport - enfant " +
+            index + "' ne peut prendre que la valeur 0 ou 1.")
+  }
+
+  // Validation of the selection of the subscriptions:
+  //   - A rider counts as a first subscription. The value can only be 1.
+  //     This is a limitation but that's OK.
+  //   - We can't have a rider and a first subscription.
+  //   - Past a rider/first subscription, the value can for a subscription
+  //     can only be 1 or 0 and when it reaches 0, it can't be 1 again.
+
+  // Rider cell value validation
+  var rider = getNumberAt(getRiderSubscriptionCoordinates())
+  var first_subscription = getNumberAt(getFirstNonRiderSubscriptionCoordinate())
+  if (rider != 0 && rider != 1) {
+    return ("La valeur du champ 'Adhésion Rider / Stage / Sortie hors station / Transport'" +
+            " ne peut prendre que la valeur 0 ou 1.");
+  }
+  // First subscription cell validation
+  if (first_subscription != 0 && first_subscription != 1) {
+    return errorMessageBadSubscriptionValue(1)
+  }
+
+  // Can't have a rider and a first cell
+  if (rider == 1 && first_subscription == 1) {
+    return ("L'adhésion rider compte comme une première Adhésion / Stage / Transport")
+  }
+
   var total_non_comp = 0;
   var reached_zero = false;
+  if (rider == 1 || first_subscription == 1) {
+    total_non_comp = 1;
+  }
+  if (rider == 0 && first_subscription == 0) {
+    reached_zero = true;
+  }
+
+  // Validate the subscriptions past the rider/first subscription.
   for (var index in coord_purchased_subscriptions_non_comp) {
-    value = getNumberAt(coord_purchased_subscriptions_non_comp[index]);
-    // When we get past the rider category, that value can only be 1
-    // and when it reaches 0, it can't be 1 again :)
-    if (index > 0) {
+    // We verified the rider and the first subscription, we are only verifying
+    // the subscriptions past those - hence the test index > 1 (rider is index 0,
+    // first subscription is index 1)
+    if (index > 1) {
+      value = getNumberAt(coord_purchased_subscriptions_non_comp[index]);
       if (value != 1 && value != 0) {
-        return ("La valeur du champ 'Adhésion / Stage / Transport - enfant " +
-                index + "' ne peut prendre que la valeur 0 ou 1.");
+        return errorMessageBadSubscriptionValue(index)
       }
       if (value == 1 && reached_zero) {
         return (
@@ -583,8 +624,8 @@ function validateLicenseSubscription(attributed_licenses) {
       if (value == 0) {
         reached_zero = true;
       }
+      total_non_comp += value;
     }
-    total_non_comp += value;
   }
   // The number of non competition registrations should be equal to the 
   // number of non competition CNs purchased
