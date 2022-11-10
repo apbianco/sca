@@ -119,7 +119,7 @@ var coord_purchased_licenses = {
 // - Coordinates of where subscription purchases are indicated.
 //
 var coord_purchased_subscriptions_non_comp = [
-  [38, 5],  // First Rider. We will only accept one rider
+  [38, 5],  // First Rider. We can have more than one rider registered
   [39, 5],  // Child 1
   [40, 5],  // Child 2
   [41, 5],  // Child 3
@@ -580,9 +580,9 @@ function validateLicenseSubscription(attributed_licenses) {
   // Rider cell value validation
   var rider = getNumberAt(getRiderSubscriptionCoordinates())
   var first_subscription = getNumberAt(getFirstNonRiderSubscriptionCoordinate())
-  if (rider != 0 && rider != 1) {
+  if (rider < 0) {
     return ("La valeur du champ 'Adhésion Rider / Stage / Sortie hors station / Transport'" +
-            " ne peut prendre que la valeur 0 ou 1.");
+            " ne peut prendre la valeur " + rider);
   }
   // First subscription cell validation
   if (first_subscription != 0 && first_subscription != 1) {
@@ -590,14 +590,14 @@ function validateLicenseSubscription(attributed_licenses) {
   }
 
   // Can't have a rider and a first cell
-  if (rider == 1 && first_subscription == 1) {
+  if (rider >= 1 && first_subscription == 1) {
     return ("L'adhésion rider compte comme une première Adhésion / Stage / Transport")
   }
 
   var total_non_comp = 0;
   var reached_zero = false;
-  if (rider == 1 || first_subscription == 1) {
-    total_non_comp = 1;
+  if (rider >= 1 || first_subscription == 1) {
+    total_non_comp = rider + first_subscription;
   }
   if (rider == 0 && first_subscription == 0) {
     reached_zero = true;
@@ -859,7 +859,7 @@ function validateLicenseCrossCheck() {
     var res = countAdultsAndKids(dobs);
     var count_adults = res[0];
     var count_children = res[1];
-    if (count_adults != 2 || count_children < 2) {
+    if (count_adults < 2 || count_adults + count_children < 4) {
       return returnError(
         "Seulement " + count_adults + " adulte(s) déclaré(s) et " +
         count_children + " enfants(s) de moins de 17 ans déclaré(s) " +
