@@ -1,3 +1,4 @@
+// Version: 2022-12-10
 // This validates the invoice sheet (more could be done BTW) and
 // sends an email with the required attached pieces.
 // This script runs with duplicates of the following shared doc: 
@@ -1322,4 +1323,3 @@ function GenerateJustPDFAndSendEmailButton() {
   generatePDFAndMaybeSendEmail(/* send_email= */ true,
                                /* just_the_invoice= */ true)
 }
-
