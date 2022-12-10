@@ -1,3 +1,5 @@
+var version="2022-12-10"
+
 // Code implementing the trigger.
 //
 // The goal of the trigger is to generate a new fresh sheet from
