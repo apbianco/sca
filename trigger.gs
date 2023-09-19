@@ -1,6 +1,4 @@
-var version="2022-12-10"
-
-// Code implementing the trigger.
+// Code implementing the trigger for the 2023/2024 seasons
 //
 // The goal of the trigger is to generate a new fresh sheet from
 // template, performing some minimal validation of the input.
@@ -13,9 +11,10 @@ var version="2022-12-10"
 // 4- A link to that sheet is inserted back into the sheet from which
 //    this script runs, so that the user can start directly interacting
 //    with it.
+// 5- Previous season data can be loaded and converted into a new
+//    sheet.
 
 // TODO:
-//  - When exist, list the link?
 //  - All FIXMEs
 //  - On click on link replaces the status with a ready message
 
@@ -23,28 +22,39 @@ var version="2022-12-10"
 //
 // The ID of the empty invoice to use to create content. Adjust
 // this ID for the new season
-var empty_invoice = '1enIvk0cW9RtsXLzVIZmwpK8HwSB89xAZOwcjNA2t0k0';
+var empty_invoice = '1iHyV80rdaLrX18-TUJmitFmUnWV8TmEWTNgNtMaybTc';
 
 // The DB folder for the PREVIOUS season
-var previous_db_folder = '1UmSA2OIMZs_9J7kEFu0LSfAHaYFfi8Et'
+var previous_db_folder = '1apITLkzOIkqCI7oIxpiKA5W_QR0EM3ey'
 // Ranges to copy from an entry filed last season:
-// FIXME: Season 2023/2024: second range features one more row.
-//        and we will copy again up to column G.
-// NOTE: Season 2022/2023: we're not copying the level so we stop
-//       at F20
-var ranges_previous_season = ["C8:G12", "B16:F20"];
+// - License types is a separate column to copy since its destination
+//   in the new invoice is shifted to the right to column H
+var ranges_previous_season = [
+  // Civility
+  "C6:G10",
+  // Registered members
+  "B14:F19",
+  // License types
+  "G14:G19",
+  ];
 
 // The DB folder for the CURRENT season
-var db_folder = '1apITLkzOIkqCI7oIxpiKA5W_QR0EM3ey';
+var db_folder = '1vTYVaHHs1oRvdbQ3mvmYfUvYGipXPaf3';
 // Ranges to copy to for an entry filed this season:
-// FIXME: Season 2023/2024: second range will feature one more row.
-//        for the names: families will be up to 6 members and we
-//        need to copy an additional column so include column G again.
-var ranges_current_season = ["C6:G10", "B14:F18"];
+// - Civility extends to column I
+// - License types is copyied in column H
+var ranges_current_season = [
+  // Civility
+  "C6:I10",
+  // Registered members
+  "B14:F19",
+  // License types
+  "H14:H19",
+  ];
 
 var allowed_user = 'inscriptions.sca@gmail.com'
 
-// Spreadsheet parameters (row, columns, etc...)
+// Trigger spreadsheet parameters (row, columns, etc...)
 var coord_family_name = [1, 2];
 var coord_family_last_season = [2, 2];
 var coord_status_info = [3, 2];
@@ -87,11 +97,10 @@ function activeRangeInCoord(r, coord) {
 //
 // 1- Export last year db-YYYY-YYYY as a zip file from the Drive UI.
 // 2- Extract the list of registered families:
-//
-//    LC_CTYPE=C && LANG=C && \
-//    unzip -l db-2021-2022-20220914T190110Z-001.zip | \
-//    egrep db- | sed 's@^.*2022/@@g' | sort -u | sed 's/.*_//g' | \
-//    sort > LIST
+//    LC_CTYPE=C && LANG=C &&  \
+//    unzip -l ~/Desktop/db-2022-2023-20230918T195513Z-001.zip  | \
+//    egrep db- | sed 's@^.*2023/@@g'  | sort -u | sed 's/\/.*$//g' | \
+//    sed 's/.*_//g' | sort -u > /tmp/LIST
 //
 // 3- Edit LIST to remove undesirable entries
 // 4- Turn the list in to a CSV list:
@@ -99,7 +108,8 @@ function activeRangeInCoord(r, coord) {
 //    clear; for i in $(cat LIST); do echo -n "$i,"; done | \
 //    sed 's/,$//g'; echo
 //
-//  5- Install in cell B2 as previously detailed
+//  5- Install in cell B2: populate the F sheet in column A and
+//     set the data validation input to be the content of =F!$A$1:$A$<LAST>
   
 function setLastSeasonFamilyList(sheet) {
   return;
@@ -387,7 +397,7 @@ function createNewFamilySheetFromOld(sheet, family_name) {
         dest_cell.setValue(first_name)
       }
       // Second column in that range is the familly name which is
-      // upercassed for consistency
+      // upercased for consistency
       else if (column == 2) {
         dest_cell.setValue(source_cell.getValue().toString().toUpperCase());
       }
@@ -481,4 +491,3 @@ function GenerateEntry() {
   setLastSeasonFamilyList(sheet);
   SpreadsheetApp.flush();
 }
-
