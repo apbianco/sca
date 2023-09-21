@@ -1,5 +1,4 @@
-var version="2022-12-10"
-
+// Version: 2023-09-21
 // This validates the invoice sheet (more could be done BTW) and
 // sends an email with the required attached pieces.
 // This script runs with duplicates of the following shared doc: 
@@ -8,7 +7,7 @@ var version="2022-12-10"
 // Dev or prod? "dev" sends all email to email_dev. Prod is the
 // real thing: family will receive invoices, and so will email_license,
 // unless the trigger in use is the TEST trigger.
-dev_or_prod = "prod"
+dev_or_prod = "dev"
 
 // Enable/disable new features - first entry set to false
 // requires all following entries set to false. Note that
@@ -35,19 +34,19 @@ if ((!advanced_verification_subscriptions &&
 // Seasonal parameters - change for each season
 // 
 // - Name of the season
-var season = "2022/2023"
+var season = "2023/2024"
 // - Date at which we consider a licensee is adult. An adult is
 //   an individual born on that year or before
 var adult_yob = 2007
 //
 // - Storage for the current season's database.
 //
-var db_folder = '1apITLkzOIkqCI7oIxpiKA5W_QR0EM3ey'
+var db_folder = '1vTYVaHHs1oRvdbQ3mvmYfUvYGipXPaf3'
 //
 // - ID of attachements to be sent with the invoice - some may change
 //   from one season to an other when they are refreshed.
 //
-// TODO: Change for 2022/2023
+// TODO: Change for 2023/2024
 var parental_consent_pdf = '1TzWFmJUpp7eHdQTcWxGdW5Vze9XILw2e'
 var rules_pdf = '1JKsqHWBIQc9PJrPesX3GkM9u22DSNVJN'
 var parents_note_pdf = '10xRJwUWS_eJApxNgUJOfOAnAilNDdnWj'
@@ -67,22 +66,33 @@ var coord_family_phone2 =   [10, 5]
 // - Locations of various status line and collected input, located
 //   a the bottom of the invoice.
 // 
-var coord_personal_message = [78, 3]
-var coord_callme_phone =     [79, 7]
-var coord_timestamp =        [79, 2]
-var coord_version =          [79, 3]
-var coord_parental_consent = [79, 5]
-var coord_status =           [81, 4]
-var coord_generated_pdf =    [81, 6]
+var coord_personal_message = [79, 3]
+var coord_callme_phone =     [80, 8]
+var coord_timestamp =        [80, 2]
+var coord_version =          [80, 3]
+var coord_parental_consent = [80, 5]
+var coord_status =           [82, 4]
+var coord_generated_pdf =    [82, 6]
 //
-// - Rows where the familly names are entered
+// - Rows where the family names are entered
 // 
 var coords_identity_rows = [14, 15, 16, 17, 18, 19];
+//
+// - Columns where informationa about family members can be found
+//
+var coord_first_name_column = 2
+var coord_last_name_column = 3
+var coord_dob_column = 4
+var coord_cob_column = 5
+var coord_sex_column = 6
+var coord_level = 7
+var coord_license_column = 8
+var coord_license_number = 9
 //
 // - Parameters defining the valid ranges to be retained during the
 //   generation of the invoice's PDF
 //
-var coords_pdf_row_column_ranges = {'start': [1, 0], 'end': [80, 7]}
+var coords_pdf_row_column_ranges = {'start': [1, 0], 'end': [81, 9]}
 //
 // - Definition of all possible license values
 //
@@ -473,6 +483,26 @@ function formatPhoneNumbers() {
   formatPhoneNumber(coord_family_phone2);
 }
 
+// Normalize a name:
+// - Remove leading/trailing spaces
+// - Replace diacritics by their accented counterpart (for instance, é becomes e).
+// - Other caracters transformed or removes
+// - Optionally, the output can be upcased if required. Default is not to upcase.
+function normalizeName(str, to_upper_case=false) {
+  to_return = str.trim().normalize("NFD").replace(/\p{Diacritic}/gu, "").
+      replace(/\s/g, "-").  // No spaces in the middle
+      replace(/\d+/g, "").  // No numbers
+      replace(/\//g, "-").  // / into -
+      replace(/\./g, "-").  // . into -
+      replace(/_/g, "-").   // _ into -
+      replace(/:/g, "-").   // : into -
+      replace(/-+/g, "-");  // Many - into a single one
+  if (to_upper_case) {
+    to_return = to_return.toUpperCase()
+  }
+  return to_return
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 // Alerting
 ///////////////////////////////////////////////////////////////////////////////
@@ -524,8 +554,12 @@ function validateFamilyMembers() {
   dobs = [];
   var no_license = getNoLicenseString();
   for (var index in coords_identity_rows) {
-    var first_name = getStringAt([coords_identity_rows[index], 2]);
-    var last_name = getStringAt([coords_identity_rows[index], 3]);
+    var first_name = getStringAt([coords_identity_rows[index], coord_first_name_column]);
+    var last_name = getStringAt([coords_identity_rows[index], coord_last_name_column]);
+    // Normalize the first name, normalize/upcase the last name
+    first_name = normalizeName(first_name, false)
+    last_name = normalizeName(last_name, true)
+
     // Entry is empty, just skip it
     if (first_name == "" && last_name == "") {
       continue;
@@ -537,12 +571,12 @@ function validateFamilyMembers() {
     if (! last_name) {
       return returnError("Pas de nom de famille fournit pour " + first_name);
     }
-    // Upcase the familly name and write it back
-    last_name = last_name.toUpperCase();
-    setStringAt([coords_identity_rows[index], 3], last_name, "black");
+    // Write the first and last name back as it's been normalized
+    setStringAt([coords_identity_rows[index], coord_first_name_column], first_name, "black");
+    setStringAt([coords_identity_rows[index], coord_last_name_column], last_name, "black");
     // We need a DoB but only if a license has been requested.
-    var dob = getDoB([coords_identity_rows[index], 4]);
-    var license = getStringAt([coords_identity_rows[index], 7]);
+    var dob = getDoB([coords_identity_rows[index], coord_dob_column]);
+    var license = getStringAt([coords_identity_rows[index], coord_license_column]);
     if (dob == undefined) {
       if (license != '' && license != no_license) {
         return returnError(
@@ -555,7 +589,7 @@ function validateFamilyMembers() {
       dobs.push(dob);
     }
     // We need a sex
-    var sex = getStringAt([coords_identity_rows[index], 6]);
+    var sex = getStringAt([coords_identity_rows[index], coord_sex_column]);
     if (sex != "Fille" && sex != "Garçon") {
       return returnError("Pas de sexe défini pour " +
                          first_name + " " + last_name);
@@ -766,13 +800,13 @@ function validateLicenseCrossCheck() {
   // Collect the attributed licenses into a hash
   for (var index in coords_identity_rows) {
     var row = coords_identity_rows[index];
-    var selected_license = getStringAt([row, 7]);
+    var selected_license = getStringAt([row, coord_license_column]);
     if (selected_license === '') {
       selected_license = no_license;
     }
     // You can't have no first/last name and an assigned license
-    var first_name = getStringAt([row, 2]);
-    var last_name = getStringAt([row, 3]);
+    var first_name = getStringAt([row, coord_first_name_column]);
+    var last_name = getStringAt([row, coord_last_name_column]);
     // If there's no name on that row, the only possible value is None
     if (first_name === '' && last_name === '') {
       if (selected_license != no_license) {
@@ -795,7 +829,7 @@ function validateLicenseCrossCheck() {
     }
     // Executive license requires a city of birth
     if (selected_license == exec_license) {
-      var city = getStringAt([row, 5]);
+      var city = getStringAt([row, coord_cob_column]);
       if (city == '') {
         return returnError(first_name + " " + last_name + ": une license " +
                            selected_license +
@@ -811,7 +845,7 @@ function validateLicenseCrossCheck() {
     }
     
     // Validate DoB against the type of license
-    var yob = getDoBYear(getDoB([row, 4]));
+    var yob = getDoBYear(getDoB([row, coord_dob_column]));
     dob_start = attributed_licenses_dob_validation[selected_license][0];
     dob_end = attributed_licenses_dob_validation[selected_license][1];
     if (yob < dob_start || yob > dob_end) {
@@ -929,8 +963,8 @@ function getDictionaryOfFamilyPurchasingALicense() {
   var family = []
   var no_license = getNoLicenseString();
   for (var index in coords_identity_rows) {    
-    var first_name = getStringAt([coords_identity_rows[index], 2]);
-    var last_name = getStringAt([coords_identity_rows[index], 3]);    
+    var first_name = getStringAt([coords_identity_rows[index], coord_first_name_column]);
+    var last_name = getStringAt([coords_identity_rows[index], coord_last_name_column]);    
     // After validation of the family entries, having a first name
     // guarantees a last name. Just check the existence of a
     // first name in order to skip that entry
@@ -939,18 +973,18 @@ function getDictionaryOfFamilyPurchasingALicense() {
     }
     // We can skip that entry if no license is required. That familly
     // member doesn't need to be reported in this dictionary.
-    var license = getStringAt([coords_identity_rows[index], 7]);
+    var license = getStringAt([coords_identity_rows[index], coord_license_column]);
     if (license == "" || license == no_license) {
       continue;
     }
     // DoB is guaranteed to be there if a license was requested
-    var birth = getDoB([coords_identity_rows[index], 4]);
-    var city = getStringAt([coords_identity_rows[index], 5])
+    var birth = getDoB([coords_identity_rows[index], coord_dob_column]);
+    var city = getStringAt([coords_identity_rows[index], coord_cob_column])
     if (city == "") {
       city = "\\";
     }
     // Sex is guaranteed to be there
-    var sex = getStringAt([coords_identity_rows[index], 6])
+    var sex = getStringAt([coords_identity_rows[index], coord_sex_column])
 
     family.push({'first': first_name, 'last': last_name,
                  'birth': birth, 'city': city, 'sex': sex,
