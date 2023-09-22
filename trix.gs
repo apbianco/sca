@@ -1,28 +1,6 @@
 // The trix to update this season and several ranges that exist in that trix.
 var license_trix = '13akc77rrPaI6g6mNDr13FrsXjkStShviTnBst78xSVY'
 
-// For each level, the column offset relative to the last_name_range for
-// a given level
-var levels_to_columns_map = {
-  'FIRST': 9, // Horribly confusing
-  'Débutant/Ourson': 7,
-  'Flocon': 8,
-  'Étoile 1': 9,
-  'Étoile 2': 10,
-  'Étoile 3': 11,
-  'Bronze': 12,
-  'Argent': 13,
-  'Or': 14,
-  'Ski/Fun': 15,
-  'Rider': 16,
-  'Snow Découverte': 17,
-  'Snow 1': 18,
-  'Snow 2': 19,
-  'Snow 3': 20,
-  'Snow Expert': 21,
-  'LAST': 23
-}
-
 function UpdateTrix(data) {
 
   function FirstEmptySlotRange(sheet, range) {
@@ -63,33 +41,20 @@ function UpdateTrix(data) {
     sheet.getRange(row,column+4).setValue(data.dob)
     var dob_year = new RegExp("[0-9]+/[0-9]+/([0-9]+)", "gi").exec(data.dob)[1];
     sheet.getRange(row,column+5).setValue(dob_year)
-    SpreadsheetApp.flush()
-    // Insert the level after having determined which column it should go to.
-    if (data.level in levels_to_columns_map) {
-      // First clear the entire level row before inserting the marker.
-      sheet.getRange(row, levels_to_columns_map['FIRST'],
-                     row, levels_to_columns_map['LAST']).clearContent()
-      SpreadsheetApp.flush()
-      var offset_level = levels_to_columns_map[data.level]
-      sheet.getRange(row,column+offset_level).setValue(1)
-      sheet.getRange(row,column+5).setValue(data.level)
-    }
+    sheet.getRange(row,column+6).setValue(data.level)
   }
 
   // Open the spread sheet, insert the name if the operation is possible. Sync
   // the spreadsheet.
-  var sheet = SpreadsheetApp.openById(license_trix).getSheetByName('FFS');
-  var last_name_range = sheet.getRange('B5:B')
-  var entire_range = sheet.getRange('B5:Y')
+  var sheet = SpreadsheetApp.openById(license_trix).getSheetByName('FFS2');
+  var last_name_range = sheet.getRange('B7:B')
+  var entire_range = sheet.getRange('B7:N')
   var res = SearchEntry(sheet, last_name_range, data)
   if (res != null) {
     UpdateRow(sheet, res, data)
-    SpreadsheetApp.flush()
   }
 
-  // Sort the spread sheet and sync the spreadsheet again
-  // Totally counter intuitive:
-  var x = entire_range.getColumn()
+  // Sort the spread sheet by last name and then first name and sync the spreadsheet.
   entire_range.sort([{column: entire_range.getColumn()}, {column: entire_range.getColumn()+1}])
   SpreadsheetApp.flush()
 }
@@ -107,7 +72,8 @@ class TrixUpdate {
 
 function Run() {
   console.log("X part of code is running here") 
-  data = new TrixUpdate('Alain', 'Tricouille', 'G', '12/01/2015', 'F12414000412', 'Étoile 2')
+  data = new TrixUpdate('Regis', 'Skimal', 'M', '12/03/2015', 'F124199990412', 'Étoile 3')
   UpdateTrix(data)
   console.log('Done')
 }
+
