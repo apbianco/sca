@@ -4,7 +4,7 @@ var license_trix = '13akc77rrPaI6g6mNDr13FrsXjkStShviTnBst78xSVY'
 // For each level, the column offset relative to the last_name_range for
 // a given level
 var levels_to_columns_map = {
-  'FIRST': 7,
+  'FIRST': 9, // Horribly confusing
   'Débutant/Ourson': 7,
   'Flocon': 8,
   'Étoile 1': 9,
@@ -20,7 +20,7 @@ var levels_to_columns_map = {
   'Snow 2': 19,
   'Snow 3': 20,
   'Snow Expert': 21,
-  'LAST': 21
+  'LAST': 23
 }
 
 function UpdateTrix(data) {
@@ -63,13 +63,16 @@ function UpdateTrix(data) {
     sheet.getRange(row,column+4).setValue(data.dob)
     var dob_year = new RegExp("[0-9]+/[0-9]+/([0-9]+)", "gi").exec(data.dob)[1];
     sheet.getRange(row,column+5).setValue(dob_year)
+    SpreadsheetApp.flush()
     // Insert the level after having determined which column it should go to.
     if (data.level in levels_to_columns_map) {
       // First clear the entire level row before inserting the marker.
       sheet.getRange(row, levels_to_columns_map['FIRST'],
                      row, levels_to_columns_map['LAST']).clearContent()
+      SpreadsheetApp.flush()
       var offset_level = levels_to_columns_map[data.level]
       sheet.getRange(row,column+offset_level).setValue(1)
+      sheet.getRange(row,column+5).setValue(data.level)
     }
   }
 
@@ -104,11 +107,7 @@ class TrixUpdate {
 
 function Run() {
   console.log("X part of code is running here") 
-  data = new TrixUpdate('FN', 'BBB_LN', 'M', '12/12/2022', '12345AABB', 'Étoile 3')
-  UpdateTrix(data)
-  data = new TrixUpdate('FN', 'BBB_LN', 'M', '12/12/2022', '12345AABB', 'Snow 1')
-  UpdateTrix(data)
-  data = new TrixUpdate('Zorra', 'La rousse', 'F', '12/12/2005', 'F12414412', 'Débutant/Ourson')
+  data = new TrixUpdate('Alain', 'Tricouille', 'G', '12/01/2015', 'F12414000412', 'Étoile 2')
   UpdateTrix(data)
   console.log('Done')
 }
