@@ -46,7 +46,13 @@ var db_folder = '1vTYVaHHs1oRvdbQ3mvmYfUvYGipXPaf3'
 // - ID of attachements to be sent with the invoice - some may change
 //   from one season to an other when they are refreshed.
 //
+// Level aggregation trix to update when a new entry is added
+//
+var license_trix = '13akc77rrPaI6g6mNDr13FrsXjkStShviTnBst78xSVY'
+//
+// PDF content to insert in a registration bundle.
 // TODO: Change for 2023/2024
+//
 var parental_consent_pdf = '1TzWFmJUpp7eHdQTcWxGdW5Vze9XILw2e'
 var rules_pdf = '1JKsqHWBIQc9PJrPesX3GkM9u22DSNVJN'
 var parents_note_pdf = '10xRJwUWS_eJApxNgUJOfOAnAilNDdnWj'
@@ -85,9 +91,9 @@ var coord_last_name_column = 3
 var coord_dob_column = 4
 var coord_cob_column = 5
 var coord_sex_column = 6
-var coord_level = 7
+var coord_level_column = 7
 var coord_license_column = 8
-var coord_license_number = 9
+var coord_license_number_column = 9
 //
 // - Parameters defining the valid ranges to be retained during the
 //   generation of the invoice's PDF
@@ -440,6 +446,10 @@ function isAdult(dob) {
   return Number(res[3]) <= adult_yob;
 }
 
+function isKid(dob) {
+  return ! isAdult(dob)
+}
+
 // Given a list of DoBs, count the number of adults and kids in it.
 function countAdultsAndKids(dobs) {
   var count_adults = 0;
@@ -530,6 +540,18 @@ function displayWarningPanel(message) {
 // Validation methods
 ///////////////////////////////////////////////////////////////////////////////
 
+function isLicenseDefined(licence) {
+  return license != '' && license != no_license
+}
+
+function isLicenseNonComp(license) {
+  return (license == getNonCompJuniorLicenseString() ||
+          license == getNonCompFamilyLicenseString())
+}
+
+function isLicenseAdult(license) {
+}
+
 // Validate a cell at (x, y) whose value is set via a drop-down
 // menu. We rely on the fact that a cell not yet set a proper value
 // always has the same value.  When the value is valid, it is
@@ -552,7 +574,6 @@ function validateFamilyMembers() {
   }
 
   dobs = [];
-  var no_license = getNoLicenseString();
   for (var index in coords_identity_rows) {
     var first_name = getStringAt([coords_identity_rows[index], coord_first_name_column]);
     var last_name = getStringAt([coords_identity_rows[index], coord_last_name_column]);
@@ -574,11 +595,13 @@ function validateFamilyMembers() {
     // Write the first and last name back as it's been normalized
     setStringAt([coords_identity_rows[index], coord_first_name_column], first_name, "black");
     setStringAt([coords_identity_rows[index], coord_last_name_column], last_name, "black");
-    // We need a DoB but only if a license has been requested.
-    var dob = getDoB([coords_identity_rows[index], coord_dob_column]);
+
     var license = getStringAt([coords_identity_rows[index], coord_license_column]);
+    // We need a DoB but only if a license has been requested. If a DoB is
+    // defined, we save it.
+    var dob = getDoB([coords_identity_rows[index], coord_dob_column]);
     if (dob == undefined) {
-      if (license != '' && license != no_license) {
+      if (isLicenseDefined(license)) {
         return returnError(
           "Pas de date de naissance fournie pour " +
           first_name + " " + last_name +
@@ -587,6 +610,14 @@ function validateFamilyMembers() {
       }
     } else {
       dobs.push(dob);
+    }
+    // We need a level but only if a non competitor license has been requested
+    // We exclude adults because a non competitor license can be a family license.
+    var level = getStringAt([coords_identity_rows[index], coord_level_column]);
+    if (level == undefined && isKid(dob) && isLicenseNonComp(license)) {
+      return returnError(
+          "Pas de niveau fourni pour " + first_name + " " + last_name         
+      )
     }
     // We need a sex
     var sex = getStringAt([coords_identity_rows[index], coord_sex_column]);
@@ -956,11 +987,25 @@ function getAndUpdateInvoiceNumber() {
   return extracted_num;
 }
 
+class FamilyMember {
+  constructor(first_name, last_name, dob, sex, city, license_type, license_number, level) {
+    this.first_name = first_name
+    this.last_name = last_name
+    this.dob = dob
+    this.sex = sex
+    this.city = city
+    this.license_type = license_type
+    this.license_number = license_number
+    this.level = level
+  }
+}
+
 // Produce a dictionary of family members that has purchased a license.
-// This assumes that some verification of first/last name, DoB and sex
+// This assumes that some verification of first/last name, DoB, sex and level
 // have already been performed.
 function getDictionaryOfFamilyPurchasingALicense() {
   var family = []
+  var f = []
   var no_license = getNoLicenseString();
   for (var index in coords_identity_rows) {    
     var first_name = getStringAt([coords_identity_rows[index], coord_first_name_column]);
@@ -977,6 +1022,8 @@ function getDictionaryOfFamilyPurchasingALicense() {
     if (license == "" || license == no_license) {
       continue;
     }
+    var license_number = getStringAt([coords_identity_rows[index], coord_license_number_column])
+
     // DoB is guaranteed to be there if a license was requested
     var birth = getDoB([coords_identity_rows[index], coord_dob_column]);
     var city = getStringAt([coords_identity_rows[index], coord_cob_column])
@@ -986,11 +1033,116 @@ function getDictionaryOfFamilyPurchasingALicense() {
     // Sex is guaranteed to be there
     var sex = getStringAt([coords_identity_rows[index], coord_sex_column])
 
+    // Level is guaranteed to be there, it should have been verified
+    // in validateAndReturnDropDownValue()
+    var level = getStringAt([coords_identity_rows[index], coord_level_column])
+
+    f.push(new FamilyMember(first_name, last_name, birth,
+                            sex, city, license, license_number, level))
     family.push({'first': first_name, 'last': last_name,
                  'birth': birth, 'city': city, 'sex': sex,
-                 'license': license})
+                 'level': level,
+                 'license': license, 'license_number': license_number})
   }
   return family
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// Updating the aggregation trix with entered data (only once)
+///////////////////////////////////////////////////////////////////////////////
+
+function UpdateTrix(data, allow_overwrite) {
+
+  function FirstEmptySlotRange(sheet, range) {
+    // Range must be a column
+    var values = range.getValues();
+    var ct = 0;
+    while ( values[ct] && values[ct][0] != "" ) {
+      ct++;
+    }
+    return sheet.getRange(range.getRow() + ct,range.getColumn())
+  }
+  
+  // Search for elements in data in sheet over range. If we can't find data,
+  // return a range on the first empty slot we find. If we can find data
+  // return its range unless allow_overwrite is false, in which case we
+  // return null: this will be used to avoid overwriting existing data.
+  function SearchEntry(sheet, range, data, allow_overwrite) {
+    var finder = range.createTextFinder(data.last_name)
+    while (true) {
+      var current_range = finder.findNext()
+      if (current_range == null) {
+        return FirstEmptySlotRange(sheet, range)
+      }
+      var row = current_range.getRow()
+      var col = current_range.getColumn()
+      // This assumes that first_name will be found at col+1 relative to last_name.
+      if (sheet.getRange(row, col+1).getValue().toString() == data.first_name) {
+        if (allow_overwrite) {
+          return sheet.getRange(row, col)
+        }
+        return null
+      }
+    }
+  }
+
+  // Update the row at range in sheet with data
+  function UpdateRow(sheet, range, data) {
+    var row = range.getRow()
+    var column = range.getColumn()
+    sheet.getRange(row,column).setValue(data.last_name)
+    sheet.getRange(row,column+1).setValue(data.first_name)
+    sheet.getRange(row,column+2).setValue(data.license_number)
+    sheet.getRange(row,column+3).setValue(data.sex)
+    sheet.getRange(row,column+4).setValue(data.dob)
+    sheet.getRange(row,column+5).setValue(getDoBYear(data.dob))
+    sheet.getRange(row,column+6).setValue(data.level)
+  }
+
+  // Open the spread sheet, insert the name if the operation is possible. Sync
+  // the spreadsheet.
+  var sheet = SpreadsheetApp.openById(license_trix).getSheetByName('FFS');
+  var last_name_range = sheet.getRange('B7:B')
+  var entire_range = sheet.getRange('B7:N')
+
+  for (var index in data) {
+    var res = SearchEntry(sheet, last_name_range, data[index], allow_overwrite)
+    // res can be null if allow_overwrite is false and the entry was found
+    if (res == null) {
+      continue
+    }
+    UpdateRow(sheet, res, data[index])
+  }
+  // Sort the spread sheet by last name and then first name and sync the spreadsheet.
+  entire_range.sort([{column: entire_range.getColumn()}, {column: entire_range.getColumn()+1}])
+  SpreadsheetApp.flush()
+}
+
+function updateAggregationTrix() {
+  // We computed this already possible in the caller, maybe pass this as an argument?
+  var family_dict = getDictionaryOfFamilyPurchasingALicense()
+  var family = []
+  // Skip over an empty name
+  for (var index in family_dict) {
+    var family_member = family_dict[index]
+    if (family_dict[index]['last'] == "") {
+      continue
+    }
+
+    // Retain kids with a non comp license (can be a junior license or a family license)
+    if (isKid(family_member['birth']) && isLicenseNonComp(family_member['license'])) {
+      family.push(new FamilyMember(
+        family_member['first'],
+        family_member['last'],
+        family_member['birth'],
+        family_member['sex'],
+        family_member['city'],
+        family_member['license_type'],
+        family_member['license_number'],
+        family_member['level']))
+    }
+  }
+  UpdateTrix(family, false)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1281,8 +1433,9 @@ function generatePDFAndMaybeSendEmail(send_email, just_the_invoice) {
     
       parental_consent_text +
 
-      "<p>Des questions concernant cette facture? Contacter Aissam: " +
-      "aissam.yaagoubi@sfr.fr (06-60-50-74-77) pour le ski loisir ou " +
+      "<p>Des questions concernant cette facture? Contacter Marlène: " +
+      "marlene.czajka@gmail.com (06-60-69-75-39) / Aurélien: " +
+      "armand.aurelien@gmail.com (07-69-62-84-29) pour le ski loisir ou " +
       "Ludivine: tresorerie.sca@gmail.com pour le ski compétition.</p>" +
       "<p>Des questions concernant la saison " + season + " ? " +
       "Envoyez un mail à " + email_loisir + " (ski loisir) " +
@@ -1329,6 +1482,11 @@ function generatePDFAndMaybeSendEmail(send_email, just_the_invoice) {
                            "Facture générée" : "dossier généré"), "green")  
   }
   displayPDFLink(pdf_file)
+
+  // Now we can update the level aggregation trix with all the folks that
+  // where declared as not competitors
+  updateAggregationTrix()
+
   SpreadsheetApp.flush()  
 }
 
