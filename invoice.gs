@@ -1325,20 +1325,19 @@ function maybeEmailLicenseSCA(invoice) {
   MailApp.sendEmail(email_options)
 }
 
-function generatePDFAndMaybeSendEmail(send_email, just_the_invoice) {
-  setStringAt(coord_status, 
-              "⏳ Validation de la facture...", "orange")      
+function updateStatusBar(message, color) {
+  setStringAt(coord_status, message, color)
   SpreadsheetApp.flush()
+}
+
+function generatePDFAndMaybeSendEmail(send_email, just_the_invoice) {
+  updateStatusBar("⏳ Validation de la facture...", "orange")      
   var validation = validateInvoice();
   if (isEmpty(validation)) {
-    setStringAt(coord_status, 
-                "❌ La validation de la facture a échouée", "red")      
-    SpreadsheetApp.flush()
+    updateStatusBar("❌ La validation de la facture a échouée", "red")      
     return;
   }
-  setStringAt(coord_status, 
-              "⏳ Préparation de la facture...", "orange")
-  SpreadsheetApp.flush()
+  updateStatusBar("⏳ Préparation de la facture...", "orange")
   
   // Generate and prepare attaching the PDF to the email
   var pdf_file = generatePDF();
@@ -1346,14 +1345,11 @@ function generatePDFAndMaybeSendEmail(send_email, just_the_invoice) {
   var attachments = [pdf.getAs(MimeType.PDF)]
 
   if (just_the_invoice) {
-    setStringAt(coord_status,
-                "⏳ Génération " +
-                (send_email? "et envoit " : " ") + "de la facture...", "orange");
+    updateStatusBar("⏳ Génération " +
+                    (send_email? "et envoit " : " ") + "de la facture...", "orange")
   } else {
-    setStringAt(coord_status, 
-                "⏳ Génération " +
-                (send_email? "et envoit " : " ") + "du dossier...", "orange");
-    SpreadsheetApp.flush()
+    updateStstusBar("⏳ Génération " +
+                    (send_email? "et envoit " : " ") + "du dossier...", "orange")
   }
   
   var civility = validation['civility'];
@@ -1447,6 +1443,10 @@ function generatePDFAndMaybeSendEmail(send_email, just_the_invoice) {
   // to tell here that we're going to send an email to the license
   // email address.
   var quota_threshold = 2 + (cc_to == "" ? 0 : 1);
+  // The final status to display is captured in this variable and
+  // the status bar is updated after the aggregation trix has been
+  // updated.
+  var final_status = ""
   if (send_email) {
     var emailQuotaRemaining = MailApp.getRemainingDailyQuota();
     if (emailQuotaRemaining < quota_threshold) {
@@ -1454,30 +1454,28 @@ function generatePDFAndMaybeSendEmail(send_email, just_the_invoice) {
                           (just_the_invoice ? "de la facture" : "du dossier") +
                           " retardé. Quota restant: " + emailQuotaRemaining +
                           ". Nécessaire: " + quota_threshold);
-      setStringAt(coord_status,
-                  "⚠️ Quota email insuffisant. Envoi retardé", "orange");
+      updateStatusBar("⚠️ Quota email insuffisant. Envoi retardé", "orange")
     } else {
       // Send the email  
       MailApp.sendEmail(email_options)
       maybeEmailLicenseSCA([attachments[0]]);
-
-      setStringAt(coord_status, 
-                  "✅ " + (just_the_invoice ? 
-                           "Facture envoyée" : "dossier envoyé"), "green")  
+      final_status = "✅ " + (just_the_invoice ? 
+                              "Facture envoyée" : "dossier envoyé")
     }
   } else {
-      setStringAt(coord_status, 
-                  "✅ " + (just_the_invoice ?
-                           "Facture générée" : "dossier généré"), "green")  
+      final_status = "✅ " + (just_the_invoice ?
+                              "Facture générée" : "dossier généré")
   }
-  displayPDFLink(pdf_file)
 
   // Now we can update the level aggregation trix with all the folks that
   // where declared as not competitors
   // TODO: write that we're updating the aggregation trix and then display the
   // PDF link
+  updateStatusBar("⏳ Enregistrement des niveaux...", "orange")
   updateAggregationTrix()
+  updateStatusBar(final_status, "green")
 
+  displayPDFLink(pdf_file)
   SpreadsheetApp.flush()  
 }
 
