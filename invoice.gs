@@ -614,7 +614,7 @@ function validateFamilyMembers() {
     // We need a level but only if a non competitor license has been requested
     // We exclude adults because a non competitor license can be a family license.
     var level = getStringAt([coords_identity_rows[index], coord_level_column]);
-    if (level == undefined && isKid(dob) && isLicenseNonComp(license)) {
+    if (level == '' && isKid(dob) && isLicenseNonComp(license)) {
       return returnError(
           "Pas de niveau fourni pour " + first_name + " " + last_name         
       )
@@ -1000,12 +1000,12 @@ class FamilyMember {
   }
 }
 
-// Produce a dictionary of family members that has purchased a license.
+// Produce a list of family members that has purchased a license.
 // This assumes that some verification of first/last name, DoB, sex and level
-// have already been performed.
-function getDictionaryOfFamilyPurchasingALicense() {
+// have already been performed. Each family member is an instance of the
+// FamilyMember class.
+function getListOfFamilyPurchasingALicense() {
   var family = []
-  var f = []
   var no_license = getNoLicenseString();
   for (var index in coords_identity_rows) {    
     var first_name = getStringAt([coords_identity_rows[index], coord_first_name_column]);
@@ -1037,12 +1037,8 @@ function getDictionaryOfFamilyPurchasingALicense() {
     // in validateAndReturnDropDownValue()
     var level = getStringAt([coords_identity_rows[index], coord_level_column])
 
-    f.push(new FamilyMember(first_name, last_name, birth,
-                            sex, city, license, license_number, level))
-    family.push({'first': first_name, 'last': last_name,
-                 'birth': birth, 'city': city, 'sex': sex,
-                 'level': level,
-                 'license': license, 'license_number': license_number})
+    family.push(new FamilyMember(first_name, last_name, birth,
+                                 sex, city, license, license_number, level))
   }
   return family
 }
@@ -1120,26 +1116,18 @@ function UpdateTrix(data, allow_overwrite) {
 
 function updateAggregationTrix() {
   // We computed this already possible in the caller, maybe pass this as an argument?
-  var family_dict = getDictionaryOfFamilyPurchasingALicense()
+  var family_dict = getListOfFamilyPurchasingALicense()
   var family = []
   // Skip over an empty name
   for (var index in family_dict) {
     var family_member = family_dict[index]
-    if (family_dict[index]['last'] == "") {
+    if (family_dict[index].last_name == "") {
       continue
     }
 
     // Retain kids with a non comp license (can be a junior license or a family license)
-    if (isKid(family_member['birth']) && isLicenseNonComp(family_member['license'])) {
-      family.push(new FamilyMember(
-        family_member['first'],
-        family_member['last'],
-        family_member['birth'],
-        family_member['sex'],
-        family_member['city'],
-        family_member['license_type'],
-        family_member['license_number'],
-        family_member['level']))
+    if (isKid(family_member.dob) && isLicenseNonComp(family_member.license_type)) {
+      family.push(family_member)
     }
   }
   UpdateTrix(family, false)
@@ -1297,20 +1285,21 @@ function validateInvoice() {
 function maybeEmailLicenseSCA(invoice) {
   var operator = getOperator()
   var family_name = getFamilyName()
-  var family_dict = getDictionaryOfFamilyPurchasingALicense() 
+  var family_dict = getListOfFamilyPurchasingALicense() 
   var string_family_members = "";
   for (var index in family_dict) {
-    if (family_dict[index]['last'] == "") {
+    if (family_dict[index].last_name == "") {
       continue
     }
     string_family_members += (
       "<tt>" +
-      "Nom: <b>" + family_dict[index]['last'].toUpperCase() + "</b><br>" +
-      "Prénom: " + family_dict[index]['first'] + "<br>" +
-      "Naissance: " + family_dict[index]['birth'] + "<br>" +
-      "Fille/Garçon: " + family_dict[index]['sex'] + "<br>" +
-      "Ville de Naissance: " + family_dict[index]['city'] + "<br>" +
-      "Licence: " + family_dict[index]['license'] + "<br>" +
+      "Nom: <b>" + family_dict[index].last_name.toUpperCase() + "</b><br>" +
+      "Prénom: " + family_dict[index].first_name + "<br>" +
+      "Naissance: " + family_dict[index].dob + "<br>" +
+      "Fille/Garçon: " + family_dict[index].sex + "<br>" +
+      "Ville de Naissance: " + family_dict[index].city + "<br>" +
+      "Licence: " + family_dict[index].license_type + "<br>" +
+      "Numéro License: " + family_dict[index].license_number + "<br>" +
       "----------------------------------------------------</tt><br>\n");
   }
   if (string_family_members) {
@@ -1485,6 +1474,8 @@ function generatePDFAndMaybeSendEmail(send_email, just_the_invoice) {
 
   // Now we can update the level aggregation trix with all the folks that
   // where declared as not competitors
+  // TODO: write that we're updating the aggregation trix and then display the
+  // PDF link
   updateAggregationTrix()
 
   SpreadsheetApp.flush()  
