@@ -439,7 +439,7 @@ function getDoB(coords) {
   return undefined;
 }
 
-// Determine whether someone is an adult. adult_date is a global that needs to
+// Determine whether someone is an adult. adult_yob is a global that needs to
 // be adjusted for each season.
 function isAdult(dob) {
   var res = new RegExp("([0-9]+)/([0-9]+)/([0-9]+)", "gi").exec(dob);
@@ -547,6 +547,10 @@ function isLicenseDefined(licence) {
 function isLicenseNonComp(license) {
   return (license == getNonCompJuniorLicenseString() ||
           license == getNonCompFamilyLicenseString())
+}
+
+function isExecLicense(license) {
+  return license = getExecutiveLicenseString()
 }
 
 function isLicenseAdult(license) {
@@ -818,7 +822,6 @@ function validateLicenseCrossCheck() {
   // Capture the "no license" and exec license string, we're going to
   // use it a lot.
   var no_license = getNoLicenseString();
-  var exec_license = getExecutiveLicenseString();
   var purchased_licenses = {}
   attributed_licenses_values.forEach(function(key) {
     // Entry indicating no license is skipped because it can't
@@ -859,7 +862,7 @@ function validateLicenseCrossCheck() {
                          "' n'est pas une license attribuée possible!");
     }
     // Executive license requires a city of birth
-    if (selected_license == exec_license) {
+    if (isExecLicense(selected_license)) {
       var city = getStringAt([row, coord_cob_column]);
       if (city == '') {
         return returnError(first_name + " " + last_name + ": une license " +
