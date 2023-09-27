@@ -168,28 +168,26 @@ function getFamilyName(sheet, coord) {
   var x = coord[0];
   var y = coord[1];
   if (sheet.getRange(x, y)) {
-    return sheet.getRange(x, y).getValue().toString().toUpperCase().
-      replace(/\s/g, "-").  // No spaces
-      replace(/\d+/g, "").  // No numbers
-      replace(/\//g, "-").  // / into -
-      replace(/\./g, "-").  // . into -
-      replace(/_/g, "-").   // _ into -
-      replace(/:/g, "-").   // : into -
-      replace(/-+/g, "-").  // Many - into a single one
-      replace(/-$/g, "").   // Last - into nothing
-      replace(/^-/g, "")    // First - into nothing
+    return Normalize(sheet.getRange(x, y).getValue().toString(), true)
   } else {
     return "";
   }
 } 
 
-// Normalize a name replacing accented characters by non accented
-// characters (for instance, é becomes e). The leading/trailing
-// white spaces are removed before the normalization takes place.
-// Optionally, the output can be upcased if required. Default is
-// not to upcase.
+// Normalize a name:
+// - Remove leading/trailing spaces
+// - Replace diacritics by their accented counterpart (for instance, é becomes e).
+// - Other caracters transformed or removes
+// - Optionally, the output can be upcased if required. Default is not to upcase.
 function Normalize(str, to_upper_case=false) {
-  to_return = str.trim().normalize("NFD").replace(/\p{Diacritic}/gu, "")
+  to_return = str.trim().normalize("NFD").replace(/\p{Diacritic}/gu, "").
+      replace(/\s/g, "-").  // No spaces in the middle
+      replace(/\d+/g, "").  // No numbers
+      replace(/\//g, "-").  // / into -
+      replace(/\./g, "-").  // . into -
+      replace(/_/g, "-").   // _ into -
+      replace(/:/g, "-").   // : into -
+      replace(/-+/g, "-");  // Many - into a single one
   if (to_upper_case) {
     to_return = to_return.toUpperCase()
   }
@@ -426,7 +424,8 @@ function createNewFamilySheetFromOld(sheet, family_name) {
         if (found >= 0) {
           first_name = first_name.substring(0, found);
         }
-        // First name is inserted normalized but not upcased.
+        // First name is inserted normalized but not upcased, we keep an upcased
+        // version around to perform the license lookup.
         first_name = Normalize(first_name)
         dest_cell.setValue(first_name)
         normalized_first_name = first_name.toUpperCase()
@@ -463,6 +462,11 @@ function createNewFamilySheetFromOld(sheet, family_name) {
       }
     }
   }
+
+  // Last step: sort the family members range by last name (ascending order)
+  // and DoB (descending order)
+  new_member_range.sort([{column: new_member_range.getColumn()+1},
+                         {column: new_member_range.getColumn()+2, ascending: false}])
 }
 
 // This call back is attached to the button used to create a new entry.
