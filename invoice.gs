@@ -1110,7 +1110,7 @@ function UpdateTrix(data, allow_overwrite) {
     UpdateRow(sheet, res, data[index])
   }
   // Sort the spread sheet by last name and then first name and sync the spreadsheet.
-  entire_range.sort([{column: entire_range.getColumn()}, {column: entire_range.getColumn()+1}])
+  entire_range.sort([{column: entire_range.getColumn()}, {column: entire_range.getColumn()+5}])
   SpreadsheetApp.flush()
 }
 
