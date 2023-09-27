@@ -550,7 +550,7 @@ function isLicenseNonComp(license) {
 }
 
 function isExecLicense(license) {
-  return license = getExecutiveLicenseString()
+  return license == getExecutiveLicenseString()
 }
 
 function isLicenseAdult(license) {
