@@ -51,11 +51,12 @@ var db_folder = '1vTYVaHHs1oRvdbQ3mvmYfUvYGipXPaf3'
 var license_trix = '13akc77rrPaI6g6mNDr13FrsXjkStShviTnBst78xSVY'
 //
 // PDF content to insert in a registration bundle.
-// TODO: Change for 2023/2024
+// TODO: Might need to change for 2023/2024 if the content changes
+//       after validation by the folks in charge.
 //
-var parental_consent_pdf = '1TzWFmJUpp7eHdQTcWxGdW5Vze9XILw2e'
-var rules_pdf = '1JKsqHWBIQc9PJrPesX3GkM9u22DSNVJN'
-var parents_note_pdf = '10xRJwUWS_eJApxNgUJOfOAnAilNDdnWj'
+var parental_consent_pdf = '1y68LVW5iZBSlRTEOIqM5umJFFi6o3ZCP'
+var rules_pdf = '10zOpUgU0gt8qYpsLBJoJQT5RyBCdeAm1'
+var parents_note_pdf = '1RewmJD4EvDJYUW0DXN0o36LTAA7r6n6-'
 
 // Spreadsheet parameters (row, columns, etc...). Adjust as necessary
 // when the master invoice is modified.
@@ -1361,7 +1362,7 @@ function generatePDFAndMaybeSendEmail(send_email, just_the_invoice) {
     updateStatusBar("⏳ Génération " +
                     (send_email? "et envoit " : " ") + "de la facture...", "orange")
   } else {
-    updateStstusBar("⏳ Génération " +
+    updateStatusBar("⏳ Génération " +
                     (send_email? "et envoit " : " ") + "du dossier...", "orange")
   }
   
@@ -1468,6 +1469,7 @@ function generatePDFAndMaybeSendEmail(send_email, just_the_invoice) {
                           " retardé. Quota restant: " + emailQuotaRemaining +
                           ". Nécessaire: " + quota_threshold);
       updateStatusBar("⚠️ Quota email insuffisant. Envoi retardé", "orange")
+      // Insert a reference to the file in a trix
     } else {
       // Send the email  
       MailApp.sendEmail(email_options)
