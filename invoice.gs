@@ -1048,12 +1048,12 @@ function getListOfFamilyPurchasingALicense() {
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-// Updating the aggregation trix with entered data (only once)
+// Updating the FFS tab of the aggregation trix with entered data (only once)
 ///////////////////////////////////////////////////////////////////////////////
 
-function UpdateTrix(data, allow_overwrite) {
-
-  function FirstEmptySlotRange(sheet, range) {
+// Find the first empty slot in range and return the range it corresponds to.
+// Note that parameter range must be a column
+function findFirstEmptySlot(sheet, range) {
     // Range must be a column
     var values = range.getValues();
     var ct = 0;
@@ -1061,7 +1061,9 @@ function UpdateTrix(data, allow_overwrite) {
       ct++;
     }
     return sheet.getRange(range.getRow() + ct,range.getColumn())
-  }
+}
+
+function doUpdateAggregationTrix(data, allow_overwrite) {
   
   // Search for elements in data in sheet over range. If we can't find data,
   // return a range on the first empty slot we find. If we can find data
@@ -1072,7 +1074,7 @@ function UpdateTrix(data, allow_overwrite) {
     while (true) {
       var current_range = finder.findNext()
       if (current_range == null) {
-        return FirstEmptySlotRange(sheet, range)
+        return findFirstEmptySlot(sheet, range)
       }
       var row = current_range.getRow()
       var col = current_range.getColumn()
@@ -1134,7 +1136,25 @@ function updateAggregationTrix() {
       family.push(family_member)
     }
   }
-  UpdateTrix(family, false)
+  doUpdateAggregationTrix(family, false)
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// Updating the tab tracking registration with issues in the aggregation trix
+///////////////////////////////////////////////////////////////////////////////
+
+function updateProblematicRegistration(link, context) {
+  var sheet = SpreadsheetApp.openById(license_trix).getSheetByName('Dossiers problématiques')
+  var insertion_range = findFirstEmptySlot(sheet, sheet.getRange('A2:A'))
+  var entire_range = sheet.getRange('B2:D')
+  var row = insertion_range.getRow()
+  var column = insertion_range.getColumn()
+  var date = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'dd-MM-YY, HH:mm')
+  sheet.getRange(row, column).setValue(date)
+  sheet.getRange(row, column+1).setValue(link)
+  sheet.getRange(row, column+2).setValue(context)
+  entire_range.sort([{column: entire_range.getColumn(), ascending: false}])
+  SpreadsheetApp.flush()
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1460,7 +1480,7 @@ function generatePDFAndMaybeSendEmail(send_email, just_the_invoice) {
   // The final status to display is captured in this variable and
   // the status bar is updated after the aggregation trix has been
   // updated.
-  var final_status = ""
+  var final_status = ['', 'green']
   if (send_email) {
     var emailQuotaRemaining = MailApp.getRemainingDailyQuota();
     if (emailQuotaRemaining < quota_threshold) {
@@ -1468,27 +1488,31 @@ function generatePDFAndMaybeSendEmail(send_email, just_the_invoice) {
                           (just_the_invoice ? "de la facture" : "du dossier") +
                           " retardé. Quota restant: " + emailQuotaRemaining +
                           ". Nécessaire: " + quota_threshold);
-      updateStatusBar("⚠️ Quota email insuffisant. Envoi retardé", "orange")
+      final_status[0] = "⚠️ Quota email insuffisant. Envoi retardé"
+      final_status[1] = "orange";
       // Insert a reference to the file in a trix
+      var link = '=HYPERLINK("' + SpreadsheetApp.getActive().getUrl() +
+                             '"; "' + SpreadsheetApp.getActive().getName() + '")'
+      var context = (just_the_invoice ? 'Facture seule à renvoyer' : 'Dossier complet à renvoyer')
+      updateProblematicRegistration(link, context)
     } else {
       // Send the email  
       MailApp.sendEmail(email_options)
       maybeEmailLicenseSCA([attachments[0]]);
-      final_status = "✅ " + (just_the_invoice ? 
-                              "Facture envoyée" : "dossier envoyé")
+      final_status[0] = "✅ " + (just_the_invoice ? 
+                                "Facture envoyée" : "dossier envoyé")
     }
   } else {
-      final_status = "✅ " + (just_the_invoice ?
-                              "Facture générée" : "dossier généré")
+      final_status[0] = "✅ " + (just_the_invoice ?
+                        "Facture générée" : "dossier généré")
   }
 
   // Now we can update the level aggregation trix with all the folks that
   // where declared as not competitors
-  // TODO: write that we're updating the aggregation trix and then display the
-  // PDF link
   updateStatusBar("⏳ Enregistrement des niveaux...", "orange")
   updateAggregationTrix()
-  updateStatusBar(final_status, "green")
+  // And deliver the final status.
+  updateStatusBar(final_status[0], final_status[1])
 
   displayPDFLink(pdf_file)
   SpreadsheetApp.flush()  
