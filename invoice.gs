@@ -1184,6 +1184,16 @@ function validateInvoice() {
     return {};
   }
 
+  // Validation: first phone number
+  var phone_number = getStringAt(coord_family_phone1)
+  if (phone_number == '') {
+    displayErrorPanel(
+      "Vous n'avez pas renseigné de nom de numéro de telephone ou " +
+      "vous avez oublié \n" +
+      "de valider le numéro de téléphone par [return] ou [enter]...")
+    return {};    
+  }
+
   // Validation: proper email adress.
   var mail_to = getStringAt(coord_family_email)
   if (mail_to == '') {
