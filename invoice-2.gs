@@ -15,8 +15,7 @@ dev_or_prod = "dev"
 // definitions.
 var advanced_verification_family_licenses = true;
 var advanced_verification_subscriptions = true;
-// FIXME: Too complicated for the 6th of Octobre
-var advanced_verification_skipass = false;
+var advanced_verification_skipass = true;
 
 // Boolean expression generated from a truth table.
 if ((!advanced_verification_subscriptions &&
@@ -71,14 +70,13 @@ var coord_family_phone2 =   [10, 5]
 // - Locations of various status line and collected input, located
 //   a the bottom of the invoice.
 // 
-var coord_rebate =           [76, 4]
-var coord_personal_message = [85, 3]
-var coord_callme_phone =     [86, 8]
-var coord_timestamp =        [86, 2]
-var coord_version =          [86, 3]
-var coord_parental_consent = [86, 5]
-var coord_status =           [88, 4]
-var coord_generated_pdf =    [88, 6]
+var coord_personal_message = [86, 3]
+var coord_callme_phone =     [87, 8]
+var coord_timestamp =        [87, 2]
+var coord_version =          [87, 3]
+var coord_parental_consent = [87, 5]
+var coord_status =           [89, 4]
+var coord_generated_pdf =    [89, 6]
 //
 // - Rows where the family names are entered
 // 
@@ -98,19 +96,10 @@ var coord_license_number_column = 9
 // - Parameters defining the valid ranges to be retained during the
 //   generation of the invoice's PDF
 //
-var coords_pdf_row_column_ranges = {'start': [1, 0], 'end': [86, 9]}
+var coords_pdf_row_column_ranges = {'start': [1, 0], 'end': [87, 9]}
 //
-// - Definition of all possible license values, the license class and
-//   all possible instances.
+// - Definition of the license class and all possible license values
 //
-function getNoLicenseString() {return 'Aucune'}
-function getNonCompJuniorLicenseString() { return 'CN Jeune (Loisir)'}
-function getNonCompAdultLicenseString() { return 'CN Adulte (Loisir)'}
-function getNonCompFamilyLicenseString() {return 'CN Famille (Loisir)'}
-function getExecutiveLicenseString() {return 'CN Dirigeant'}
-function getCompJuniorLicenseString() {return 'CN Jeune (Compétition)'}
-function getCompAdultLicenseString() {return 'CN Adulte (Compétition)'}
-
 class License {
   constructor(name, purchase_range, dob_validation_method, valid_dob_range_message) {
     // The name of the ski pass type
@@ -149,6 +138,24 @@ class License {
     return this.valid_dob_range_message
   }
 }
+
+var attributed_licenses_values = [
+  'Aucune',                    // Must match getNoLicenseString() accessor
+  'CN Jeune (Loisir)',
+  'CN Adulte (Loisir)',
+  'CN Famille (Loisir)',
+  'CN Dirigeant',              // Must match getExecutiveLicenseString() accessor
+  'CN Jeune (Compétition)',
+  'CN Adulte (Compétition)'
+];
+
+function getNoLicenseString() {return attributed_licenses_values[0]}
+function getNonCompJuniorLicenseString() { return attributed_licenses_values[1]}
+function getNonCompAdultLicenseString() { return attributed_licenses_values[2]}
+function getNonCompFamilyLicenseString() {return attributed_licenses_values[3]}
+function getExecutiveLicenseString() {return attributed_licenses_values[4]}
+function getCompJuniorLicenseString() {return attributed_licenses_values[5]}
+function getCompAdultLicenseString() {return attributed_licenses_values[6]}
   
 function createLicensesMap(sheet) {
   return {
@@ -157,12 +164,12 @@ function createLicensesMap(sheet) {
     'CN Jeune (Loisir)': new License(
       getNonCompJuniorLicenseString(),
       sheet.getRange(41, 5),
-      (dob) => {return ageVerificationBornAfter(dob, new Date("January 1, 2009"))},
+      (dob) => {return ageVerificationBornAfter(dob, new Date("1/1/2009"))},
       "2009 et après"),
     'CN Adulte (Loisir)': new License(
       getNonCompAdultLicenseString(),
       sheet.getRange(42, 5),
-      (dob) => {return ageVerificationBornBefore(dob, new Date("December 31, 2008"))},
+      (dob) => {return ageVerificationBornBefore(dob, new Date("31/12/2008"))},
       "2008 et avant"),
     'CN Famille (Loisir)': new License(
       getNonCompFamilyLicenseString(),
@@ -177,12 +184,12 @@ function createLicensesMap(sheet) {
     'CN Jeune (Compétition)': new License(
       getCompJuniorLicenseString(),
       sheet.getRange(51, 5),
-      (dob) => {return ageVerificationBornAfter(dob, new Date("January 1, 2009"))},
+      (dob) => {return ageVerificationBornAfter(dob, new Date("1/1/2009"))},
       "2009 et après"),
     'CN Adulte (Compétition)': new License(
       getCompAdultLicenseString(),
       sheet.getRange(52, 5),
-      (dob) => {return ageVerificationBornBefore(dob, new Date("December 31, 2008"))},
+      (dob) => {return ageVerificationBornBefore(dob, new Date("31/12/2008"))},
       "2008 et avant"),
   }
 }
@@ -199,116 +206,59 @@ var coord_purchased_subscriptions_non_comp = [
 //
 // Skipass section:
 //
-// - Definition of the ski pass class and all possible instances.
+// - Skipass values
 //
+
+/*
+Collet - Forfait Annuel Senior (70-75ans)	
+Collet - Forfait Annuel Vermeil (+75ans)	
+Collet - Forfait Annuel Adulte (-70 ans)	
+Collet - Forfait Annuel Etudiant***(né entre le 1er janvier 1993 et le 31 décembre 2004)	
+Collet - Forfait Annuel Junior (né entre le 1er janvier 2005 et le 31 décembre 2012)	
+Collet - Forfait Annuel Enfant (né entre le 1er janvier 2013 et le 31 décembre 2017)	
+Collet - Forfait Annuel Bambin (né à partir du 1er janvier 2018)	
+Support Rechargeable - Saison (Validité 5 ans)	
+3 Domaines - Forfait Annuel Senior (70-75ans)	
+3 Domaines - Forfait Annuel Vermeil (+75ans)	
+3 Domaines - Forfait Annuel Adulte (-70 ans)	
+3 Domaines - Forfait Annuel Etudiant***(né entre le 1er janvier 1993 et le 31 décembre 2004)	
+3 Domaines - Forfait Annuel Junior (né entre le 1er janvier 2005 et le 31 décembre 2012)	
+3 Domaines - Forfait Annuel Enfant (né entre le 1er janvier 2013 et le 31 décembre 2017)	
+3 Domaines - Forfait Annuel Bambin (né à partir du 1er janvier 2018)	
+*/
+
 class SkiPass {
-  constructor(name, purchase_range, dob_validation_method, valid_dob_range_message) {
+  constructor(name, range, dob_validation_method) {
     // The name of the ski pass type
     this.name = name
     // The range at which the number of ski pass of the same kind can be found
-    this.range = purchase_range
+    this.range = range
     // The DoB validation method
     this.dob_validation_method = dob_validation_method
-    this.purchased_amount = 0
-  }
-
-  UpdatePurchasedSkiPassAmount() {
-    this.purchased_amount = getNumberAt([this.purchase_range.getRow(),
-                                         this.purchase_range.getColumn()])
   }
 
   ValidateDoB(dob) {
-    return this.dob_validation_method(dob)
-  }
-
-  ValidDoBRangeMessage() {
-    return this.valid_dob_range_message
+    this.dob_validation_method(dob)
   }
 }
 
-function createSkipassMap(sheet) {
-  return {
-    'Collet Senior': new SkiPass(
-      'Collet Senior',
-      sheet.getRange(25, 5),
-      (dob) => {return ageVerificationRange(dob, 70, 75)},
-      "70 à 75 ans révolus"),
-    'Collet Vermeil': new SkiPass(
-      'Collet Vermeil',
-      sheet.getRange(26, 5),
-      (dob) => {return ageVerificationOlder(dob, 75)},
-      '+75 ans'),
-    'Collet Adulte': new SkiPass(
-      'Collet Adulte',
-      sheet.getRange(27, 5),
-      (dob) => {return isAdult(dob) && ageVerificationYounger(dob, 70)},
-      "Adulte de moins de 70 ans"),
-    'Collet Étudiant': new SkiPass(
-      'Collet Étudiant',
-      sheet.getRange(28, 5),
-      (dob) => {return ageVerificationBornBetween(dob, new Date("January 1, 1993"), new Date("December 31, 2004"))},
-      '1er janvier 1993 et le 31 décembre 2004'),
-    'Collet Junior': new SkiPass(
-      'Collet Junior',
-      sheet.getRange(29, 5),
-      (dob) => {return ageVerificationBornBetween(dob, new Date("January 1, 2005"), new Date("December 31, 2012"))},
-      '1er janvier 2005 et le 31 décembre 2012'),
-    'Collet Enfant': new SkiPass(
-      'Collet Enfant',
-      sheet.getRange(30, 5),
-      (dob) => {return ageVerificationBornBetween(dob, new Date("January 1, 2013"), new Date("December 31, 2017"))},
-      "1er janvier 2013 et le 31 décembre 2017"),
-    'Collet Bambin': new SkiPass(
-      'Collet Bambin',
-      sheet.getRange(31, 5),
-      (dob) => {return ageVerificationBornBefore(dob, new Date("December 31, 2017"))}),
-
-    '3D Senior': new SkiPass(
-      '3D Senior',
-      sheet.getRange(33, 5),
-      (dob) => {return ageVerificationRange(dob, 70, 75)},
-      "70 à 75 ans révolus"),
-    '3D Vermeil': new SkiPass(
-      '3D Vermeil',
-      sheet.getRange(34, 5),
-      (dob) => {return ageVerificationOlder(dob, 75)},
-      '+75 ans'),
-    '3D Adulte': new SkiPass(
-      'Collet Adulte',
-      sheet.getRange(35, 5),
-      (dob) => {return isAdult(dob) && ageVerificationYounger(dob, 70)},
-      "Adulte de moins de 70 ans"),
-    '3D Étudiant': new SkiPass(
-      'Collet Étudiant',
-      sheet.getRange(36, 5),
-      (dob) => {return ageVerificationBornBetween(dob, new Date("January 1, 1993"), new Date("December 31, 2004"))},
-      '1er janvier 1993 et le 31 décembre 2004'),
-    '3D Junior': new SkiPass(
-      'Collet Junior',
-      sheet.getRange(37, 5),
-      (dob) => {return ageVerificationBornBetween(dob, new Date("January 1, 2005"), new Date("December 31, 2012"))},
-      '1er janvier 2005 et le 31 décembre 2012'),
-    '3D Enfant': new SkiPass(
-      'Collet Enfant',
-      sheet.getRange(38, 5),
-      (dob) => {return ageVerificationBornBetween(dob, new Date("January 1, 2013"), new Date("December 31, 2017"))},
-      "1er janvier 2013 et le 31 décembre 2017"),
-    '3D Bambin': new SkiPass(
-      'Collet Bambin',
-      sheet.getRange(39, 5),
-      (dob) => {return ageVerificationBornBefore(dob, new Date("December 31, 2017"))}),
-  }
-}
-
-var skip = [
+var ski_pass_values = [
+  'Collet Senior',
+  'Collet Vermeil',
+  'Collet Adulte',
+  'Collet Étudiant',
+  'Collet Junior',
+  'Collet Enfant',
+  'Collet Bambin',
   '3D Senior',
   '3D Vermeil',
   '3D Adulte',
-  '3D Étudiant',
+  '3D Etudiant',
   '3D Junior',
-  '3D Enfant',
-  '3D Bambin'
+  '3D Enfait',
+  '3D Bambin',
 ]
+
 
 var ski_pass_values = [
   'Famille 4',
@@ -511,30 +461,12 @@ function createPDF(sheet) {
 // the blob as a PDF and move it to the <db>/<OPERATOR:FAMILY>
 // directory. Return the PDF file ID.  
 function generatePDF() {
-  function setResetRebate(coord, color) {
-    var row = coord[0]
-    var column = coord[1]
-    while(column > 0) {
-      setStringAt([row, column], getStringAt([row, column]), color)
-      column -= 1
-    }
-    SpreadsheetApp.flush() 
-  }
   var spreadsheet = SpreadsheetApp.getActiveSpreadsheet()
   var pdf_number = getAndUpdateInvoiceNumber();
-  // If no rebate has been entered, mask the information entirely 
-  // before creating the PDF and revert that. Otherwise, don't change
-  // anything.
-  if (getNumberAt(coord_rebate) == 0) {
-    setResetRebate(coord_rebate, "white")
-  }
-  var blob = createPDF(spreadsheet) 
+  var blob = createPDF(spreadsheet)
   var pdf_filename = spreadsheet.getName() + '-' + pdf_number + '.pdf';
   var file = savePDF(blob, pdf_filename)
-
-  // Always for the rebate area to be back in black 🤘.
-  setResetRebate(coord_rebate, "black")
-
+  
   var spreadsheet_folder_id =
     DriveApp.getFolderById(spreadsheet.getId()).getParents().next().getId()
   DriveApp.getFileById(file.getId()).moveTo(
@@ -552,22 +484,22 @@ function clearRange(sheet, coord) {
 
 function setStringAt(coord, text, color) {
   var sheet = SpreadsheetApp.getActiveSheet();
-  var row = coord[0];
-  var column = coord[1];
-  sheet.getRange(row, column).setValue(text);
-  sheet.getRange(row, column).setFontColor(color);
+  var x = coord[0];
+  var y = coord[1];
+  sheet.getRange(x,y).setValue(text);
+  sheet.getRange(x,y).setFontColor(color);
 }
 
 function getStringAt(coord) {
-  var row = coord[0];
-  var column = coord[1];
-  return SpreadsheetApp.getActiveSheet().getRange(row, column).getValue().toString()
+  var x = coord[0];
+  var y = coord[1];
+  return SpreadsheetApp.getActiveSheet().getRange(x, y).getValue().toString()
 }
 
 function getNumberAt(coord) {
-  var row = coord[0];
-  var column = coord[1];
-  return Number(SpreadsheetApp.getActiveSheet().getRange(row, column).getValue())
+  var x = coord[0];
+  var y = coord[1];
+  return Number(SpreadsheetApp.getActiveSheet().getRange(x, y).getValue())
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -602,7 +534,7 @@ function ageVerificationBornBefore(dob, date) {
   return dob.valueOf() <= date.valueOf()
 }
 
-// Return true if DoB happened between first and last date included.
+// Return true if DoB happened between first and last date
 function ageVerificationBornBetween(dob, first, last) {
   return (dob.valueOf() >= first.valueOf() && dob.valueOf() <= last.valueOf())
 }
@@ -619,17 +551,12 @@ function ageFromDoB(dob) {
   return Math.abs(year - 1970);
 }
 
-// Return True if at the current time, someone with dob is strictly older than age.
+// Return True if at the current time, someone with dob is years old
 function ageVerificationOlder(dob, age){
-  return ageFromDoB(dob) > age
+  return ageFromDoB(dob) >= age
 }
 
-// Return True if at the current time, someone with dob is strictly younger than age.
-function ageVerificationYounger(dob, age){
-  return ageFromDoB(dob) < age
-}
-
-// Return True if at current tie, someone with dob is between age1 and age2 years old included.
+// Return True if at current tie, someone with dob is between age1 and age2 years old.
 function ageVerificationRange(dob, age1, age2) {
   var age = ageFromDoB(dob)
   return (age >= age1 && age <= age2);
@@ -754,21 +681,11 @@ function isLicenseNonComp(license) {
           license == getNonCompFamilyLicenseString())
 }
 
-function isLicenseComp(license) {
-  return (license == getCompAdultLicenseString() ||
-          license == getCompJuniorLicenseString())
-}
-
-function isLicenseCompAdult(license) {
-  return license == getCompAdultLicenseString()
-}
-
-function isLicenseCompJunior(license) {
-  return license == getCompJuniorLicenseString()
-}
-
 function isExecLicense(license) {
   return license == getExecutiveLicenseString()
+}
+
+function isLicenseAdult(license) {
 }
 
 function isLicenseFamily(license) {
@@ -1032,8 +949,23 @@ function validateLicenseCrossCheck(license_map, dobs) {
   function returnError(v) {
     return [v, {}];
   }
+
+  // FIXME: This can be removed.
+  var attributed_licenses = {}
+  attributed_licenses_values.forEach(function(key) {
+    attributed_licenses[key] = 0;
+  });
   
-  // Collect the attributed licenses
+  var purchased_licenses = {}
+  attributed_licenses_values.forEach(function(key) {
+    // Entry indicating no license is skipped because it can't
+    // be collected.
+    if (isLicenseDefined(key)) {
+      purchased_licenses[key] = 0;
+    }
+  });  
+  
+  // Collect the attributed licenses into a hash
   for (var index in coords_identity_rows) {
     var row = coords_identity_rows[index];
     var selected_license = getStringAt([row, coord_license_column]);
@@ -1128,10 +1060,7 @@ function validateLicenseCrossCheck(license_map, dobs) {
         "pour la license famille.");
     }
   }
-  
-var attributed_licenses = {}
-for (var index in license_map) {
-    attributed_licenses[index] = license_map[index].AttributedLicenseCount()
+  for (var index in license_map) {
     // Entry indicating no license is skipped because it can't
     // be collected. Entry indicating a family license skipped because
     // it's been already verified
@@ -1147,6 +1076,10 @@ for (var index in license_map) {
         license_map[index].PurchasedLicenseAmount() + ")")
     }
   }
+
+  // FIXME: the method called after that one is expecting a list of licenses that have been
+  // purchased. Maybe a method running on license_map
+  // attributed_license are all license_map entries for which AttributedLicenseCount() is non zero.
   return ["", attributed_licenses];
 }
 
@@ -1327,7 +1260,7 @@ function updateAggregationTrix() {
     }
 
     // Retain kids with a non comp license (can be a junior license or a family license)
-    if (isMinor(family_member.dob) && isLicenseNonComp(family_member.license_type)) {
+    if (isKid(family_member.dob) && isLicenseNonComp(family_member.license_type)) {
       family.push(family_member)
     }
   }
@@ -1421,13 +1354,14 @@ function validateInvoice() {
   }
   
   // Validate all the entered family members
+  
   var ret = validateFamilyMembers();
   var family_validation_error = ret[0];
+  var dobs = ret[1];
   if (family_validation_error) {
     displayErrorPanel(family_validation_error);
     return {};
   }
-  var dobs = ret[1];
   
   // Now performing the optional/advanced validations... 
   //
@@ -1446,10 +1380,10 @@ function validateInvoice() {
   //    as some situation are un-verifiable automatically.
   if (advanced_verification_family_licenses &&
       advanced_verification_subscriptions) {
-    var collected_attributed_licenses_values = ret[1];
+    var attributed_licenses_values = ret[1];
     // Validate requested licenses and subscriptions
     var subscription_validation_error = 
-        validateLicenseSubscription(collected_attributed_licenses_values);
+        validateLicenseSubscription(attributed_licenses_values);
     if (subscription_validation_error) {
       subscription_validation_error += (
         "\n\nChoisissez 'OK' pour continuer à générer la facture.\n" +
