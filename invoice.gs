@@ -1524,7 +1524,7 @@ function maybeEmailLicenseSCA(invoice) {
       "<tt>" +
       "Nom: <b>" + family_dict[index].last_name.toUpperCase() + "</b><br>" +
       "Prénom: " + family_dict[index].first_name + "<br>" +
-      "Naissance: " + family_dict[index].dob + "<br>" +
+      "Naissance: " + Utilities.formatDate(family_dict[index].dob, Session.getScriptTimeZone(), 'dd-MM-YYYY') + "<br>" +
       "Fille/Garçon: " + family_dict[index].sex + "<br>" +
       "Ville de Naissance: " + family_dict[index].city + "<br>" +
       "Licence: " + family_dict[index].license_type + "<br>" +
