@@ -124,6 +124,8 @@ class License {
     this.purchased_amount = 0
   }
 
+  Name() { return this.name }
+
   UpdatePurchasedLicenseAmount() {
     if (this.purchase_range != null) {
       this.purchased_amount = getNumberAt([this.purchase_range.getRow(),
@@ -151,7 +153,7 @@ class License {
 }
   
 function createLicensesMap(sheet) {
-  return {
+  to_return = {
     'Aucune': new License(
       getNoLicenseString(), null, null),
     'CN Jeune (Loisir)': new License(
@@ -185,6 +187,13 @@ function createLicensesMap(sheet) {
       (dob) => {return ageVerificationBornBefore(dob, new Date("December 31, 2008"))},
       "2008 et avant"),
   }
+  for (var license in to_return) {
+    if (to_return[license].Name() != license) {
+      displayErrorPanel('Erreur validation license_map: ' +
+                        'to_return[' + license + '].Name() = ' + to_return[license].Name())
+    }
+  }
+  return to_return
 }
 //
 // - Coordinates of where subscription purchases are indicated.
@@ -206,15 +215,29 @@ class SkiPass {
     // The name of the ski pass type
     this.name = name
     // The range at which the number of ski pass of the same kind can be found
-    this.range = purchase_range
+    this.purchase_range = purchase_range
     // The DoB validation method
     this.dob_validation_method = dob_validation_method
     this.purchased_amount = 0
+    this.occurence_count = 0
   }
+
+  Name() { return this.name }
 
   UpdatePurchasedSkiPassAmount() {
     this.purchased_amount = getNumberAt([this.purchase_range.getRow(),
                                          this.purchase_range.getColumn()])
+  }
+  PurchasedSkiPassAmount() { return this.purchased_amount }
+
+
+  IncrementAttributedSkiPassCountIfDoB(dob) {
+    if (this.ValidateDoB(dob)) {
+      this.occurence_count += 1
+    }
+  }
+  AttributedSkiPassCount() {
+    return this.occurence_count
   }
 
   ValidateDoB(dob) {
@@ -227,7 +250,7 @@ class SkiPass {
 }
 
 function createSkipassMap(sheet) {
-  return {
+  to_return = {
     'Collet Senior': new SkiPass(
       'Collet Senior',
       sheet.getRange(25, 5),
@@ -274,31 +297,46 @@ function createSkipassMap(sheet) {
       (dob) => {return ageVerificationOlder(dob, 75)},
       '+75 ans'),
     '3D Adulte': new SkiPass(
-      'Collet Adulte',
+      '3D Adulte',
       sheet.getRange(35, 5),
       (dob) => {return isAdult(dob) && ageVerificationYounger(dob, 70)},
       "Adulte de moins de 70 ans"),
     '3D Étudiant': new SkiPass(
-      'Collet Étudiant',
+      '3D Étudiant',
       sheet.getRange(36, 5),
       (dob) => {return ageVerificationBornBetween(dob, new Date("January 1, 1993"), new Date("December 31, 2004"))},
       '1er janvier 1993 et le 31 décembre 2004'),
     '3D Junior': new SkiPass(
-      'Collet Junior',
+      '3D Junior',
       sheet.getRange(37, 5),
       (dob) => {return ageVerificationBornBetween(dob, new Date("January 1, 2005"), new Date("December 31, 2012"))},
       '1er janvier 2005 et le 31 décembre 2012'),
     '3D Enfant': new SkiPass(
-      'Collet Enfant',
+      '3D Enfant',
       sheet.getRange(38, 5),
       (dob) => {return ageVerificationBornBetween(dob, new Date("January 1, 2013"), new Date("December 31, 2017"))},
       "1er janvier 2013 et le 31 décembre 2017"),
     '3D Bambin': new SkiPass(
-      'Collet Bambin',
+      '3D Bambin',
       sheet.getRange(39, 5),
       (dob) => {return ageVerificationBornBefore(dob, new Date("December 31, 2017"))}),
   }
+  for (var license in to_return) {
+    if (to_return[license].Name() != license) {
+      displayErrorPanel('Erreur validation license_map: ' +
+                        'to_return[' + license + '].Name() = ' + to_return[license].Name())
+    }
+  }
+  return to_return
 }
+
+// Identifier we retain as ski passes valid for competitor
+var competitor_ski_passes = [
+  'Collet Adulte',
+  'Collet Étudiant',
+  'Collet Junior',
+  'Collet Enfant',
+]
 
 var skip = [
   '3D Senior',
@@ -1027,6 +1065,44 @@ function validateSkiPassPurchase(dobs) {
   return error;
 }
 
+function validateSkiPassComp() {
+  var ski_passes_map = createSkipassMap(SpreadsheetApp.getActiveSheet())
+  for (var index in coords_identity_rows) {
+    var row = coords_identity_rows[index];
+    var selected_license = getStringAt([row, coord_license_column]);
+    if (! isLicenseComp(selected_license)) {
+      continue
+    }
+    var dob = getDoB([row, coord_dob_column])
+    // Increment the ski pass count that validates for a DoB. This will tell us
+    // how many ski passes suitable for competitor we can expect to be
+    // purchased.
+    for (var skipass in ski_passes_map) {
+      ski_passes_map[skipass].IncrementAttributedSkiPassCountIfDoB(dob)
+    }
+  }
+
+  // Collect the amount of skipasses that have be declared for purchase.
+  for (var skipass in ski_passes_map) {
+    ski_passes_map[skipass].UpdatePurchasedSkiPassAmount()
+  }
+
+  // Go over all the skipass that apply to a competitor and perform the verification:
+  // If the occurence count of a skipass that can apply to a competitor
+  // is above than the purchased amount, we have an error (some competitor are not
+  // buying a ski pass). If it's below it means that the amount of purchased ski passes
+  // includes competitors and non competitors which is fine.
+  for (var index in competitor_ski_passes) {
+    skipass = competitor_ski_passes[index]
+    if (ski_passes_map[skipass].AttributedSkiPassCount() > ski_passes_map[skipass].PurchasedSkiPassAmount()) {
+      return (ski_passes_map[skipass].PurchasedSkiPassAmount() + ' forfait(s) ' + skipass +
+              ' acheté(s) pour ' + ski_passes_map[skipass].AttributedSkiPassCount() +
+              ' licenses compétiteur dans cette tranche d\'âge')
+    }
+  }
+  return ''
+}
+
 // Cross check the attributed licenses with the ones selected for payment
 function validateLicenseCrossCheck(license_map, dobs) {
   function returnError(v) {
@@ -1429,6 +1505,18 @@ function validateInvoice() {
     return {};
   }
   var dobs = ret[1];
+
+  // Validate de competitor ski passes
+  var validate_ski_pass_comp_error = validateSkiPassComp()
+  if (validate_ski_pass_comp_error) {
+    validate_ski_pass_comp_error += (
+      "\n\nChoisissez 'OK' pour continuer à générer la facture.\n" +
+      "Choisissez 'Annuler' pour ne pas générer la facture et " +
+      "vérifier les valeurs saisies...");
+    if (! displayYesNoPanel(validate_ski_pass_comp_error)) {
+      return {};
+    }      
+  }
   
   // Now performing the optional/advanced validations... 
   //
