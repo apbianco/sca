@@ -1339,12 +1339,13 @@ function updateAggregationTrix() {
 ///////////////////////////////////////////////////////////////////////////////
 
 function updateProblematicRegistration(link, context) {
+  updateStatusBar('⏳ Enregistrement de la notification de problème...', 'orange')
   var sheet = SpreadsheetApp.openById(license_trix).getSheetByName('Dossiers problématiques')
   var insertion_range = findFirstEmptySlot(sheet, sheet.getRange('A2:A'))
-  var entire_range = sheet.getRange('B2:D')
+  var entire_range = sheet.getRange('A2:D')
   var row = insertion_range.getRow()
   var column = insertion_range.getColumn()
-  var date = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'dd-MM-YY, HH:mm')
+  var date = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'dd-MM-YYYY, HH:mm')
   sheet.getRange(row, column).setValue(date)
   sheet.getRange(row, column+1).setValue(link)
   sheet.getRange(row, column+2).setValue(context)
@@ -1745,6 +1746,5 @@ function SignalProblem() {
   var link = '=HYPERLINK("' + SpreadsheetApp.getActive().getUrl() +
                          '"; "' + SpreadsheetApp.getActive().getName() + '")'
   updateProblematicRegistration(link, getStringAt(coord_status))
-  var final_status = ['⚠️ Facture signalée commme problématique', 'red']
-  updateStatusBar(final_status[0], final_status[1])
+  updateStatusBar('⚠️ Facture signalée commme problématique', 'red')
 }
