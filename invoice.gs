@@ -1739,3 +1739,12 @@ function GenerateJustPDFAndSendEmailButton() {
   generatePDFAndMaybeSendEmail(/* send_email= */ true,
                                /* just_the_invoice= */ true)
 }
+
+// This is what the [signal problem] button runs
+function SignalProblem() {
+  var link = '=HYPERLINK("' + SpreadsheetApp.getActive().getUrl() +
+                         '"; "' + SpreadsheetApp.getActive().getName() + '")'
+  updateProblematicRegistration(link, getStringAt(coord_status))
+  var final_status = ['⚠️ Facture signalée commme problématique', 'red']
+  updateStatusBar(final_status[0], final_status[1])
+}
