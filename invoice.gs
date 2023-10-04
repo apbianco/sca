@@ -56,6 +56,7 @@ var parental_consent_pdf = '1y68LVW5iZBSlRTEOIqM5umJFFi6o3ZCP'
 var rules_pdf = '10zOpUgU0gt8qYpsLBJoJQT5RyBCdeAm1'
 var parents_note_pdf = '1RewmJD4EvDJYUW0DXN0o36LTAA7r6n6-'
 var information_leaflet_pdf = '1jpclCIoqu0eNh8fhwY0kklCNzH2d5EYO'
+var information_leaflet_page = 16
 
 // Spreadsheet parameters (row, columns, etc...). Adjust as necessary
 // when the master invoice is modified.
@@ -1769,8 +1770,8 @@ function generatePDFAndMaybeSendEmail(send_email, just_the_invoice) {
   } else if (medical_form == 'Toutes réponses NON') {
     medical_form_text = ('<p><b><font color="red">' +
                          'Les réponses que vous avez portées au questionaire médical vous ' +
-                         'obligent à signer la page 16 de la notice d\'informations ' + season +
-                         ' fournie en attachement' +
+                         'obligent à signer la page ' + information_leaflet_page +
+                         ' de la notice d\'informations ' + season + ' fournie en attachement' +
                          '</font></b>')
     attachments.push(DriveApp.getFileById(information_leaflet_pdf).getAs(MimeType.PDF))
   }
