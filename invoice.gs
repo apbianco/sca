@@ -196,8 +196,54 @@ function createLicensesMap(sheet) {
   return to_return
 }
 //
-// - Coordinates of where subscription purchases are indicated.
+// - Definition of the subscription class and other useful data
+// - like the coordinates of where subscription purchases are indicated (FIXME: non longer necessary?)
 //
+class Subscription {
+  constructor(name, purchase_range, dob_validation_method, valid_dob_range_message) {
+    // The name of the subscription
+    this.name = name
+    // The range at which the number of subscriptions the same kind can be found
+    this.purchase_range = purchase_range
+    // The DoB validation method
+    this.dob_validation_method = dob_validation_method
+    // The amount entered by the operation for purchase
+    this.purchased_amount = 0
+    // The number of occurences that should exist based in the population
+    this.occurence_count = 0
+  }
+
+  Name() { return this.name }
+
+  // When this method run, we capture the amount of subscription of that nature
+  // the operator entered.
+  UpdateSubscriptionPurchasAmount() {
+    this.purchased_amount = getNumberAt([this.purchase_range.getRow(),
+                                         this.purchase_range.getColumn()])
+  }
+  PurchasedSubscriptionAmount() { return this.purchased_amount }
+
+  // When that method run, we verify that the DoB matches the offer and if it does
+  // the occurence count is incremented. In the end, this tracks how many purchased
+  // subscription count (purchased_amount) should have been found.
+  IncrementAttributedSubscription(dob) {
+    if (this.ValidateDoB(dob)) {
+      this.occurence_count += 1
+    }
+  }
+  AttributedSubscriptionCount() {
+    return this.occurence_count
+  }
+
+  ValidateDoB(dob) {
+    return this.dob_validation_method(dob)
+  }
+
+  ValidDoBRangeMessage() {
+    return this.valid_dob_range_message
+  }  
+}
+
 var coord_purchased_subscriptions_non_comp = [
   [45, 5],  // First Rider. We can have more than one rider registered
   [46, 5],  // Child 1
