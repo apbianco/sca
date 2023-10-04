@@ -55,6 +55,7 @@ var license_trix = '13akc77rrPaI6g6mNDr13FrsXjkStShviTnBst78xSVY'
 var parental_consent_pdf = '1y68LVW5iZBSlRTEOIqM5umJFFi6o3ZCP'
 var rules_pdf = '10zOpUgU0gt8qYpsLBJoJQT5RyBCdeAm1'
 var parents_note_pdf = '1RewmJD4EvDJYUW0DXN0o36LTAA7r6n6-'
+var information_leaflet_pdf = '1jpclCIoqu0eNh8fhwY0kklCNzH2d5EYO'
 
 // Spreadsheet parameters (row, columns, etc...). Adjust as necessary
 // when the master invoice is modified.
@@ -73,10 +74,11 @@ var coord_family_phone2 =   [10, 5]
 // 
 var coord_rebate =           [76, 4]
 var coord_personal_message = [85, 3]
-var coord_callme_phone =     [86, 8]
 var coord_timestamp =        [86, 2]
 var coord_version =          [86, 3]
 var coord_parental_consent = [86, 5]
+var coord_medical_form =     [86, 7]
+var coord_callme_phone =     [86, 9]
 var coord_status =           [88, 4]
 var coord_generated_pdf =    [88, 6]
 //
@@ -1613,7 +1615,7 @@ function validateInvoice() {
     }
   }
   
-  // Finally, validate the parental consent.
+  // Validate the parental consent.
   var consent = validateAndReturnDropDownValue(
     coord_parental_consent,
     "Vous n'avez pas renseigné la nécessitée ou non de devoir " +
@@ -1628,6 +1630,14 @@ function validateInvoice() {
       "valider le dossier et terminer l'inscription");
     return {};
   }
+
+  // Validate the medical form
+  var medical_form = validateAndReturnDropDownValue(
+    coord_medical_form,
+    "Vous n'avez pas renseigné votre réponse (OUI/NON) au questionaire médicale.")
+  if (consent == '') {
+    return {}
+  }
   
   // Update the timestamp. 
   setStringAt(coord_timestamp,
@@ -1639,7 +1649,8 @@ function validateInvoice() {
   return {'civility': civility,
           'family_name': family_name,
           'mail_to': checkEmail(mail_to),
-          'consent': consent};
+          'consent': consent,
+          'medical_form': medical_form};
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1720,6 +1731,7 @@ function generatePDFAndMaybeSendEmail(send_email, just_the_invoice) {
   var family_name = validation['family_name'];
   var mail_to = validation['mail_to'];
   var consent = validation['consent'];
+  var medical_form = validation['medical_form']
   
   // Determine whether parental consent needs to be generated. If
   // that's the case, we generate additional attachment content.
@@ -1742,6 +1754,25 @@ function generatePDFAndMaybeSendEmail(send_email, just_the_invoice) {
       "<p>Vous trouverez également en attachement une note adressée aux " +
       "parents, ainsi que le règlement intérieur. Merci de lire ces deux " +
       "documents attentivement.</p>");
+  }
+  
+  // Take a look at the medical form answer:
+  // 1- Yes: we need to tell that a medical certificate needs to be provided
+  // 2- No: a new attachment need to be added.
+  var medical_form_text = ''
+  if (medical_form == 'Une réponse OUI') {
+    medical_form_text = ('<p><b><font color="red">' +
+                         'Les réponses que vous avez portées au questionaire médicale vous ' +
+                         'obligent à transmettre dans au SCA (inscriptions.sca@gmail.com) les plus ' +
+                         'brefs délais un certificat médical en cours de validité' +
+                         '</font></b>')
+  } else if (medical_form == 'Toutes réponses NON') {
+    medical_form_text = ('<p><b><font color="red">' +
+                         'Les réponses que vous avez portées au questionaire médical vous ' +
+                         'obligent à signer la page 16 de la notice d\'informations ' + season +
+                         ' fournie en attachement' +
+                         '</font></b>')
+    attachments.push(DriveApp.getFileById(information_leaflet_pdf).getAs(MimeType.PDF))
   }
   
   var subject = ("❄️ [Incription Ski Club Allevardin] " +
@@ -1781,6 +1812,7 @@ function generatePDFAndMaybeSendEmail(send_email, just_the_invoice) {
       "qu\'elle corresponde à vos besoins.</p>" +
     
       parental_consent_text +
+      medical_form_text +
 
       "<p>Des questions concernant cette facture? Contacter Marlène: " +
       "marlene.czajka@gmail.com (06-60-69-75-39) / Aurélien: " +
