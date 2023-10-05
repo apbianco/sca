@@ -252,33 +252,32 @@ class Subscription {
   }
 }
 
-function createCompSubscriptionMap(sheet) {
-  var to_return = {
-    '1U8': new Subscription(
-      '1U8',
-      sheet.getRange(53, 5),
-      (dob) => {return ageVerificationBornBetweenYearsIncluded(dob, 2016, 2017)}),
-    '1U10': new Subscription(
-      '1U10',
-      sheet.getRange(54, 5),
-      (dob) => {return ageVerificationBornBetweenYearsIncluded(dob, 2014, 2015)}),
-    '1U12+': new Subscription(
-      '1U12+',
-      sheet.getRange(55, 5),
-      (dob) => {return ageVerificationBornBeforeYearIncluded(dob, 2013)}),
+var comp_subscription_categories = [
+  'U8', 'U10', 'U12+'
+]
 
-    '2U8': new Subscription(
-      '2U8',
-      sheet.getRange(56, 5),
-      (dob) => {return ageVerificationBornBetweenYearsIncluded(dob, 2016, 2017)}),
-    '2U10': new Subscription(
-      '2U10',
-      sheet.getRange(57, 5),
-      (dob) => {return ageVerificationBornBetweenYearsIncluded(dob, 2014, 2015)}),
-    '2U12+': new Subscription(
-      '2U12+',
-      sheet.getRange(58, 5),
-      (dob) => {return ageVerificationBornBeforeYearIncluded(dob, 2013)}),
+function createCompSubscriptionMap(sheet) {
+  var row = 53
+  var to_return = {}
+  for (var rank = 1; rank <= 4; rank +=1) {
+    var label = rank + comp_subscription_categories[0]
+    to_return[label] = new Subscription(
+      label,
+      sheet.getRange(row, 5),
+      (dob) => {return ageVerificationBornBetweenYearsIncluded(dob, 2016, 2017)})
+    row += 1;
+    label = rank + comp_subscription_categories[1]
+    to_return[label] = new Subscription(
+      label,
+      sheet.getRange(row, 5),
+      (dob) => {return ageVerificationBornBetweenYearsIncluded(dob, 2014, 2015)})
+    row += 1
+    label = rank + comp_subscription_categories[2]
+    to_return[label] = new Subscription(
+      label,
+      sheet.getRange(row, 5),
+      (dob) => {return ageVerificationBornBeforeYearIncluded(dob, 2013)})
+    row += 1
   }
   validateClassInstancesMap(to_return, 'subscription_map')
   return to_return
@@ -1193,7 +1192,7 @@ function validateSkiPassComp() {
     if (skipass.AttributedSkiPassCount() > skipass.PurchasedSkiPassAmount()) {
       return (skipass.PurchasedSkiPassAmount() + ' forfait(s) ' + skipass_name +
               ' acheté(s) pour ' + skipass.AttributedSkiPassCount() +
-              ' licenses compétiteur dans cette tranche d\'âge')
+              ' license(s) compétiteur dans cette tranche d\'âge')
     }
   }
   return ''
@@ -1222,19 +1221,29 @@ function validateSubscriptComp() {
   }
 
   // Tally the number for all defined categories (first, 2nd, ... child in U8, etc...)
-  var total_existing_u8 = 0
-  var total_purchased_u8 = 0
-  var m = {'1U12+': null, '2U12+': null}
-  for (var index in m) {
-    // The number of existing competitor in an age range has already been accumulated,
-    // just capture it.
-    total_existing_u8 = ski_subscription_map[index].AttributedSubscriptionCount()
-    total_purchased_u8 += ski_subscription_map[index].PurchasedSubscriptionAmount()
-  }
-  if (total_existing_u8 != total_purchased_u8) {
-    return (total_purchased_u8 + ' subscription(s) ' + 'U8' +
-            ' achetée(s) pour ' + total_existing_u8 +
-            ' licenses compétiteur dans cette tranche d\'âge')    
+
+  for (index in comp_subscription_categories) {
+    var category = comp_subscription_categories[index]
+    var total_existing = 0
+    var total_purchased = 0
+    for (var rank = 1; rank <= 4; rank += 1) {
+      var indexed_category = rank + category
+      // The number of existing competitor in an age range has already been accumulated.
+      // just capture it. The number of purchased competitor needs to be accumulated as it's
+      // spread over several cells
+      total_existing = ski_subscription_map[indexed_category].AttributedSubscriptionCount()
+      var current_purchased = ski_subscription_map[indexed_category].PurchasedSubscriptionAmount()
+      if (current_purchased > 1 || current_purchased < 0 || ~~current_purchased != current_purchased) {
+        return ('Le nombre d\'adhésion(s) ' + category + ' achetée(s) (' + 
+                current_purchased + ') n\'est pas valide.')
+      }
+      total_purchased += current_purchased
+    }
+    if (total_existing != total_purchased) {
+      return (total_purchased + ' adhésion(s) ' + category +
+              ' achetée(s) pour ' + total_existing +
+              ' license(s) compétiteur dans cette tranche d\'âge')
+    }
   }
   return ''
 }
