@@ -212,7 +212,7 @@ function createLicensesMap(sheet) {
 //   of where subscription purchases are indicated (FIXME: non longer necessary?)
 //
 class Subscription {
-  constructor(name, purchase_range, dob_validation_method, valid_dob_range_message) {
+  constructor(name, purchase_range, dob_validation_method) {
     // The name of the subscription
     this.name = name
     // The range at which the number of subscriptions the same kind can be found
@@ -229,7 +229,7 @@ class Subscription {
 
   // When this method run, we capture the amount of subscription of that nature
   // the operator entered.
-  UpdateSubscriptionPurchasAmount() {
+  UpdatePurchasedSubscriptionAmount() {
     this.purchased_amount = getNumberAt([this.purchase_range.getRow(),
                                          this.purchase_range.getColumn()])
   }
@@ -237,8 +237,8 @@ class Subscription {
 
   // When that method run, we verify that the DoB matches the offer and if it does
   // the occurence count is incremented. In the end, this tracks how many purchased
-  // subscription count (purchased_amount) should have been found.
-  IncrementAttributedSubscription(dob) {
+  // subscription count (purchased_amount) should have been entered by the operator.
+  IncrementAttributedSubscriptionCountIfDoB(dob) {
     if (this.ValidateDoB(dob)) {
       this.occurence_count += 1
     }
@@ -250,14 +250,35 @@ class Subscription {
   ValidateDoB(dob) {
     return this.dob_validation_method(dob)
   }
-
-  ValidDoBRangeMessage() {
-    return this.valid_dob_range_message
-  }  
 }
 
 function createCompSubscriptionMap(sheet) {
   var to_return = {
+    '1U8': new Subscription(
+      '1U8',
+      sheet.getRange(53, 5),
+      (dob) => {return ageVerificationBornBetweenYearsIncluded(dob, 2016, 2017)}),
+    '1U10': new Subscription(
+      '1U10',
+      sheet.getRange(54, 5),
+      (dob) => {return ageVerificationBornBetweenYearsIncluded(dob, 2014, 2015)}),
+    '1U12+': new Subscription(
+      '1U12+',
+      sheet.getRange(55, 5),
+      (dob) => {return ageVerificationBornBeforeYearIncluded(dob, 2013)}),
+
+    '2U8': new Subscription(
+      '2U8',
+      sheet.getRange(56, 5),
+      (dob) => {return ageVerificationBornBetweenYearsIncluded(dob, 2016, 2017)}),
+    '2U10': new Subscription(
+      '2U10',
+      sheet.getRange(57, 5),
+      (dob) => {return ageVerificationBornBetweenYearsIncluded(dob, 2014, 2015)}),
+    '2U12+': new Subscription(
+      '2U12+',
+      sheet.getRange(58, 5),
+      (dob) => {return ageVerificationBornBeforeYearIncluded(dob, 2013)}),
   }
   validateClassInstancesMap(to_return, 'subscription_map')
   return to_return
@@ -710,6 +731,15 @@ function ageVerificationBornBetween(dob, first, last) {
   return (dob.valueOf() >= first.valueOf() && dob.valueOf() <= last.valueOf())
 }
 
+function ageVerificationBornBetweenYearsIncluded(dob, first, last) {
+  var dob_year = getDoBYear(dob)
+  return dob_year >= first && dob_year <= last
+}
+
+function ageVerificationBornBeforeYearIncluded(dob, year) {
+  return getDoBYear(dob) <= year
+}
+
 // Return and age from DoB with respect to now
 function ageFromDoB(dob) {
   // Calculate month difference from current date in time
@@ -1158,12 +1188,53 @@ function validateSkiPassComp() {
   // buying a ski pass). If it's below it means that the amount of purchased ski passes
   // includes competitors and non competitors which is fine.
   for (var index in competitor_ski_passes) {
-    skipass = competitor_ski_passes[index]
-    if (ski_passes_map[skipass].AttributedSkiPassCount() > ski_passes_map[skipass].PurchasedSkiPassAmount()) {
-      return (ski_passes_map[skipass].PurchasedSkiPassAmount() + ' forfait(s) ' + skipass +
-              ' acheté(s) pour ' + ski_passes_map[skipass].AttributedSkiPassCount() +
+    var skipass_name = competitor_ski_passes[index]
+    var skipass = ski_passes_map[skipass_name]
+    if (skipass.AttributedSkiPassCount() > skipass.PurchasedSkiPassAmount()) {
+      return (skipass.PurchasedSkiPassAmount() + ' forfait(s) ' + skipass_name +
+              ' acheté(s) pour ' + skipass.AttributedSkiPassCount() +
               ' licenses compétiteur dans cette tranche d\'âge')
     }
+  }
+  return ''
+}
+
+function validateSubscriptComp() {
+  var ski_subscription_map = createCompSubscriptionMap(SpreadsheetApp.getActiveSheet())
+  for (var index in coords_identity_rows) {
+    var row = coords_identity_rows[index];
+    var selected_license = getStringAt([row, coord_license_column]);
+    if (! isLicenseComp(selected_license)) {
+      continue
+    }
+    var dob = getDoB([row, coord_dob_column])
+    // Increment the subscription count that validates for a DoB. This will tell us
+    // how many subscription suitable for competitor we can expect to be
+    // purchased.
+    for (var subscription in ski_subscription_map) {
+      ski_subscription_map[subscription].IncrementAttributedSubscriptionCountIfDoB(dob)
+    }
+  }
+
+  // Collect the amount of skipasses that have be declared for purchase.
+  for (var subscription in ski_subscription_map) {
+    ski_subscription_map[subscription].UpdatePurchasedSubscriptionAmount()
+  }
+
+  // Tally the number for all defined categories (first, 2nd, ... child in U8, etc...)
+  var total_existing_u8 = 0
+  var total_purchased_u8 = 0
+  var m = {'1U12+': null, '2U12+': null}
+  for (var index in m) {
+    // The number of existing competitor in an age range has already been accumulated,
+    // just capture it.
+    total_existing_u8 = ski_subscription_map[index].AttributedSubscriptionCount()
+    total_purchased_u8 += ski_subscription_map[index].PurchasedSubscriptionAmount()
+  }
+  if (total_existing_u8 != total_purchased_u8) {
+    return (total_purchased_u8 + ' subscription(s) ' + 'U8' +
+            ' achetée(s) pour ' + total_existing_u8 +
+            ' licenses compétiteur dans cette tranche d\'âge')    
   }
   return ''
 }
@@ -1574,6 +1645,7 @@ function validateInvoice() {
   // Validate de competitor ski passes
   var validate_ski_pass_comp_error = validateSkiPassComp()
   if (validate_ski_pass_comp_error) {
+    // FIXME: Make adding this text a method in this function.
     validate_ski_pass_comp_error += (
       "\n\nChoisissez 'OK' pour continuer à générer la facture.\n" +
       "Choisissez 'Annuler' pour ne pas générer la facture et " +
@@ -1582,7 +1654,17 @@ function validateInvoice() {
       return {};
     }      
   }
-  
+
+  var validate_subscription_comp_error = validateSubscriptComp()
+  if (validate_subscription_comp_error) {
+    validate_subscription_comp_error += (
+      "\n\nChoisissez 'OK' pour continuer à générer la facture.\n" +
+      "Choisissez 'Annuler' pour ne pas générer la facture et " +
+      "vérifier les valeurs saisies...");
+    if (! displayYesNoPanel(validate_subscription_comp_error)) {
+      return {};
+    }      
+  }  
   // Now performing the optional/advanced validations... 
   //
   // 1- Validate the licenses requested by this family
