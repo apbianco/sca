@@ -1198,7 +1198,7 @@ function validateSkiPassComp() {
   return ''
 }
 
-function validateSubscriptComp() {
+function validateSubscriptionComp() {
   var ski_subscription_map = createCompSubscriptionMap(SpreadsheetApp.getActiveSheet())
   for (var index in coords_identity_rows) {
     var row = coords_identity_rows[index];
@@ -1220,8 +1220,12 @@ function validateSubscriptComp() {
     ski_subscription_map[subscription].UpdatePurchasedSubscriptionAmount()
   }
 
-  // Tally the number for all defined categories (first, 2nd, ... child in U8, etc...)
-
+  // Verification:
+  // 1- For each category, the number of licenses purchased matches the number of
+  //    licensees.
+  // 2- The number of licensee in one category can only be either 0 or 1
+  // 3- TODO: A category rank (1st, 2nd, etc...) can only be filled if all the previous
+  //    ranks have been filled.
   for (index in comp_subscription_categories) {
     var category = comp_subscription_categories[index]
     var total_existing = 0
@@ -1664,7 +1668,7 @@ function validateInvoice() {
     }      
   }
 
-  var validate_subscription_comp_error = validateSubscriptComp()
+  var validate_subscription_comp_error = validateSubscriptionComp()
   if (validate_subscription_comp_error) {
     validate_subscription_comp_error += (
       "\n\nChoisissez 'OK' pour continuer à générer la facture.\n" +
