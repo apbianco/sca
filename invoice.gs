@@ -1,8 +1,6 @@
 // Version: 2023-09-21
 // This validates the invoice sheet (more could be done BTW) and
 // sends an email with the required attached pieces.
-// This script runs with duplicates of the following shared doc: 
-// shorturl.at/EJM58
 
 // Dev or prod? "dev" sends all email to email_dev. Prod is the
 // real thing: family will receive invoices, and so will email_license,
@@ -15,7 +13,7 @@ dev_or_prod = "dev"
 // definitions.
 var advanced_verification_family_licenses = true;
 var advanced_verification_subscriptions = true;
-// FIXME: Too complicated for the 6th of Octobre
+// FIXME: Too complicated for the 6th of October
 var advanced_verification_skipass = false;
 
 // Boolean expression generated from a truth table.
@@ -56,6 +54,7 @@ var parental_consent_pdf = '1y68LVW5iZBSlRTEOIqM5umJFFi6o3ZCP'
 var rules_pdf = '10zOpUgU0gt8qYpsLBJoJQT5RyBCdeAm1'
 var parents_note_pdf = '1RewmJD4EvDJYUW0DXN0o36LTAA7r6n6-'
 var information_leaflet_pdf = '1jpclCIoqu0eNh8fhwY0kklCNzH2d5EYO'
+// The page in information_leaflet_pdf parents should sign
 var information_leaflet_page = 16
 
 // Spreadsheet parameters (row, columns, etc...). Adjust as necessary
@@ -208,8 +207,7 @@ function createLicensesMap(sheet) {
   return to_return
 }
 //
-// - Definition of the subscription class and other useful data like the coordinates
-//   of where subscription purchases are indicated (FIXME: non longer necessary?)
+// - Definition of the subscription class
 //
 class Subscription {
   constructor(name, purchase_range, dob_validation_method) {
@@ -251,7 +249,9 @@ class Subscription {
     return this.dob_validation_method(dob)
   }
 }
-
+//
+// Categories used to from a range to establish the subscription
+// ranges.
 var comp_subscription_categories = [
   'U8', 'U10', 'U12+'
 ]
@@ -282,6 +282,9 @@ function createCompSubscriptionMap(sheet) {
   validateClassInstancesMap(to_return, 'subscription_map')
   return to_return
 }
+
+// FIXME: This can be migrated to a validation similar to the thing we do
+// for competitors.
 var coord_purchased_subscriptions_non_comp = [
   [45, 5],  // First Rider. We can have more than one rider registered
   [46, 5],  // Child 1
@@ -421,16 +424,6 @@ var competitor_ski_passes = [
   'Collet Étudiant',
   'Collet Junior',
   'Collet Enfant',
-]
-
-var skip = [
-  '3D Senior',
-  '3D Vermeil',
-  '3D Adulte',
-  '3D Étudiant',
-  '3D Junior',
-  '3D Enfant',
-  '3D Bambin'
 ]
 
 var ski_pass_values = [
@@ -1198,7 +1191,7 @@ function validateSkiPassComp() {
   return ''
 }
 
-function validateSubscriptionComp() {
+function validateCompetitionSubscriptions() {
   var comp_subscription_map = createCompSubscriptionMap(SpreadsheetApp.getActiveSheet())
   for (var index in coords_identity_rows) {
     var row = coords_identity_rows[index];
@@ -1668,7 +1661,7 @@ function validateInvoice() {
     }      
   }
 
-  var validate_subscription_comp_error = validateSubscriptionComp()
+  var validate_subscription_comp_error = validateCompetitionSubscriptions()
   if (validate_subscription_comp_error) {
     if (! displayYesNoPanel(augmentEscapeHatch(validate_subscription_comp_error))) {
       return {};
