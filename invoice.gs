@@ -686,6 +686,15 @@ function getNumberAt(coord) {
   return Number(SpreadsheetApp.getActiveSheet().getRange(row, column).getValue())
 }
 
+function nthString(value) {
+  var nth_strings = ["??ème", "1er", "2ème", "3ème", "4ème", "5ème"]
+  if (value < 0 || value >= 5) {
+    return "??ème"
+  } else {
+    return nth_strings[value]
+  }
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 // Date of Birth (DoB) management
 ///////////////////////////////////////////////////////////////////////////////
@@ -1233,6 +1242,18 @@ function validateCompetitionSubscriptions() {
       if (current_purchased > 1 || current_purchased < 0 || ~~current_purchased != current_purchased) {
         return ('Le nombre d\'adhésion(s) ' + category + ' achetée(s) (' + 
                 current_purchased + ') n\'est pas valide.')
+      }
+      // If we have a current purchased subscription past rank 1, we should have a purchased
+      // subscription in the previous ranks
+      if (rank > 1 && current_purchased == 1) {
+        for (var reversed_rank = rank - 1; reversed_rank >= 1; reversed_rank -= 1) {
+          var reversed_indexed_category = reversed_rank + category
+          if (comp_subscription_map[reversed_indexed_category].PurchasedSubscriptionAmount() != 1) {
+            return ('Une adhésion existe pour un(e) ' + nthString(rank) + ' ' + category +
+                    ' sans adhésion déclarée pour un(e) ' + nthString(reversed_rank) + ' ' + category)
+          }
+
+        }
       }
       total_purchased += current_purchased
     }
