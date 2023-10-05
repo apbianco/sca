@@ -102,6 +102,18 @@ var coord_license_number_column = 9
 //   generation of the invoice's PDF
 //
 var coords_pdf_row_column_ranges = {'start': [1, 0], 'end': [86, 9]}
+
+// Validation method use when creating license, skipasses and subscription
+// maps.
+function validateClassInstancesMap(map, map_name) {
+  for (var key in map) {
+    if (map[key].Name() != key) {
+      displayErrorPanel('Erreur interne de validation pour ' + map_name + ': ' +
+                        map_name + '[' + key + '].Name() = ' + map[key].Name())
+    }
+  }
+}
+
 //
 // - Definition of all possible license values, the license class and
 //   all possible instances.
@@ -156,17 +168,19 @@ class License {
 }
   
 function createLicensesMap(sheet) {
-  to_return = {
+  var to_return = {
     'Aucune': new License(
       getNoLicenseString(), null, null),
     'CN Jeune (Loisir)': new License(
       getNonCompJuniorLicenseString(),
       sheet.getRange(41, 5),
+      // ageVerificationBornAfter is inclusive - so born after 2009 is born on 1/1/2009 or later.
       (dob) => {return ageVerificationBornAfter(dob, new Date("January 1, 2009"))},
       "2009 et après"),
     'CN Adulte (Loisir)': new License(
       getNonCompAdultLicenseString(),
       sheet.getRange(42, 5),
+      // ageVerificationBornBefore is inclusive - so born on 2008 and before means 12/1/2008 or before.
       (dob) => {return ageVerificationBornBefore(dob, new Date("December 31, 2008"))},
       "2008 et avant"),
     'CN Famille (Loisir)': new License(
@@ -190,17 +204,12 @@ function createLicensesMap(sheet) {
       (dob) => {return ageVerificationBornBefore(dob, new Date("December 31, 2008"))},
       "2008 et avant"),
   }
-  for (var license in to_return) {
-    if (to_return[license].Name() != license) {
-      displayErrorPanel('Erreur validation license_map: ' +
-                        'to_return[' + license + '].Name() = ' + to_return[license].Name())
-    }
-  }
+  validateClassInstancesMap(to_return, 'license_map')
   return to_return
 }
 //
-// - Definition of the subscription class and other useful data
-// - like the coordinates of where subscription purchases are indicated (FIXME: non longer necessary?)
+// - Definition of the subscription class and other useful data like the coordinates
+//   of where subscription purchases are indicated (FIXME: non longer necessary?)
 //
 class Subscription {
   constructor(name, purchase_range, dob_validation_method, valid_dob_range_message) {
@@ -247,6 +256,12 @@ class Subscription {
   }  
 }
 
+function createCompSubscriptionMap(sheet) {
+  var to_return = {
+  }
+  validateClassInstancesMap(to_return, 'subscription_map')
+  return to_return
+}
 var coord_purchased_subscriptions_non_comp = [
   [45, 5],  // First Rider. We can have more than one rider registered
   [46, 5],  // Child 1
@@ -299,7 +314,7 @@ class SkiPass {
 }
 
 function createSkipassMap(sheet) {
-  to_return = {
+  var to_return = {
     'Collet Senior': new SkiPass(
       'Collet Senior',
       sheet.getRange(25, 5),
@@ -376,6 +391,7 @@ function createSkipassMap(sheet) {
                         'to_return[' + license + '].Name() = ' + to_return[license].Name())
     }
   }
+  validateClassInstancesMap(to_return, 'skipass_map')
   return to_return
 }
 
@@ -1763,13 +1779,13 @@ function generatePDFAndMaybeSendEmail(send_email, just_the_invoice) {
   var medical_form_text = ''
   if (medical_form == 'Une réponse OUI') {
     medical_form_text = ('<p><b><font color="red">' +
-                         'Les réponses que vous avez portées au questionaire médicale vous ' +
+                         'Les réponses que vous avez porté au questionaire médicale vous ' +
                          'obligent à transmettre dans au SCA (inscriptions.sca@gmail.com) les plus ' +
                          'brefs délais un certificat médical en cours de validité' +
                          '</font></b>')
   } else if (medical_form == 'Toutes réponses NON') {
     medical_form_text = ('<p><b><font color="red">' +
-                         'Les réponses que vous avez portées au questionaire médical vous ' +
+                         'Les réponses que vous avez porté au questionaire médical vous ' +
                          'obligent à signer la page ' + information_leaflet_page +
                          ' de la notice d\'informations ' + season + ' fournie en attachement' +
                          '</font></b>')
