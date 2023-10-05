@@ -1585,6 +1585,11 @@ function updateProblematicRegistration(link, context) {
 // Validate the invoice and return a dictionary of values
 // to use during invoice generation.
 function validateInvoice() {
+  function augmentEscapeHatch(source) {
+    return source + ("\n\nChoisissez 'OK' pour continuer à générer la facture.\n" +
+                    "Choisissez 'Annuler' pour ne pas générer la facture et " +
+                    "vérifier les valeurs saisies...");
+  }
   // Reformat the phone numbers  
   formatPhoneNumbers();
 
@@ -1658,23 +1663,14 @@ function validateInvoice() {
   // Validate de competitor ski passes
   var validate_ski_pass_comp_error = validateSkiPassComp()
   if (validate_ski_pass_comp_error) {
-    // FIXME: Make adding this text a method in this function.
-    validate_ski_pass_comp_error += (
-      "\n\nChoisissez 'OK' pour continuer à générer la facture.\n" +
-      "Choisissez 'Annuler' pour ne pas générer la facture et " +
-      "vérifier les valeurs saisies...");
-    if (! displayYesNoPanel(validate_ski_pass_comp_error)) {
+    if (! displayYesNoPanel(augmentEscapeHatch(validate_ski_pass_comp_error))) {
       return {};
     }      
   }
 
   var validate_subscription_comp_error = validateSubscriptionComp()
   if (validate_subscription_comp_error) {
-    validate_subscription_comp_error += (
-      "\n\nChoisissez 'OK' pour continuer à générer la facture.\n" +
-      "Choisissez 'Annuler' pour ne pas générer la facture et " +
-      "vérifier les valeurs saisies...");
-    if (! displayYesNoPanel(validate_subscription_comp_error)) {
+    if (! displayYesNoPanel(augmentEscapeHatch(validate_subscription_comp_error))) {
       return {};
     }      
   }  
@@ -1700,11 +1696,7 @@ function validateInvoice() {
     var subscription_validation_error = 
         validateLicenseSubscription(collected_attributed_licenses_values);
     if (subscription_validation_error) {
-      subscription_validation_error += (
-        "\n\nChoisissez 'OK' pour continuer à générer la facture.\n" +
-        "Choisissez 'Annuler' pour ne pas générer la facture et " +
-        "vérifier les valeurs saisies...");
-      if (! displayYesNoPanel(subscription_validation_error)) {
+      if (! displayYesNoPanel(augmentEscapeHatch(subscription_validation_error))) {
         return {};
       }
     }
@@ -1717,11 +1709,7 @@ function validateInvoice() {
       advanced_verification_skipass) {
     var skipass_validation_error = validateSkiPassPurchase(dobs);
     if (skipass_validation_error) {
-      skipass_validation_error += (
-        "\n\nChoisissez 'OK' pour continuer à générer la facture.\n" +
-        "Choisissez 'Annuler' pour ne pas générer la facture et " +
-        "vérifier les valeurs saisies...");
-      if (! displayYesNoPanel(skipass_validation_error)) {
+      if (! displayYesNoPanel(augmentEscapeHatch(skipass_validation_error))) {
         return {};
       }    
     }
