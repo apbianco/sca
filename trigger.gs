@@ -47,6 +47,7 @@ var ranges_current_season = {
   'Civility': 'C6:G10',
   'Members':  'B14:F19',
   'Licenses': 'H14:H19',
+  'All': 'B14:I19',
 };
 
 var allowed_user = 'inscriptions.sca@gmail.com'
@@ -465,8 +466,9 @@ function createNewFamilySheetFromOld(sheet, family_name) {
 
   // Last step: sort the family members range by last name (ascending order)
   // and DoB (descending order)
-  new_member_range.sort([{column: new_member_range.getColumn()+1},
-                         {column: new_member_range.getColumn()+2, ascending: false}])
+  var all_members_range = new_sheet.getRange(ranges_current_season['All']);
+  all_members_range.sort([{column: all_members_range.getColumn()+1},
+                         {column: all_members_range.getColumn()+2, ascending: false}])
 }
 
 // This call back is attached to the button used to create a new entry.
