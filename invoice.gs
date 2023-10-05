@@ -9,8 +9,8 @@ dev_or_prod = "dev"
 
 // Enable/disable new features - first entry set to false
 // requires all following entries set to false. Note that
-// a validation is carried out immediately after these
-// definitions.
+// a validation of that constraint is carried out immediately
+// after these definitions.
 var advanced_verification_family_licenses = true;
 var advanced_verification_subscriptions = true;
 // FIXME: Too complicated for the 6th of October
@@ -129,7 +129,7 @@ class License {
   constructor(name, purchase_range, dob_validation_method, valid_dob_range_message) {
     // The name of the ski pass type
     this.name = name
-    // The range at which the number of ski pass of the same kind can be found
+    // The range at which the number of licenses of the same kind can be found
     this.purchase_range = purchase_range
     // The DoB validation method
     this.dob_validation_method = dob_validation_method
@@ -140,7 +140,9 @@ class License {
 
   Name() { return this.name }
 
-  UpdatePurchasedLicenseAmount() {
+  // When this method run, we capture the amount licenses of that given type
+  // the operator entered.
+    UpdatePurchasedLicenseAmount() {
     if (this.purchase_range != null) {
       this.purchased_amount = getNumberAt([this.purchase_range.getRow(),
                                            this.purchase_range.getColumn()])
@@ -311,12 +313,13 @@ class SkiPass {
 
   Name() { return this.name }
 
+  // When this method run, we capture the amount skippasses of that type
+  // the operator entered.
   UpdatePurchasedSkiPassAmount() {
     this.purchased_amount = getNumberAt([this.purchase_range.getRow(),
                                          this.purchase_range.getColumn()])
   }
   PurchasedSkiPassAmount() { return this.purchased_amount }
-
 
   IncrementAttributedSkiPassCountIfDoB(dob) {
     if (this.ValidateDoB(dob)) {
