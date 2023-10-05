@@ -1199,7 +1199,7 @@ function validateSkiPassComp() {
 }
 
 function validateSubscriptionComp() {
-  var ski_subscription_map = createCompSubscriptionMap(SpreadsheetApp.getActiveSheet())
+  var comp_subscription_map = createCompSubscriptionMap(SpreadsheetApp.getActiveSheet())
   for (var index in coords_identity_rows) {
     var row = coords_identity_rows[index];
     var selected_license = getStringAt([row, coord_license_column]);
@@ -1210,14 +1210,14 @@ function validateSubscriptionComp() {
     // Increment the subscription count that validates for a DoB. This will tell us
     // how many subscription suitable for competitor we can expect to be
     // purchased.
-    for (var subscription in ski_subscription_map) {
-      ski_subscription_map[subscription].IncrementAttributedSubscriptionCountIfDoB(dob)
+    for (var subscription in comp_subscription_map) {
+      comp_subscription_map[subscription].IncrementAttributedSubscriptionCountIfDoB(dob)
     }
   }
 
-  // Collect the amount of skipasses that have be declared for purchase.
-  for (var subscription in ski_subscription_map) {
-    ski_subscription_map[subscription].UpdatePurchasedSubscriptionAmount()
+  // Collect the amount of subscriptions that have be declared for purchase.
+  for (var subscription in comp_subscription_map) {
+    comp_subscription_map[subscription].UpdatePurchasedSubscriptionAmount()
   }
 
   // Verification:
@@ -1235,8 +1235,8 @@ function validateSubscriptionComp() {
       // The number of existing competitor in an age range has already been accumulated.
       // just capture it. The number of purchased competitor needs to be accumulated as it's
       // spread over several cells
-      total_existing = ski_subscription_map[indexed_category].AttributedSubscriptionCount()
-      var current_purchased = ski_subscription_map[indexed_category].PurchasedSubscriptionAmount()
+      total_existing = comp_subscription_map[indexed_category].AttributedSubscriptionCount()
+      var current_purchased = comp_subscription_map[indexed_category].PurchasedSubscriptionAmount()
       if (current_purchased > 1 || current_purchased < 0 || ~~current_purchased != current_purchased) {
         return ('Le nombre d\'adhésion(s) ' + category + ' achetée(s) (' + 
                 current_purchased + ') n\'est pas valide.')
