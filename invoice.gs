@@ -1229,8 +1229,9 @@ function validateCompetitionSubscriptions() {
   // 1- For each category, the number of licenses purchased matches the number of
   //    licensees.
   // 2- The number of licensee in one category can only be either 0 or 1
-  // 3- TODO: A category rank (1st, 2nd, etc...) can only be filled if all the previous
+  // 3- A category rank (1st, 2nd, etc...) can only be filled if all the previous
   //    ranks have been filled.
+  // 4- TODO: Only one category can be filled per rank
   for (index in comp_subscription_categories) {
     var category = comp_subscription_categories[index]
     var total_existing = 0
@@ -1266,6 +1267,8 @@ function validateCompetitionSubscriptions() {
       }
       total_purchased += current_purchased
     }
+    // For that category, the total number of purchased licenses must match
+    // the number of accumulated purchases accross all ranks.
     if (total_existing != total_purchased) {
       return (total_purchased + ' adhésion(s) ' + category +
               ' achetée(s) pour ' + total_existing +
