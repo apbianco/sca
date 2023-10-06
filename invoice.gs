@@ -125,6 +125,16 @@ function getExecutiveLicenseString() {return 'CN Dirigeant'}
 function getCompJuniorLicenseString() {return 'CN Jeune (Compétition)'}
 function getCompAdultLicenseString() {return 'CN Adulte (Compétition)'}
 
+// Get a license at coord and normalize it's value. It's important to normalize
+// the license string as it can be used as a key to a license_map.
+function getLicenseAt(coord) {
+  var license = getStringAt(coord)
+  if(isLicenseNotDefined(license)) {
+    license = getNoLicenseString()
+  }
+  return license
+}
+
 class License {
   constructor(name, purchase_range, dob_validation_method, valid_dob_range_message) {
     // The name of the ski pass type
@@ -956,7 +966,7 @@ function validateFamilyMembers() {
     setStringAt([coords_identity_rows[index], coord_first_name_column], first_name, "black");
     setStringAt([coords_identity_rows[index], coord_last_name_column], last_name, "black");
 
-    var license = getStringAt([coords_identity_rows[index], coord_license_column]);
+    var license = getLicenseAt([coords_identity_rows[index], coord_license_column]);
     // We need a DoB but only if a license has been requested. If a DoB is
     // defined, we save it.
     var dob = getDoB([coords_identity_rows[index], coord_dob_column]);
@@ -1168,7 +1178,7 @@ function validateSkiPassComp() {
   var ski_passes_map = createSkipassMap(SpreadsheetApp.getActiveSheet())
   for (var index in coords_identity_rows) {
     var row = coords_identity_rows[index];
-    var selected_license = getStringAt([row, coord_license_column]);
+    var selected_license = getLicenseAt([row, coord_license_column]);
     if (! isLicenseComp(selected_license)) {
       continue
     }
@@ -1207,7 +1217,7 @@ function validateCompetitionSubscriptions() {
   var comp_subscription_map = createCompSubscriptionMap(SpreadsheetApp.getActiveSheet())
   for (var index in coords_identity_rows) {
     var row = coords_identity_rows[index];
-    var selected_license = getStringAt([row, coord_license_column]);
+    var selected_license = getLicenseAt([row, coord_license_column]);
     if (! isLicenseComp(selected_license)) {
       continue
     }
@@ -1300,7 +1310,7 @@ function validateLicenseCrossCheck(license_map, dobs) {
   // Collect the attributed licenses
   for (var index in coords_identity_rows) {
     var row = coords_identity_rows[index];
-    var selected_license = getStringAt([row, coord_license_column]);
+    var selected_license = getLicenseAt([row, coord_license_column]);
     // You can't have no first/last name and an assigned license
     var first_name = getStringAt([row, coord_first_name_column]);
     var last_name = getStringAt([row, coord_last_name_column]);
@@ -1469,7 +1479,6 @@ class FamilyMember {
 // FamilyMember class.
 function getListOfFamilyPurchasingALicense() {
   var family = []
-  var no_license = getNoLicenseString();
   for (var index in coords_identity_rows) {    
     var first_name = getStringAt([coords_identity_rows[index], coord_first_name_column]);
     var last_name = getStringAt([coords_identity_rows[index], coord_last_name_column]);    
@@ -1481,9 +1490,9 @@ function getListOfFamilyPurchasingALicense() {
     }
     // We can skip that entry if no license is required. That familly
     // member doesn't need to be reported in this dictionary.
-    var license = getStringAt([coords_identity_rows[index], coord_license_column]);
-    if (license == "" || license == no_license) {
-      continue;
+    var license = getLicenseAt([coords_identity_rows[index], coord_license_column]);
+    if (isLicenseNotDefined(license)) {
+      continue
     }
     var license_number = getStringAt([coords_identity_rows[index], coord_license_number_column])
 
