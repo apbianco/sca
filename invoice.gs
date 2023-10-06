@@ -5,7 +5,7 @@
 // Dev or prod? "dev" sends all email to email_dev. Prod is the
 // real thing: family will receive invoices, and so will email_license,
 // unless the trigger in use is the TEST trigger.
-dev_or_prod = "prod"
+dev_or_prod = "dev"
 
 // Enable/disable new features - first entry set to false
 // requires all following entries set to false. Note that
@@ -1247,15 +1247,21 @@ function validateCompetitionSubscriptions() {
                 current_purchased + ') n\'est pas valide.')
       }
       // If we have a current purchased subscription past rank 1, we should have a purchased
-      // subscription in the previous ranks
+      // subscription in the previous ranks for all categories
       if (rank > 1 && current_purchased == 1) {
+        var subscription_other_category = 0
         for (var reversed_rank = rank - 1; reversed_rank >= 1; reversed_rank -= 1) {
-          var reversed_indexed_category = reversed_rank + category
-          if (comp_subscription_map[reversed_indexed_category].PurchasedSubscriptionAmount() != 1) {
-            return ('Une adhésion existe pour un(e) ' + nthString(rank) + ' ' + category +
-                    ' sans adhésion déclarée pour un(e) ' + nthString(reversed_rank) + ' ' + category)
+          for (var reversed_category in comp_subscription_categories) {
+            var reversed_indexed_category = (reversed_rank +
+                                             comp_subscription_categories[reversed_category])
+            subscription_other_category += 
+              comp_subscription_map[reversed_indexed_category].PurchasedSubscriptionAmount()
           }
-
+          if (subscription_other_category != 1) {
+            return ('Une adhésion existe pour un(e) ' + nthString(rank) + ' ' + category +
+                    ' sans adhésion déclarée pour un ' + nthString(rank-1) +
+                    ' enfant')
+          }
         }
       }
       total_purchased += current_purchased
