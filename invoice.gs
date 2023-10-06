@@ -5,7 +5,7 @@
 // Dev or prod? "dev" sends all email to email_dev. Prod is the
 // real thing: family will receive invoices, and so will email_license,
 // unless the trigger in use is the TEST trigger.
-dev_or_prod = "dev"
+dev_or_prod = "prod"
 
 // Enable/disable new features - first entry set to false
 // requires all following entries set to false. Note that
