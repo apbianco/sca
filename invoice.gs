@@ -1231,7 +1231,6 @@ function validateCompetitionSubscriptions() {
   // 2- The number of licensee in one category can only be either 0 or 1
   // 3- A category rank (1st, 2nd, etc...) can only be filled if all the previous
   //    ranks have been filled.
-  // 4- TODO: Only one category can be filled per rank
   for (index in comp_subscription_categories) {
     var category = comp_subscription_categories[index]
     var total_existing = 0
@@ -1252,14 +1251,14 @@ function validateCompetitionSubscriptions() {
       if (rank > 1 && current_purchased == 1) {
         var subscription_other_category = 0
         for (var reversed_rank = rank - 1; reversed_rank >= 1; reversed_rank -= 1) {
-          for (var reversed_category in comp_subscription_categories) {
+          for (var reversed_category_index in comp_subscription_categories) {
             var reversed_indexed_category = (reversed_rank +
-                                             comp_subscription_categories[reversed_category])
+                                             comp_subscription_categories[reversed_category_index])
             subscription_other_category += 
               comp_subscription_map[reversed_indexed_category].PurchasedSubscriptionAmount()
           }
-          if (subscription_other_category != 1) {
-            return ('Une adhésion existe pour un(e) ' + nthString(rank) + ' ' + category +
+          if (subscription_other_category == 0) {
+            return ('Une adhésion compétition existe pour un(e) ' + nthString(rank) + ' ' + category +
                     ' sans adhésion déclarée pour un ' + nthString(rank-1) +
                     ' enfant')
           }
@@ -1270,9 +1269,23 @@ function validateCompetitionSubscriptions() {
     // For that category, the total number of purchased licenses must match
     // the number of accumulated purchases accross all ranks.
     if (total_existing != total_purchased) {
-      return (total_purchased + ' adhésion(s) ' + category +
+      return (total_purchased + ' adhésion(s) compétition ' + category +
               ' achetée(s) pour ' + total_existing +
               ' license(s) compétiteur dans cette tranche d\'âge')
+    }
+  }
+  // 4- Only one category can be filled per rank. That loops needs
+  //    to start for each rank so the loop above can not be used.
+  for (var rank = 1; rank <= 4; rank += 1) {
+    var total_purchased_for_rank = 0
+    for (index in comp_subscription_categories) {
+      var category = comp_subscription_categories[index] 
+      var indexed_category = rank + category
+      total_purchased_for_rank += comp_subscription_map[indexed_category].PurchasedSubscriptionAmount()
+      if (total_purchased_for_rank > 1) {
+        return (total_purchased_for_rank + ' adhésions compétition achetées pour un ' + 
+                nthString(rank) + ' enfant. Ce nombre ne peut dépasser 1')
+      }
     }
   }
   return ''
