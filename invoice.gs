@@ -192,7 +192,7 @@ function createLicensesMap(sheet) {
       getNonCompAdultLicenseString(),
       sheet.getRange(42, 5),
       // ageVerificationBornBefore is inclusive - so born on 2008 and before means 12/1/2008 or before.
-      (dob) => {return ageVerificationBornBefore(dob, new Date("December 31, 2008"))},
+      (dob) => {return ageVerificationBornBeforeDateIncluded(dob, new Date("December 31, 2008"))},
       "2008 et avant"),
     'CN Famille (Loisir)': new License(
       getNonCompFamilyLicenseString(),
@@ -212,7 +212,7 @@ function createLicensesMap(sheet) {
     'CN Adulte (Compétition)': new License(
       getCompAdultLicenseString(),
       sheet.getRange(52, 5),
-      (dob) => {return ageVerificationBornBefore(dob, new Date("December 31, 2008"))},
+      (dob) => {return ageVerificationBornBeforeDateIncluded(dob, new Date("December 31, 2008"))},
       "2008 et avant"),
   }
   validateClassInstancesMap(to_return, 'license_map')
@@ -359,32 +359,32 @@ function createSkipassMap(sheet) {
     'Collet Vermeil': new SkiPass(
       'Collet Vermeil',
       sheet.getRange(26, 5),
-      (dob) => {return ageVerificationOlder(dob, 75)},
+      (dob) => {return ageVerificationStrictlyOlder(dob, 75)},
       '+75 ans'),
     'Collet Adulte': new SkiPass(
       'Collet Adulte',
       sheet.getRange(27, 5),
-      (dob) => {return isAdult(dob) && ageVerificationYounger(dob, 70)},
+      (dob) => {return isAdult(dob) && ageVerificationStrictlyYounger(dob, 70)},
       "Adulte de moins de 70 ans"),
     'Collet Étudiant': new SkiPass(
       'Collet Étudiant',
       sheet.getRange(28, 5),
-      (dob) => {return ageVerificationBornBetween(dob, new Date("January 1, 1993"), new Date("December 31, 2004"))},
+      (dob) => {return ageVerificationBornBetweenDatesIncluded(dob, new Date("January 1, 1993"), new Date("December 31, 2004"))},
       '1er janvier 1993 et le 31 décembre 2004'),
     'Collet Junior': new SkiPass(
       'Collet Junior',
       sheet.getRange(29, 5),
-      (dob) => {return ageVerificationBornBetween(dob, new Date("January 1, 2005"), new Date("December 31, 2012"))},
+      (dob) => {return ageVerificationBornBetweenDatesIncluded(dob, new Date("January 1, 2005"), new Date("December 31, 2012"))},
       '1er janvier 2005 et le 31 décembre 2012'),
     'Collet Enfant': new SkiPass(
       'Collet Enfant',
       sheet.getRange(30, 5),
-      (dob) => {return ageVerificationBornBetween(dob, new Date("January 1, 2013"), new Date("December 31, 2017"))},
+      (dob) => {return ageVerificationBornBetweenDatesIncluded(dob, new Date("January 1, 2013"), new Date("December 31, 2017"))},
       "1er janvier 2013 et le 31 décembre 2017"),
     'Collet Bambin': new SkiPass(
       'Collet Bambin',
       sheet.getRange(31, 5),
-      (dob) => {return ageVerificationBornBefore(dob, new Date("December 31, 2017"))}),
+      (dob) => {return ageVerificationBornBeforeDateIncluded(dob, new Date("December 31, 2017"))}),
 
     '3 Domaines Senior': new SkiPass(
       '3 Domaines Senior',
@@ -394,32 +394,32 @@ function createSkipassMap(sheet) {
     '3 Domaines Vermeil': new SkiPass(
       '3 Domaines Vermeil',
       sheet.getRange(34, 5),
-      (dob) => {return ageVerificationOlder(dob, 75)},
+      (dob) => {return ageVerificationStrictlyOlder(dob, 75)},
       '+75 ans'),
     '3 Domaines Adulte': new SkiPass(
       '3 Domaines Adulte',
       sheet.getRange(35, 5),
-      (dob) => {return isAdult(dob) && ageVerificationYounger(dob, 70)},
+      (dob) => {return isAdult(dob) && ageVerificationStrictlyYounger(dob, 70)},
       "Adulte de moins de 70 ans"),
     '3 Domaines Étudiant': new SkiPass(
       '3 Domaines Étudiant',
       sheet.getRange(36, 5),
-      (dob) => {return ageVerificationBornBetween(dob, new Date("January 1, 1993"), new Date("December 31, 2004"))},
+      (dob) => {return ageVerificationBornBetweenDatesIncluded(dob, new Date("January 1, 1993"), new Date("December 31, 2004"))},
       '1er janvier 1993 et le 31 décembre 2004'),
     '3 Domaines Junior': new SkiPass(
       '3D Junior',
       sheet.getRange(37, 5),
-      (dob) => {return ageVerificationBornBetween(dob, new Date("January 1, 2005"), new Date("December 31, 2012"))},
+      (dob) => {return ageVerificationBornBetweenDatesIncluded(dob, new Date("January 1, 2005"), new Date("December 31, 2012"))},
       '1er janvier 2005 et le 31 décembre 2012'),
     '3 Domaines Enfant': new SkiPass(
       '3D Enfant',
       sheet.getRange(38, 5),
-      (dob) => {return ageVerificationBornBetween(dob, new Date("January 1, 2013"), new Date("December 31, 2017"))},
+      (dob) => {return ageVerificationBornBetweenDatesIncluded(dob, new Date("January 1, 2013"), new Date("December 31, 2017"))},
       "1er janvier 2013 et le 31 décembre 2017"),
     '3 Domaines Bambin': new SkiPass(
       '3 Domaines Bambin',
       sheet.getRange(39, 5),
-      (dob) => {return ageVerificationBornBefore(dob, new Date("December 31, 2017"))}),
+      (dob) => {return ageVerificationBornBeforeDateIncluded(dob, new Date("December 31, 2017"))}),
   }
   for (var license in to_return) {
     if (to_return[license].Name() != license) {
@@ -731,17 +731,17 @@ function getDoB(coords) {
 }
 
 // Return true if DoB happened after date
-function ageVerificationBornAfter(dob, date) {
+function ageVerificationBornAfterDateIncluded(dob, date) {
   return dob.valueOf() >= date.valueOf()
 }
 
 // Return true if DoB happened before date
-function ageVerificationBornBefore(dob, date) {
+function ageVerificationBornBeforeDateIncluded(dob, date) {
   return dob.valueOf() <= date.valueOf()
 }
 
 // Return true if DoB happened between first and last date included.
-function ageVerificationBornBetween(dob, first, last) {
+function ageVerificationBornBetweenDatesIncluded(dob, first, last) {
   return (dob.valueOf() >= first.valueOf() && dob.valueOf() <= last.valueOf())
 }
 
@@ -767,12 +767,12 @@ function ageFromDoB(dob) {
 }
 
 // Return True if at the current time, someone with dob is strictly older than age.
-function ageVerificationOlder(dob, age){
+function ageVerificationStrictlyOlder(dob, age){
   return ageFromDoB(dob) > age
 }
 
 // Return True if at the current time, someone with dob is strictly younger than age.
-function ageVerificationYounger(dob, age){
+function ageVerificationStrictlyYounger(dob, age){
   return ageFromDoB(dob) < age
 }
 
