@@ -340,7 +340,23 @@ function createCompSubscriptionMap(sheet) {
       (dob) => {return ageVerificationBornBeforeYearIncluded(dob, 2013)})
     row += 1
   }
-  validateClassInstancesMap(to_return, 'subscription_map')
+  validateClassInstancesMap(to_return, 'createCompSubscriptionMap')
+  return to_return
+}
+
+function createNonCompSubscriptionMap(sheet) {
+  var labels = ['Rider', '1er Enfant', '2ème Enfant', '3ème Enfant', '4ème Enfant']
+  var to_return = {}
+  var row = 45
+  for (index in labels) {
+    var label = labels[index]
+    to_return[label] = new Subscription(
+      label,
+      sheet.getRange(row, 5),
+      (dob) => {return true}),
+    row += 1
+  }
+  validateClassInstancesMap(to_return, 'createNonCompSubscriptionMap')
   return to_return
 }
 
