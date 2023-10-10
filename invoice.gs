@@ -5,7 +5,7 @@
 // Dev or prod? "dev" sends all email to email_dev. Prod is the
 // real thing: family will receive invoices, and so will email_license,
 // unless the trigger in use is the TEST trigger.
-dev_or_prod = "prod"
+dev_or_prod = "dev"
 
 // Enable/disable new features - first entry set to false
 // requires all following entries set to false. Note that
@@ -386,38 +386,38 @@ function createSkipassMap(sheet) {
       sheet.getRange(31, 5),
       (dob) => {return ageVerificationBornBefore(dob, new Date("December 31, 2017"))}),
 
-    '3D Senior': new SkiPass(
-      '3D Senior',
+    '3 Domaines Senior': new SkiPass(
+      '3 Domaines Senior',
       sheet.getRange(33, 5),
       (dob) => {return ageVerificationRange(dob, 70, 75)},
       "70 à 75 ans révolus"),
-    '3D Vermeil': new SkiPass(
-      '3D Vermeil',
+    '3 Domaines Vermeil': new SkiPass(
+      '3 Domaines Vermeil',
       sheet.getRange(34, 5),
       (dob) => {return ageVerificationOlder(dob, 75)},
       '+75 ans'),
-    '3D Adulte': new SkiPass(
-      '3D Adulte',
+    '3 Domaines Adulte': new SkiPass(
+      '3 Domaines Adulte',
       sheet.getRange(35, 5),
       (dob) => {return isAdult(dob) && ageVerificationYounger(dob, 70)},
       "Adulte de moins de 70 ans"),
-    '3D Étudiant': new SkiPass(
-      '3D Étudiant',
+    '3 Domaines Étudiant': new SkiPass(
+      '3 Domaines Étudiant',
       sheet.getRange(36, 5),
       (dob) => {return ageVerificationBornBetween(dob, new Date("January 1, 1993"), new Date("December 31, 2004"))},
       '1er janvier 1993 et le 31 décembre 2004'),
-    '3D Junior': new SkiPass(
+    '3 Domaines Junior': new SkiPass(
       '3D Junior',
       sheet.getRange(37, 5),
       (dob) => {return ageVerificationBornBetween(dob, new Date("January 1, 2005"), new Date("December 31, 2012"))},
       '1er janvier 2005 et le 31 décembre 2012'),
-    '3D Enfant': new SkiPass(
+    '3 Domaines Enfant': new SkiPass(
       '3D Enfant',
       sheet.getRange(38, 5),
       (dob) => {return ageVerificationBornBetween(dob, new Date("January 1, 2013"), new Date("December 31, 2017"))},
       "1er janvier 2013 et le 31 décembre 2017"),
-    '3D Bambin': new SkiPass(
-      '3D Bambin',
+    '3 Domaines Bambin': new SkiPass(
+      '3 Domaines Bambin',
       sheet.getRange(39, 5),
       (dob) => {return ageVerificationBornBefore(dob, new Date("December 31, 2017"))}),
   }
