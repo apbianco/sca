@@ -201,7 +201,7 @@ class License {
 
   // When this method run, we capture the amount licenses of that given type
   // the operator entered.
-    UpdatePurchasedLicenseAmount() {
+  UpdatePurchasedLicenseAmount() {
     if (this.purchase_range != null) {
       this.purchased_amount = getNumberAt([this.purchase_range.getRow(),
                                            this.purchase_range.getColumn()])
@@ -1757,22 +1757,6 @@ function validateInvoice() {
   }
   var dobs = ret[1];
 
-  // Validate de competitor ski passes
-  var validate_ski_pass_comp_error = validateSkiPassComp()
-  if (validate_ski_pass_comp_error) {
-    if (! displayYesNoPanel(augmentEscapeHatch(validate_ski_pass_comp_error))) {
-      return {};
-    }      
-  }
-
-  // Validate the competitor subscriptions
-  var validate_subscription_comp_error = validateCompetitionSubscriptions()
-  if (validate_subscription_comp_error) {
-    if (! displayYesNoPanel(augmentEscapeHatch(validate_subscription_comp_error))) {
-      return {};
-    }      
-  }
-
   // Now performing the optional/advanced validations... 
   //
   // 1- Validate the licenses requested by this family
@@ -1809,6 +1793,22 @@ function validateInvoice() {
         return {};
       }    
     }
+  }
+
+  // Validate de competitor ski passes
+  var validate_ski_pass_comp_error = validateSkiPassComp()
+  if (validate_ski_pass_comp_error) {
+    if (! displayYesNoPanel(augmentEscapeHatch(validate_ski_pass_comp_error))) {
+      return {};
+    }      
+  }
+
+  // Validate the competitor subscriptions
+  var validate_subscription_comp_error = validateCompetitionSubscriptions()
+  if (validate_subscription_comp_error) {
+    if (! displayYesNoPanel(augmentEscapeHatch(validate_subscription_comp_error))) {
+      return {};
+    }      
   }
   
   // Validate the parental consent.
