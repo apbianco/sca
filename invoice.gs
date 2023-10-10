@@ -11,24 +11,73 @@ dev_or_prod = "dev"
 // requires all following entries set to false. Note that
 // a validation of that constraint is carried out immediately
 // after these definitions.
-var advanced_verification_family_licenses = true;
-var advanced_verification_subscriptions = true;
-// FIXME: Too complicated for the 6th of October
-var advanced_verification_skipass = false;
+//
+// The coresponding truth table is:
+//
+// a     b     c     result
+// 0     0     0     1
+// 1     0     0     1
+// 1     1     0     1
+// 1     1     1     1
+// *     *     *     0
+//
+// result = !(bc) + ab
+class AdvancedFeatures {
+  constructor() {
+    // a
+    this.advanced_verification_family_licenses = false
+    // b
+    this.advanced_verification_subscriptions = false
+    // c
+    this.advanced_verification_skipass = false
+  }
 
-// Boolean expression generated from a truth table.
-if ((!advanced_verification_subscriptions &&
-     advanced_verification_skipass) ||
-    (!advanced_verification_family_licenses &&
-    advanced_verification_subscriptions)) {
-  displayErrorPanel(
-    "advanced_verification_family_licenses: " +
-    advanced_verification_family_licenses +
-    "\nadvanced_verification_subscriptions: " +
-    advanced_verification_subscriptions +
-    "\nadvanced_verification_skipass: " +
-    advanced_verification_skipass);
+  Validate() {
+    var bc = this.advanced_verification_subscriptions && this.advanced_verification_skipass
+    var ab = this.advanced_verification_family_licenses && this.advanced_verification_subscriptions
+    var result = !bc || ab
+    if (!result) {
+      displayErrorPanel(
+        "advanced_verification_family_licenses: " +
+        this.advanced_verification_family_licenses +
+        "\nadvanced_verification_subscriptions: " +
+        this.advanced_verification_subscriptions +
+        "\nadvanced_verification_skipass: " +
+        this.advanced_verification_skipass)
+    }
+  }
+
+  SetAdvancedVerificationFamilyLicenses() {
+    this.advanced_verification_family_licenses = true
+    this.Validate()
+  }
+  AdvancedVerificationFamilyLicenses() {
+    return this.advanced_verification_family_licenses
+  }
+
+  SetAdvancedVerificationSubscriptions() {
+    this.advanced_verification_subscriptions = true
+    this.Validate()
+  }
+  AdvancedVerificationSubscription() {
+    return this.advanced_verification_subscriptions
+  }
+
+  SetAdvancedVerificationSkipass() {
+    this.advanced_verification_skipass = true
+    this.Validate()
+  }
+  AdvancedVerificationSkipass() {
+    return this.advanced_verification_skipass
+  }
 }
+
+// Create the advanced validation global instance and turn on the advanced
+// validation features. The verification happens as soon as the feature is set.
+var advanced_validation = new AdvancedFeatures()
+advanced_validation.SetAdvancedVerificationFamilyLicenses()
+advanced_validation.SetAdvancedVerificationSubscriptions()
+advanced_validation.SetAdvancedVerificationSkipass()
 
 // Seasonal parameters - change for each season
 // 
@@ -407,12 +456,12 @@ function createSkipassMap(sheet) {
       (dob) => {return ageVerificationBornBetweenDatesIncluded(dob, new Date("January 1, 1993"), new Date("December 31, 2004"))},
       '1er janvier 1993 et le 31 décembre 2004'),
     '3 Domaines Junior': new SkiPass(
-      '3D Junior',
+      '3 Domaines Junior',
       sheet.getRange(37, 5),
       (dob) => {return ageVerificationBornBetweenDatesIncluded(dob, new Date("January 1, 2005"), new Date("December 31, 2012"))},
       '1er janvier 2005 et le 31 décembre 2012'),
     '3 Domaines Enfant': new SkiPass(
-      '3D Enfant',
+      '3 Domaines Enfant',
       sheet.getRange(38, 5),
       (dob) => {return ageVerificationBornBetweenDatesIncluded(dob, new Date("January 1, 2013"), new Date("December 31, 2017"))},
       "1er janvier 2013 et le 31 décembre 2017"),
@@ -1716,16 +1765,18 @@ function validateInvoice() {
     }      
   }
 
+  // Validate the competitor subscriptions
   var validate_subscription_comp_error = validateCompetitionSubscriptions()
   if (validate_subscription_comp_error) {
     if (! displayYesNoPanel(augmentEscapeHatch(validate_subscription_comp_error))) {
       return {};
     }      
-  }  
+  }
+
   // Now performing the optional/advanced validations... 
   //
   // 1- Validate the licenses requested by this family
-  if (advanced_verification_family_licenses) {
+  if (SetAdvancedVerificationFamilyLicenses()) {
     var license_map = createLicensesMap(SpreadsheetApp.getActiveSheet())
     var ret = validateLicenseCrossCheck(license_map, dobs);
     var license_cross_check_error = ret[0]
@@ -1737,8 +1788,7 @@ function validateInvoice() {
 
   // 2- Verify the subscriptions. The operator may choose to continue
   //    as some situation are un-verifiable automatically.
-  if (advanced_verification_family_licenses &&
-      advanced_verification_subscriptions) {
+  if (AdvancedVerificationSubscription()) {
     var collected_attributed_licenses_values = ret[1];
     // Validate requested licenses and subscriptions
     var subscription_validation_error = 
@@ -1752,9 +1802,7 @@ function validateInvoice() {
 
   // 3- Verify the ski pass purchases. The operator may choose to continue
   //    as some situation are un-verifiable automatically.
-  if (advanced_verification_family_licenses &&
-      advanced_verification_subscriptions &&
-      advanced_verification_skipass) {
+  if (AdvancedVerificationSkipass()) {
     var skipass_validation_error = validateSkiPassPurchase(dobs);
     if (skipass_validation_error) {
       if (! displayYesNoPanel(augmentEscapeHatch(skipass_validation_error))) {
