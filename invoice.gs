@@ -21,7 +21,7 @@ dev_or_prod = "dev"
 // 1     1     1     1
 // *     *     *     0
 //
-// result = !(bc) + ab
+// result = !b!c + ab
 class AdvancedFeatures {
   constructor() {
     // a
@@ -33,9 +33,9 @@ class AdvancedFeatures {
   }
 
   Validate() {
-    var bc = this.advanced_verification_subscriptions && this.advanced_verification_skipass
+    var not_b_not_c = ! this.advanced_verification_subscriptions && ! this.advanced_verification_skipass
     var ab = this.advanced_verification_family_licenses && this.advanced_verification_subscriptions
-    var result = !bc || ab
+    var result = not_b_not_c || ab
     if (!result) {
       displayErrorPanel(
         "advanced_verification_family_licenses: " +
