@@ -15,6 +15,7 @@ dev_or_prod = "dev"
 // The coresponding truth table is:
 //
 // a     b     c     result
+// ------------------------
 // 0     0     0     1
 // 1     0     0     1
 // 1     1     0     1
@@ -234,13 +235,13 @@ function createLicensesMap(sheet) {
     'CN Jeune (Loisir)': new License(
       getNonCompJuniorLicenseString(),
       sheet.getRange(41, 5),
-      // ageVerificationBornAfter is inclusive - so born after 2009 is born on 1/1/2009 or later.
-      (dob) => {return ageVerificationBornAfter(dob, new Date("January 1, 2009"))},
+      // Born after 2009 is born on 1/1/2009 or later.
+      (dob) => {return ageVerificationBornAfterDateIncluded(dob, new Date("January 1, 2009"))},
       "2009 et après"),
     'CN Adulte (Loisir)': new License(
       getNonCompAdultLicenseString(),
       sheet.getRange(42, 5),
-      // ageVerificationBornBefore is inclusive - so born on 2008 and before means 12/1/2008 or before.
+      // Born on 2008 and before means 12/1/2008 or before.
       (dob) => {return ageVerificationBornBeforeDateIncluded(dob, new Date("December 31, 2008"))},
       "2008 et avant"),
     'CN Famille (Loisir)': new License(
@@ -256,7 +257,7 @@ function createLicensesMap(sheet) {
     'CN Jeune (Compétition)': new License(
       getCompJuniorLicenseString(),
       sheet.getRange(51, 5),
-      (dob) => {return ageVerificationBornAfter(dob, new Date("January 1, 2009"))},
+      (dob) => {return ageVerificationBornAfterDateIncluded(dob, new Date("January 1, 2009"))},
       "2009 et après"),
     'CN Adulte (Compétition)': new License(
       getCompAdultLicenseString(),
@@ -345,6 +346,7 @@ function createCompSubscriptionMap(sheet) {
 }
 
 function createNonCompSubscriptionMap(sheet) {
+  // FIXME: For rider the verification is: how many declared of rider level
   var labels = ['Rider', '1er Enfant', '2ème Enfant', '3ème Enfant', '4ème Enfant']
   var to_return = {}
   var row = 45
