@@ -346,12 +346,18 @@ function createCompSubscriptionMap(sheet) {
 }
 
 function createNonCompSubscriptionMap(sheet) {
-  // FIXME: For rider the verification is: how many declared of rider level
-  var labels = ['Rider', '1er Enfant', '2ème Enfant', '3ème Enfant', '4ème Enfant']
+  var labels = ['1er Enfant', '2ème Enfant', '3ème Enfant', '4ème Enfant']
   var to_return = {}
   var row = 45
+  var label = 'Rider'
+  to_return[lavel] = new Subscription(
+    label,
+    sheet.range(row, 5),
+    // FIXME: the verification is that there's at least one rider declared
+    (dob) => {return true}),
+  row += 1
   for (index in labels) {
-    var label = labels[index]
+    label = labels[index]
     to_return[label] = new Subscription(
       label,
       sheet.getRange(row, 5),
@@ -1067,7 +1073,7 @@ function validateFamilyMembers() {
 }
 
 // Loosely cross checks attributed licenses with delivered subscriptions...
-function validateLicenseSubscription(attributed_licenses) {
+function validateNonCompSubscriptions(attributed_licenses) {
 
   function errorMessageBadSubscriptionValue(index) {
     return ("La valeur du champ 'Adhésion / Stage / Transport - enfant " +
@@ -1794,7 +1800,7 @@ function validateInvoice() {
     var collected_attributed_licenses_values = ret[1];
     // Validate requested licenses and subscriptions
     var subscription_validation_error = 
-        validateLicenseSubscription(collected_attributed_licenses_values);
+        validateNonCompSubscriptions(collected_attributed_licenses_values);
     if (subscription_validation_error) {
       if (! displayYesNoPanel(augmentEscapeHatch(subscription_validation_error))) {
         return {};
@@ -1813,18 +1819,18 @@ function validateInvoice() {
     }
   }
 
-  // Validate de competitor ski passes
-  var validate_ski_pass_comp_error = validateSkiPassComp()
-  if (validate_ski_pass_comp_error) {
-    if (! displayYesNoPanel(augmentEscapeHatch(validate_ski_pass_comp_error))) {
-      return {};
-    }      
-  }
-
   // Validate the competitor subscriptions
   var validate_subscription_comp_error = validateCompetitionSubscriptions()
   if (validate_subscription_comp_error) {
     if (! displayYesNoPanel(augmentEscapeHatch(validate_subscription_comp_error))) {
+      return {};
+    }      
+  }
+
+  // Validate de competitor ski passes
+  var validate_ski_pass_comp_error = validateSkiPassComp()
+  if (validate_ski_pass_comp_error) {
+    if (! displayYesNoPanel(augmentEscapeHatch(validate_ski_pass_comp_error))) {
       return {};
     }      
   }
