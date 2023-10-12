@@ -368,6 +368,26 @@ function createNonCompSubscriptionMap(sheet) {
   return to_return
 }
 
+function getNoLevelString() {
+  return 'Non défini'
+}
+
+function isLevelNotDefined(level) {
+  return level == '' || level == getNoLevelString()
+}
+
+function isLevelRider(level) {
+  return level = 'Rider'
+}
+
+function getLevelAt(coord) {
+  var level = getStringAt(coord)
+  if(isLevelNotDefined(level)) {
+    level = getNoLevelString()
+  }
+  return level  
+}
+
 // FIXME: This can be migrated to a validation similar to the thing we do
 // for competitors.
 var coord_purchased_subscriptions_non_comp = [
@@ -422,23 +442,25 @@ class SkiPass {
   }
 }
 
+
+// FIXME: All date intervals need to be adjustable globals. Include the YoB for an adult.
 function createSkipassMap(sheet) {
   var to_return = {
     'Collet Senior': new SkiPass(
       'Collet Senior',
       sheet.getRange(25, 5),
-      (dob) => {return ageVerificationRange(dob, 70, 75)},
+      (dob) => {return ageVerificationRangeIncluded(dob, 70, 74)},
       "70 à 75 ans révolus"),
     'Collet Vermeil': new SkiPass(
       'Collet Vermeil',
       sheet.getRange(26, 5),
-      (dob) => {return ageVerificationStrictlyOlder(dob, 75)},
+      (dob) => {return ageVerificationStrictlyOldOrOlder(dob, 75)},
       '+75 ans'),
     'Collet Adulte': new SkiPass(
       'Collet Adulte',
       sheet.getRange(27, 5),
-      (dob) => {return isAdult(dob) && ageVerificationStrictlyYounger(dob, 70)},
-      "Adulte de moins de 70 ans"),
+      (dob) => {return isAdultByYoB(dob) && ageVerificationStrictlyYounger(dob, 70)},
+      "Adulte non étudiant de moins de 70 ans"),
     'Collet Étudiant': new SkiPass(
       'Collet Étudiant',
       sheet.getRange(28, 5),
@@ -462,18 +484,18 @@ function createSkipassMap(sheet) {
     '3 Domaines Senior': new SkiPass(
       '3 Domaines Senior',
       sheet.getRange(33, 5),
-      (dob) => {return ageVerificationRange(dob, 70, 75)},
+      (dob) => {return ageVerificationRangeIncluded(dob, 70, 74)},
       "70 à 75 ans révolus"),
     '3 Domaines Vermeil': new SkiPass(
       '3 Domaines Vermeil',
       sheet.getRange(34, 5),
-      (dob) => {return ageVerificationStrictlyOlder(dob, 75)},
+      (dob) => {return ageVerificationStrictlyOldOrOlder(dob, 75)},
       '+75 ans'),
     '3 Domaines Adulte': new SkiPass(
       '3 Domaines Adulte',
       sheet.getRange(35, 5),
-      (dob) => {return isAdult(dob) && ageVerificationStrictlyYounger(dob, 70)},
-      "Adulte de moins de 70 ans"),
+      (dob) => {return isAdultByYoB(dob) && ageVerificationStrictlyYounger(dob, 70)},
+      "Adulte non étudiant de moins de 70 ans"),
     '3 Domaines Étudiant': new SkiPass(
       '3 Domaines Étudiant',
       sheet.getRange(36, 5),
@@ -840,8 +862,8 @@ function ageFromDoB(dob) {
 }
 
 // Return True if at the current time, someone with dob is strictly older than age.
-function ageVerificationStrictlyOlder(dob, age){
-  return ageFromDoB(dob) > age
+function ageVerificationStrictlyOldOrOlder(dob, age){
+  return ageFromDoB(dob) >= age
 }
 
 // Return True if at the current time, someone with dob is strictly younger than age.
@@ -850,15 +872,22 @@ function ageVerificationStrictlyYounger(dob, age){
 }
 
 // Return True if at current tie, someone with dob is between age1 and age2 years old included.
-function ageVerificationRange(dob, age1, age2) {
+function ageVerificationRangeIncluded(dob, age1, age2) {
   var age = ageFromDoB(dob)
   return (age >= age1 && age <= age2);
 }
 
 // Determine whether someone is a legal adult. An adult is someone who's
-// age today is 18 year old
+// age today is 18 year old (that includes turning 18 today)
 function isAdult(dob) {
   return ageFromDoB(dob) >= 18;
+}
+
+// Determine whether is someone is an adult by year of birth only. For 2023/2024 season, someone is
+// adult if they were born in 2005.
+function isAdultByYoB(dob) {
+  var yob = getDoBYear(dob)
+  return yob <= 2005
 }
 
 function isMinor(dob) {
@@ -1070,6 +1099,14 @@ function validateFamilyMembers() {
     }
   }
   return ["", dobs];
+}
+
+function validateNonCompSubscriptions2() {
+  var subscription_map = createNonCompSubscriptionMap(SpreadsheetApp.getActiveSheet())
+  for (var index in coords_identity_rows) {
+    var row = coords_identity_rows[index]
+    var column = coord_level_column
+  }
 }
 
 // Loosely cross checks attributed licenses with delivered subscriptions...
