@@ -345,19 +345,20 @@ function createCompSubscriptionMap(sheet) {
   return to_return
 }
 
+var noncomp_subscription_categories = ['Rider', '1er Enfant', '2ème Enfant', '3ème Enfant', '4ème Enfant']
+
 function createNonCompSubscriptionMap(sheet) {
-  var labels = ['1er Enfant', '2ème Enfant', '3ème Enfant', '4ème Enfant']
   var to_return = {}
   var row = 45
-  var label = 'Rider'
-  to_return[lavel] = new Subscription(
+  var label = noncomp_subscription_categories[0]
+  to_return[label] = new Subscription(
     label,
-    sheet.range(row, 5),
+    sheet.getRange(row, 5),
     // FIXME: the verification is that there's at least one rider declared
     (dob) => {return true}),
   row += 1
-  for (index in labels) {
-    label = labels[index]
+  for (index in noncomp_subscription_categories) {
+    label = noncomp_subscription_categories[index]
     to_return[label] = new Subscription(
       label,
       sheet.getRange(row, 5),
@@ -372,12 +373,16 @@ function getNoLevelString() {
   return 'Non défini'
 }
 
+function getRiderLevelString() {
+  return noncomp_subscription_categories[0]
+}
+
 function isLevelNotDefined(level) {
   return level == '' || level == getNoLevelString()
 }
 
 function isLevelRider(level) {
-  return level = 'Rider'
+  return level == getRiderLevelString()
 }
 
 function getLevelAt(coord) {
@@ -1085,8 +1090,8 @@ function validateFamilyMembers() {
     }
     // We need a level but only if a non competitor license has been requested
     // We exclude adults because a non competitor license can be a family license.
-    var level = getStringAt([coords_identity_rows[index], coord_level_column]);
-    if (level == '' && isMinor(dob) && isLicenseNonComp(license)) {
+    var level = getLevelAt([coords_identity_rows[index], coord_level_column]);
+    if (isLevelNotDefined(level) && isMinor(dob) && isLicenseNonComp(license)) {
       return returnError(
           "Pas de niveau fourni pour " + first_name + " " + last_name         
       )
@@ -1102,10 +1107,29 @@ function validateFamilyMembers() {
 }
 
 function validateNonCompSubscriptions2() {
+    function returnError(v) {
+    return [v, {}];
+  }
   var subscription_map = createNonCompSubscriptionMap(SpreadsheetApp.getActiveSheet())
-  for (var index in coords_identity_rows) {
-    var row = coords_identity_rows[index]
-    var column = coord_level_column
+
+  // Update the number of noncomp subscription registered
+  for (var subscription in subscription_map) {
+    subscription_map[subscription].UpdatePurchasedSubscriptionAmount()
+  }
+
+  // The number of riders must be equal to the number of riders we found. First count them all
+  // and the perform the verification
+  var rider_number = 0
+  coords_identity_rows.forEach(function(row) {
+    if (isLevelRider(getLevelAt([row, coord_level_column]))) {
+      rider_number += 1
+    }
+  })
+
+  var registered_rider_number = subscription_map[getRiderLevelString()].PurchasedSubscriptionAmount()
+  if (rider_number != registered_rider_number) {
+    return returnError("Le nombre d'adhésion rider (" + rider_number + ") ne correspond pas au nombre" +
+                       "de rider(s) enregistré(s) (" + registered_rider_number + ")")
   }
 }
 
@@ -1816,7 +1840,10 @@ function validateInvoice() {
     displayErrorPanel(family_validation_error);
     return {};
   }
+  // FIXME: No longer valid?
   var dobs = ret[1];
+
+  validateNonCompSubscriptions2()
 
   // Now performing the optional/advanced validations... 
   //
