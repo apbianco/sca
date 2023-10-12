@@ -350,13 +350,6 @@ var noncomp_subscription_categories = ['Rider', '1er Enfant', '2ème Enfant', '3
 function createNonCompSubscriptionMap(sheet) {
   var to_return = {}
   var row = 45
-  var label = noncomp_subscription_categories[0]
-  to_return[label] = new Subscription(
-    label,
-    sheet.getRange(row, 5),
-    // FIXME: the verification is that there's at least one rider declared
-    (dob) => {return true}),
-  row += 1
   for (index in noncomp_subscription_categories) {
     label = noncomp_subscription_categories[index]
     to_return[label] = new Subscription(
@@ -1128,7 +1121,7 @@ function validateNonCompSubscriptions2() {
 
   var registered_rider_number = subscription_map[getRiderLevelString()].PurchasedSubscriptionAmount()
   if (rider_number != registered_rider_number) {
-    return returnError("Le nombre d'adhésion rider (" + rider_number + ") ne correspond pas au nombre" +
+    return returnError("Le nombre d'adhésion(s) rider (" + rider_number + ") ne correspond pas au nombre" +
                        "de rider(s) enregistré(s) (" + registered_rider_number + ")")
   }
 }
@@ -1843,7 +1836,12 @@ function validateInvoice() {
   // FIXME: No longer valid?
   var dobs = ret[1];
 
-  validateNonCompSubscriptions2()
+  ret = validateNonCompSubscriptions2()
+  var validation_noncomp_subscription2_error = ret[0]
+  if (validation_noncomp_subscription2_error) {
+    displayErrorPanel(validation_noncomp_subscription2_error)
+    return {}
+  }
 
   // Now performing the optional/advanced validations... 
   //
