@@ -1068,8 +1068,23 @@ function validateFamilyMembers() {
     first_name = normalizeName(first_name, false)
     last_name = normalizeName(last_name, true)
 
-    // Entry is empty, just skip it
+    // Get these early as we're going to verify that if they are defined, they are
+    // attached to a name
+    var license = getLicenseAt([coords_identity_rows[index], coord_license_column]);
+    var dob = getDoB([coords_identity_rows[index], coord_dob_column]);
+    var level = getLevelAt([coords_identity_rows[index], coord_level_column]);
+    var sex = getStringAt([coords_identity_rows[index], coord_sex_column]);
+    var city = getStringAt([coords_identity_rows[index], coord_cob_column]);
+    var license_number = getStringAt([coords_identity_rows[index], coord_license_number_column ])
+
+    // Entry is empty, just skip it unless there's information that has been 
+    // entered
     if (first_name == "" && last_name == "") {
+      if (isLicenseDefined(license) || dob != undefined || isLevelDefined(level) ||
+          sex != '' || city != '' || license_number != '') {
+        return returnError(nthString(index) + " membre de famille: information définie (naissance, sexe, etc...) " +
+                           "sans prénom on nom de famille renseigné")        
+      }
       continue;
     }
     // We need both a first name and a last name
@@ -1083,10 +1098,8 @@ function validateFamilyMembers() {
     setStringAt([coords_identity_rows[index], coord_first_name_column], first_name, "black");
     setStringAt([coords_identity_rows[index], coord_last_name_column], last_name, "black");
 
-    var license = getLicenseAt([coords_identity_rows[index], coord_license_column]);
     // We need a DoB but only if a license has been requested. If a DoB is
     // defined, we save it.
-    var dob = getDoB([coords_identity_rows[index], coord_dob_column]);
     if (dob == undefined) {
       if (isLicenseDefined(license)) {
         return returnError(
@@ -1107,7 +1120,6 @@ function validateFamilyMembers() {
     //
     //  We establishing here is that a junior non comp entry must have a level set to something.
     //  A level set to something is an other way of identifying a non comp license.
-    var level = getLevelAt([coords_identity_rows[index], coord_level_column]);
     if (isLevelDefined(level) && isLicenseNotDefined(license)) {
       return returnError(first_name + " " + last_name + " est un loisir junior avec un niveau de ski " +
                          "défini ce qui traduit l'intention de prendre une adhésion au club. Choisissez " +
@@ -1127,8 +1139,7 @@ function validateFamilyMembers() {
                          "de niveau pour un cadre/dirigeant")      
     }
 
-    // We need a sex
-    var sex = getStringAt([coords_identity_rows[index], coord_sex_column]);
+    // We need a properly defined sex
     if (sex != "Fille" && sex != "Garçon") {
       return returnError("Pas de sexe défini pour " +
                          first_name + " " + last_name);
@@ -1182,7 +1193,7 @@ function validateNonCompSubscriptions2() {
   var first_kid = subscription_map[getFirstKid()].PurchasedSubscriptionAmount()
   if (first_kid != 0 && rider_number > 0) {
     return ("L'adhésion rider compte comme une première Adhésion / Stage / Transport - 1er enfant. " +
-            "veuillez saisir les adhésion à partir du deuxièmme enfant.")
+            "Veuillez saisir les adhésion à partir du deuxièmme enfant.")
   }
 
   // 2- Go over the 1st to 4th subscription and make sure that N is matched by N-1 for
@@ -1588,8 +1599,8 @@ function validateLicenseCrossCheck(license_map, dobs) {
       return returnError(first_name + " " + last_name +
                          ": l'année de naissance " + yob +
                          " ne correspond aux années de validité de la " +
-                         "license choisie: '" + selected_license + " " +
-                         license_map[selected_license].ValidDoBRangeMessage())
+                         "license choisie: " + selected_license + ", " +
+                         license_map[selected_license].ValidDoBRangeMessage() + '.')
     }
   }
 
