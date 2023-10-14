@@ -382,6 +382,15 @@ function getRiderLevelString() {
   return noncomp_subscription_categories[0]
 }
 
+function getFirstKid() {
+  // FIXME: fragile?
+  return noncomp_subscription_categories[1]
+}
+
+function isFirstKid(subscription) {
+  return isLevelDefined(subscription) && subscription == getFirstKid()
+}
+
 function isLevelDefined(level) {
   return ! isLevelNotDefined(level)
 }
@@ -1132,14 +1141,14 @@ function validateFamilyMembers() {
 // family members have been validated, which means that we are guaranteed here
 // that people declared to have a non comp license also have a level entered.
 function validateNonCompSubscriptions2() {
-    function returnError(v) {
-    return [v, {}];
+  // Return true if:
+  //   1- level_or_subscription is Rider
+  //   2- level_or_subscription is FirstKid and there's one or more rider defined
+  function skipRiderOrFirstKidIfRider(level_or_subscription) {
+    return (isLevelRider(level_or_subscription) || 
+            (isFirstKid(level_or_subscription) &&
+             subscription_map[getRiderLevelString()].PurchasedSubscriptionAmount() > 0))
   }
-  function errorMessageBadSubscriptionValue(index) {
-    return ("La valeur du champ 'Adhésion / Stage / Transport " +
-            index + "' ne peut prendre que la valeur 0 ou 1.")
-  }
-
   var subscription_map = createNonCompSubscriptionMap(SpreadsheetApp.getActiveSheet())
 
   // Update the number of noncomp subscription registered
@@ -1165,23 +1174,36 @@ function validateNonCompSubscriptions2() {
   // and the perform the verification
   var subscribed_rider_number = subscription_map[getRiderLevelString()].PurchasedSubscriptionAmount()
   if (rider_number != subscribed_rider_number) {
-    return returnError("Le nombre d'adhésion(s) rider (" + rider_number + ") ne correspond pas au nombre " +
-                       "de rider(s) renseigné(s) (" + subscribed_rider_number + ")")
+    return ("Le nombre d'adhésion(s) rider (" + rider_number + ") ne correspond pas au nombre " +
+            "de rider(s) renseigné(s) (" + subscribed_rider_number + ")")
+  }
+
+  // If we have a rider, the first subscription can not exist, we jump directly to the second kid
+  var first_kid = subscription_map[getFirstKid()].PurchasedSubscriptionAmount()
+  if (first_kid != 0 && rider_number > 0) {
+    return ("L'adhésion rider compte comme une première Adhésion / Stage / Transport - 1er enfant. " +
+            "veuillez saisir les adhésion à partir du deuxièmme enfant.")
   }
 
   // 2- Go over the 1st to 4th subscription and make sure that N is matched by N-1 for
-  //    N > 1.
+  //    N > 1. This verification is adjusted in case we have a rider as a first kid.
   var subscribed_non_rider_number_accumulator = 0
   for (var index in noncomp_subscription_categories) {
-    // index 0 is the rider, skip it
-    if (index == 0) {
+    // Skip Rider and skip first kid if we had a rider registered
+    var subscription = noncomp_subscription_categories[index]
+    if (skipRiderOrFirstKidIfRider(subscription)) {
+      // If we're skipping first kid because there's one or more riders declared
+      // we adjust the accumulator so that the rest of the verification can
+      // happen.
+      if (isFirstKid(subscription)) {
+        subscribed_non_rider_number_accumulator = 1
+      }
       continue
     }
-    var subscription = noncomp_subscription_categories[index]
     var current_purchased = subscription_map[subscription].PurchasedSubscriptionAmount()
     if (current_purchased == 1 && subscribed_non_rider_number_accumulator != (index - 1)) {
-      return returnError('Une adhésion existe pour un ' + subscription +
-                        ' sans adhésion déclarée pour un ' + noncomp_subscription_categories[index-1])
+      return ('Une adhésion existe pour un ' + subscription +
+              ' sans adhésion déclarée pour un ' + noncomp_subscription_categories[index-1])
     }
     subscribed_non_rider_number_accumulator += subscription_map[subscription].PurchasedSubscriptionAmount()
   }
@@ -1192,20 +1214,22 @@ function validateNonCompSubscriptions2() {
   for (var subscription in subscription_map) {
     // Skip riders, we already verified them. This works because there's a subscription
     // that bears the level it matches ('Rider')
-    if (isLevelRider(subscription)) {
+    if(skipRiderOrFirstKidIfRider(subscription)) {
       continue
     }
     var found_non_rider_number = subscription_map[subscription].PurchasedSubscriptionAmount()
     if (found_non_rider_number < 0 || found_non_rider_number > 1) {
-      errorMessageBadSubscriptionValue(subscription)
+      return ("La valeur du champ Adhésion / Stage / Transport pour le " +
+              subscription + " ne peut prendre que la valeur 0 ou 1.")
     }
     subscribed_non_rider_number += found_non_rider_number
   }
   if (subscribed_non_rider_number != non_rider_number) {
-    return returnError("Le nombre d'adhésion(s) non rider (" + subscribed_non_rider_number + ") " +
-                       "ne correspond pas au nombre " +
-                       "de non rider(s) renseigné(s) (" + non_rider_number + ")")    
+    return ("Le nombre d'adhésion(s) non rider (" + subscribed_non_rider_number + ") " +
+            "ne correspond pas au nombre " +
+            "de non rider(s) renseigné(s) (" + non_rider_number + ")")    
   }
+  return ''
 }
 
 // Loosely cross checks attributed licenses with delivered subscriptions...
@@ -1919,8 +1943,7 @@ function validateInvoice() {
   // FIXME: No longer useful
   var dobs = ret[1];
 
-  ret = validateNonCompSubscriptions2()
-  var validation_noncomp_subscription2_error = ret[0]
+  var validation_noncomp_subscription2_error = validateNonCompSubscriptions2()
   if (validation_noncomp_subscription2_error) {
     displayErrorPanel(validation_noncomp_subscription2_error)
     return {}
@@ -1929,7 +1952,7 @@ function validateInvoice() {
   // Now performing the optional/advanced validations... 
   //
   // 1- Validate the licenses requested by this family
-  if (SetAdvancedVerificationFamilyLicenses()) {
+  if (advanced_validation.AdvancedVerificationFamilyLicenses()) {
     var license_map = createLicensesMap(SpreadsheetApp.getActiveSheet())
     var ret = validateLicenseCrossCheck(license_map, dobs);
     var license_cross_check_error = ret[0]
@@ -1941,7 +1964,7 @@ function validateInvoice() {
 
   // 2- Verify the subscriptions. The operator may choose to continue
   //    as some situation are un-verifiable automatically.
-  if (AdvancedVerificationSubscription()) {
+  if (advanced_validation.AdvancedVerificationSubscription()) {
     var collected_attributed_licenses_values = ret[1];
     // Validate requested licenses and subscriptions
     var subscription_validation_error = 
@@ -1955,7 +1978,7 @@ function validateInvoice() {
 
   // 3- Verify the ski pass purchases. The operator may choose to continue
   //    as some situation are un-verifiable automatically.
-  if (AdvancedVerificationSkipass()) {
+  if (advanced_validation.AdvancedVerificationSkipass()) {
     var skipass_validation_error = validateSkiPassPurchase(dobs);
     if (skipass_validation_error) {
       if (! displayYesNoPanel(augmentEscapeHatch(skipass_validation_error))) {
