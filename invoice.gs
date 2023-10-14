@@ -351,7 +351,7 @@ function createNonCompSubscriptionMap(sheet) {
   var to_return = {}
   var row = 45
   for (index in noncomp_subscription_categories) {
-    label = noncomp_subscription_categories[index]
+    var label = noncomp_subscription_categories[index]
     to_return[label] = new Subscription(
       label,
       sheet.getRange(row, 5),
@@ -366,25 +366,34 @@ function getNoLevelString() {
   return 'Non défini'
 }
 
+// This is almost useless - a syntatic sugar
+function getLevelAt(coord) {
+  return getStringAt(coord)
+}
+
+// NOTE: A level is not defined when it has not been entered. Notably: a level
+// of getNotLevelString() value *DEFINES* a level.
+function isLevelNotDefined(level) {
+  return level == ''
+}
+
 function getRiderLevelString() {
+  // FIXME: Fragile
   return noncomp_subscription_categories[0]
 }
 
-function isLevelNotDefined(level) {
-  return level == '' || level == getNoLevelString()
+function isLevelDefined(level) {
+  return ! isLevelNotDefined(level)
 }
 
 function isLevelRider(level) {
   return level == getRiderLevelString()
 }
 
-function getLevelAt(coord) {
-  var level = getStringAt(coord)
-  if(isLevelNotDefined(level)) {
-    level = getNoLevelString()
-  }
-  return level  
+function isLevelNotRider(level) {
+  return isLevelDefined(level) && ! isLevelRider(level)
 }
+
 
 // FIXME: This can be migrated to a validation similar to the thing we do
 // for competitors.
@@ -439,7 +448,6 @@ class SkiPass {
     return this.valid_dob_range_message
   }
 }
-
 
 // FIXME: All date intervals need to be adjustable globals. Include the YoB for an adult.
 function createSkipassMap(sheet) {
@@ -1081,14 +1089,35 @@ function validateFamilyMembers() {
     } else {
       dobs.push(dob);
     }
-    // We need a level but only if a non competitor license has been requested
-    // We exclude adults because a non competitor license can be a family license.
+    // Level validation. A level is needed:
+    //.  1- A license is needed when a level is defined
+    //   2- Only for a non competitor license
+    //   3- Only for non adults (because a non competitor license can be a family license)
+    //   4- A competitor can not declare a level, it will confuse the rest of the validation
+    //   5- An executive can not declare a level, it will confuse the rest of the validation
+    //
+    //  We establishing here is that a junior non comp entry must have a level set to something.
+    //  A level set to something is an other way of identifying a non comp license.
     var level = getLevelAt([coords_identity_rows[index], coord_level_column]);
+    if (isLevelDefined(level) && isLicenseNotDefined(license)) {
+      return returnError(first_name + " " + last_name + " est un loisir junior avec un niveau de ski " +
+                         "défini ce qui traduit l'intention de prendre une adhésion au club. Choisissez " +
+                         "une license appropriée (CN Jeune Loisir ou Famille) pour cette personne")
+    }
     if (isLevelNotDefined(level) && isMinor(dob) && isLicenseNonComp(license)) {
       return returnError(
-          "Pas de niveau fourni pour " + first_name + " " + last_name         
+          "Vous devez fournir un niveau pour le junior non compétiteur " + first_name + " " + last_name         
       )
     }
+    if (isLevelDefined(level) && isLicenseComp(license)) {
+      return returnError(first_name + " " + last_name + " est un compétiteur. Ne définissez pas " +
+                         "de niveau pour un compétiteur")
+    }
+    if (isLevelDefined(level) && isExecLicense(license)) {
+      return returnError(first_name + " " + last_name + " est un cadre/dirigeant. Ne définissez pas " +
+                         "de niveau pour un cadre/dirigeant")      
+    }
+
     // We need a sex
     var sex = getStringAt([coords_identity_rows[index], coord_sex_column]);
     if (sex != "Fille" && sex != "Garçon") {
@@ -1099,10 +1128,18 @@ function validateFamilyMembers() {
   return ["", dobs];
 }
 
+// Validation of non competitor subscriptions. This method is invoked after all
+// family members have been validated, which means that we are guaranteed here
+// that people declared to have a non comp license also have a level entered.
 function validateNonCompSubscriptions2() {
     function returnError(v) {
     return [v, {}];
   }
+  function errorMessageBadSubscriptionValue(index) {
+    return ("La valeur du champ 'Adhésion / Stage / Transport " +
+            index + "' ne peut prendre que la valeur 0 ou 1.")
+  }
+
   var subscription_map = createNonCompSubscriptionMap(SpreadsheetApp.getActiveSheet())
 
   // Update the number of noncomp subscription registered
@@ -1110,19 +1147,64 @@ function validateNonCompSubscriptions2() {
     subscription_map[subscription].UpdatePurchasedSubscriptionAmount()
   }
 
-  // The number of riders must be equal to the number of riders we found. First count them all
-  // and the perform the verification
+  // Compute the number of people with a level, making the distinction between riders/non riders.
+  // These are the people that need a subscription.
   var rider_number = 0
+  var non_rider_number = 0
   coords_identity_rows.forEach(function(row) {
-    if (isLevelRider(getLevelAt([row, coord_level_column]))) {
+    var level = getLevelAt([row, coord_level_column])
+    if (isLevelRider(level)) {
       rider_number += 1
+    }
+    if (isLevelNotRider(level)) {
+      non_rider_number += 1
     }
   })
 
-  var registered_rider_number = subscription_map[getRiderLevelString()].PurchasedSubscriptionAmount()
-  if (rider_number != registered_rider_number) {
-    return returnError("Le nombre d'adhésion(s) rider (" + rider_number + ") ne correspond pas au nombre" +
-                       "de rider(s) enregistré(s) (" + registered_rider_number + ")")
+  // The number of riders must be equal to the number of riders we found. First count them all
+  // and the perform the verification
+  var subscribed_rider_number = subscription_map[getRiderLevelString()].PurchasedSubscriptionAmount()
+  if (rider_number != subscribed_rider_number) {
+    return returnError("Le nombre d'adhésion(s) rider (" + rider_number + ") ne correspond pas au nombre " +
+                       "de rider(s) renseigné(s) (" + subscribed_rider_number + ")")
+  }
+
+  // 2- Go over the 1st to 4th subscription and make sure that N is matched by N-1 for
+  //    N > 1.
+  var subscribed_non_rider_number_accumulator = 0
+  for (var index in noncomp_subscription_categories) {
+    // index 0 is the rider, skip it
+    if (index == 0) {
+      continue
+    }
+    var subscription = noncomp_subscription_categories[index]
+    var current_purchased = subscription_map[subscription].PurchasedSubscriptionAmount()
+    if (current_purchased == 1 && subscribed_non_rider_number_accumulator != (index - 1)) {
+      return returnError('Une adhésion existe pour un ' + subscription +
+                        ' sans adhésion déclarée pour un ' + noncomp_subscription_categories[index-1])
+    }
+    subscribed_non_rider_number_accumulator += subscription_map[subscription].PurchasedSubscriptionAmount()
+  }
+
+  // 3- Go over 1st to 4th subscription and accumulate the number of subscriptions entered.
+  //    that number must match the number of non rider member entered.
+  var subscribed_non_rider_number = 0
+  for (var subscription in subscription_map) {
+    // Skip riders, we already verified them. This works because there's a subscription
+    // that bears the level it matches ('Rider')
+    if (isLevelRider(subscription)) {
+      continue
+    }
+    var found_non_rider_number = subscription_map[subscription].PurchasedSubscriptionAmount()
+    if (found_non_rider_number < 0 || found_non_rider_number > 1) {
+      errorMessageBadSubscriptionValue(subscription)
+    }
+    subscribed_non_rider_number += found_non_rider_number
+  }
+  if (subscribed_non_rider_number != non_rider_number) {
+    return returnError("Le nombre d'adhésion(s) non rider (" + subscribed_non_rider_number + ") " +
+                       "ne correspond pas au nombre " +
+                       "de non rider(s) renseigné(s) (" + non_rider_number + ")")    
   }
 }
 
@@ -1775,9 +1857,8 @@ function validateInvoice() {
           "Vous pouvez néamoins continuer et un dossier sera préparé et " +
           "les mails serons envoyés à " + email_dev + ".\n\n" +
           "Contacter " + email_dev + " pour obtenir plus d\'aide.")
-          
   }
-  
+
   // Make sure only an allowed user runs this.
   if (Session.getEffectiveUser() != allowed_user) {
     displayErrorPanel(
@@ -1826,14 +1907,16 @@ function validateInvoice() {
     return {}
   }
   
-  // Validate all the entered family members
+  // Validate all the entered family members. This will make sure that
+  // a non comp license is matched by a level, something that the validation
+  // of non comp subscription depends on.
   var ret = validateFamilyMembers();
   var family_validation_error = ret[0];
   if (family_validation_error) {
     displayErrorPanel(family_validation_error);
     return {};
   }
-  // FIXME: No longer valid?
+  // FIXME: No longer useful
   var dobs = ret[1];
 
   ret = validateNonCompSubscriptions2()
