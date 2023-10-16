@@ -1052,6 +1052,33 @@ function validateAndReturnDropDownValue(coord, message) {
   return value
 }
 
+// Validation routines. They must be running in order. For some, failing is a 
+// show stopper. For others, it's possible to decline accepting there's an
+// error and continue (escape hatch)
+//
+// ------------------------------+---------------------------------------------+--------------
+// Name                          |What                                         |Esc. Hatch
+//                               |                                             |RETURN:
+// ------------------------------+---------------------------------------------+--------------
+// validateFamilyMembers         | Validation of all family members, including | NO
+//                               | some invariants like: junion non comp       | RETURN: List
+//                               | must have a level. If anything other than   | of DoB. Why?
+//                               | first/last name are defined, there must be. |
+//                               | a first/last name defined                   |
+// ------------------------------+---------------------------------------------+--------------
+// validateLicenseCrossCheck     | Validate selected licenses with the one     | YES
+//                               | selected for payment                        | Map selected
+//                               |                                             | licenses
+// ------------------------------+---------------------------------------------+--------------
+// validateNonCompSubscriptions2 | Validate the non competitor subscriptions.  | String if
+//                               | Should replace validateNonCompSubscriptions | error
+//                               | when we've verify parity                    |
+// ------------------------------+---------------------------------------------+--------------
+// validateNonCompSubscriptions  | Old validation of non comp subscription.    | String if
+//                               | To be replaced by the previously described. | error
+//                               | method                                      |
+// ------------------------------+---------------------------------------------+---------------
+
 // Verify that family members have a first name, 
 // last name, a DoB and a sex assigned to them.
 // Return an error and also a list of collected DoBs.
@@ -1558,7 +1585,8 @@ function validateLicenseCrossCheck(license_map, dobs) {
     // You can't have no first/last name and an assigned license
     var first_name = getStringAt([row, coord_first_name_column]);
     var last_name = getStringAt([row, coord_last_name_column]);
-    // If there's no name on that row, the only possible value is None
+    // If there's no name on that row, the only possible value is None. Note that
+    // this should have been verified in validateFamilyMembers().
     if (first_name === '' && last_name === '') {
       if (isLicenseDefined(selected_license)) {
         return returnError("'" + selected_license +
@@ -1636,6 +1664,9 @@ function validateLicenseCrossCheck(license_map, dobs) {
         "acheté pour l'instant " + family_license_purchased);
     }
     // Last verification: two adults and two+ kids
+    // FIXME: countAdultsAndKids is probably not counting 17 years old adults.
+    //        Double check again with Marie-Pierre.
+    // FIXME: one adult.
     var res = countAdultsAndKids(dobs);
     var count_adults = res[0];
     var count_children = res[1];
