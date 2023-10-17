@@ -1052,9 +1052,9 @@ function validateAndReturnDropDownValue(coord, message) {
   return value
 }
 
-// Validation routines. They must be running in order. For some, failing is a 
-// show stopper. For others, it's possible to decline accepting there's an
-// error and continue (escape hatch)
+// Validation routines table. They must be running in order. For some, failing is a  show
+// stopper. For others, it's possible to decline accepting there's an error and continue
+// (escape hatch)
 //
 // ------------------------------+---------------------------------------------+--------------
 // Name                          |What                                         |Esc. Hatch
@@ -1063,22 +1063,33 @@ function validateAndReturnDropDownValue(coord, message) {
 // validateFamilyMembers         | Validation of all family members, including | NO
 //                               | some invariants like: junion non comp       | RETURN: List
 //                               | must have a level. If anything other than   | of DoB. Why?
-//                               | first/last name are defined, there must be. |
+//                               | first/last name are defined, there must be. | FIXME
 //                               | a first/last name defined                   |
 // ------------------------------+---------------------------------------------+--------------
 // validateLicenseCrossCheck     | Validate selected licenses with the one     | YES
-//                               | selected for payment                        | Map selected
-//                               |                                             | licenses
-// ------------------------------+---------------------------------------------+--------------
-// validateNonCompSubscriptions2 | Validate the non competitor subscriptions.  | String if
-//                               | Should replace validateNonCompSubscriptions | error
+//                               | selected for payment. Args: license_map and | Map selected
+//                               | DoB - maybe could be obtained within.       | licenses. Why?
+//                               | Lots of FIXMEs, and rename it please.       | FIXME
+// ------------------------------+---------------------------------------------+----------------
+// validateNonCompSubscriptions2 | Validate the non competitor subscriptions.  | NO.
+//                               | Should replace validateNonCompSubscriptions | String if error
 //                               | when we've verify parity                    |
-// ------------------------------+---------------------------------------------+--------------
-// validateNonCompSubscriptions  | Old validation of non comp subscription.    | String if
-//                               | To be replaced by the previously described. | error
-//                               | method                                      |
-// ------------------------------+---------------------------------------------+---------------
-
+// ------------------------------+---------------------------------------------+----------------
+// validateNonCompSubscriptions  | Old validation of non comp subscription.    | YES.
+//                               | FXIME To be replaced by the previously      | String if error
+//                               | described method                            |
+// ------------------------------+---------------------------------------------+----------------
+// validateSkiPassPurchase       | Validation of non competitor ski pass       | YES.
+//                               | purchases. FIXME: Needs to be rewritten for | String if error
+//                               | 2023/2024                                   |
+// ------------------------------+---------------------------------------------+----------------
+// validateSkiPassComp           | Competitor ski pass purchases validation    | NO
+//                               | This code is complete                       | String if error
+// ------------------------------+---------------------------------------------+----------------
+// validateSubscriptionsComp     | Competitor subscription validation          | NO
+//                               | This code is complete                       | String if error
+// ------------------------------+---------------------------------------------+----------------
+//
 // Verify that family members have a first name, 
 // last name, a DoB and a sex assigned to them.
 // Return an error and also a list of collected DoBs.
@@ -1484,7 +1495,7 @@ function validateSkiPassComp() {
   return ''
 }
 
-function validateCompetitionSubscriptions() {
+function validateSubscriptionsComp() {
   var comp_subscription_map = createCompSubscriptionMap(SpreadsheetApp.getActiveSheet())
   for (var index in coords_identity_rows) {
     var row = coords_identity_rows[index];
@@ -1678,8 +1689,8 @@ function validateLicenseCrossCheck(license_map, dobs) {
     }
   }
   
-var attributed_licenses = {}
-for (var index in license_map) {
+  var attributed_licenses = {}
+  for (var index in license_map) {
     attributed_licenses[index] = license_map[index].AttributedLicenseCount()
     // Entry indicating no license is skipped because it can't
     // be collected. Entry indicating a family license skipped because
@@ -2030,7 +2041,7 @@ function validateInvoice() {
   }
 
   // Validate the competitor subscriptions
-  var validate_subscription_comp_error = validateCompetitionSubscriptions()
+  var validate_subscription_comp_error = validateSubscriptionsComp()
   if (validate_subscription_comp_error) {
     if (! displayYesNoPanel(augmentEscapeHatch(validate_subscription_comp_error))) {
       return {};
