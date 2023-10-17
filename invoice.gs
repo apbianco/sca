@@ -1052,9 +1052,9 @@ function validateAndReturnDropDownValue(coord, message) {
   return value
 }
 
-// Validation routines table. They must be running in order. For some, failing is a  show
-// stopper. For others, it's possible to decline accepting there's an error and continue
-// (escape hatch)
+// Validation routines table. They must be running in a specific order defined here after.
+// For some, failing is a  show stopper. For others, it's possible to decline accepting
+// there's an error and continue (escape hatch)
 //
 // ------------------------------+---------------------------------------------+--------------
 // Name                          |What                                         |Esc. Hatch
@@ -1194,6 +1194,263 @@ function validateFamilyMembers() {
     }
   }
   return ["", dobs];
+}
+
+// Cross check the attributed licenses with the ones selected for payment
+function validateLicenses(license_map, dobs) {
+  function returnError(v) {
+    return [v, {}];
+  }
+  
+  updateStatusBar("✔ Validation du choix des licenses...", "grey", add=true)
+  // Collect the attributed licenses
+  for (var index in coords_identity_rows) {
+    var row = coords_identity_rows[index];
+    var selected_license = getLicenseAt([row, coord_license_column]);
+    // You can't have no first/last name and an assigned license
+    var first_name = getStringAt([row, coord_first_name_column]);
+    var last_name = getStringAt([row, coord_last_name_column]);
+    // If there's no name on that row, the only possible value is None. Note that
+    // this should have been verified in validateFamilyMembers().
+    if (first_name === '' && last_name === '') {
+      if (isLicenseDefined(selected_license)) {
+        return returnError("'" + selected_license +
+                           "' attribuée à un membre de famile inexistant!");
+      }
+      continue;
+    }
+
+    // Sanity check: the selected license must exist and increment
+    // the count number for the license at hand.
+    if (!license_map.hasOwnProperty(selected_license)) {
+      return returnError("'" + selected_license +
+                         "' n'est pas une license attribuée possible!");
+    }
+    license_map[selected_license].IncrementAttributedLicenseCount()
+
+    // Executive license requires a city of birth
+    if (isExecLicense(selected_license)) {
+      var city = getStringAt([row, coord_cob_column]);
+      if (city == '') {
+        return returnError(first_name + " " + last_name + ": une license " +
+                           selected_license +
+                           " requiert de renseigner une ville et un pays de " +
+                           "naissance");
+      }
+    }
+    
+    // If we don't have a license, we can stop now. No need to
+    // validate the DoB
+    if (isLicenseNotDefined(selected_license)) {
+      continue;
+    }
+    
+    // Validate DoB against the type of license
+    var dob = getDoB([row, coord_dob_column])
+    var yob = getDoBYear(dob)
+    if (! license_map[selected_license].ValidateDoB(dob)) {
+      return returnError(first_name + " " + last_name +
+                         ": l'année de naissance " + yob +
+                         " ne correspond aux années de validité de la " +
+                         "license choisie: " + selected_license + ", " +
+                         license_map[selected_license].ValidDoBRangeMessage() + '.')
+    }
+  }
+
+  // Collect the amount of purchased licenses for all licenses
+  for (var index in license_map) {
+    license_map[index].UpdatePurchasedLicenseAmount()
+  }
+  
+  // Perform the verification
+  
+  // First verify the family non comp license because it's special.
+  // 1- Family license requires at last four declared family members
+  //    selecting it
+  // 2- One family license should have been purchased
+  // 3- Other checks are carried out still as they can be determined
+  //    valid or not
+  //    even with a family license purchased.
+  var family_license_attributed_count = license_map[getNonCompFamilyLicenseString()].AttributedLicenseCount()
+  if (family_license_attributed_count != 0) {
+    // A least four declared participants
+    if (family_license_attributed_count < 4) {
+      return returnError(
+        "Il faut attribuer une licence famille à au moins 4 membres " +
+        "d'une même famille. Seulement " + 
+        family_license_attributed_count +
+        " ont été attribuées.");
+    }
+    // Check that one family license was purchased.
+    var family_license_purchased = license_map[getNonCompFamilyLicenseString()].PurchasedLicenseAmount()
+    if (family_license_purchased != 1) {
+      return returnError(
+        "Vous devez acheter une licence loisir famille, vous en avez " +
+        "acheté pour l'instant " + family_license_purchased);
+    }
+    // Last verification: two adults and two+ kids
+    // FIXME: countAdultsAndKids is probably not counting 17 years old adults.
+    //        Double check again with Marie-Pierre.
+    // FIXME: one adult.
+    var res = countAdultsAndKids(dobs);
+    var count_adults = res[0];
+    var count_children = res[1];
+    if (count_adults < 2 || count_adults + count_children < 4) {
+      return returnError(
+        "Seulement " + count_adults + " adulte(s) déclaré(s) et " +
+        count_children + " enfants(s) de moins de 17 ans déclaré(s) " +
+        "pour la license famille.");
+    }
+  }
+  
+  var attributed_licenses = {}
+  for (var index in license_map) {
+    attributed_licenses[index] = license_map[index].AttributedLicenseCount()
+    // Entry indicating no license is skipped because it can't
+    // be collected. Entry indicating a family license skipped because
+    // it's been already verified
+    if (isLicenseNotDefined(index) || isLicenseFamily(index)) {
+      continue
+    }
+    // What you attributed must match what you're purchasing...
+    if (license_map[index].PurchasedLicenseAmount() != license_map[index].AttributedLicenseCount()) {
+      return returnError(
+        "Le nombre de licence(s) '" + index + "' attribuée(s) (au nombre de " +
+        license_map[index].AttributedLicenseCount() + ")\n" +
+        "ne correspond pas au nombre de licence(s) achetée(s) (au nombre de " +
+        license_map[index].PurchasedLicenseAmount() + ")")
+    }
+  }
+  return ["", attributed_licenses];
+}
+
+function validateCompSubscriptions() {
+  updateStatusBar("✔ Validation des adhésions compétition...", "grey", add=true)
+  var comp_subscription_map = createCompSubscriptionMap(SpreadsheetApp.getActiveSheet())
+  for (var index in coords_identity_rows) {
+    var row = coords_identity_rows[index];
+    var selected_license = getLicenseAt([row, coord_license_column]);
+    if (! isLicenseComp(selected_license)) {
+      continue
+    }
+    var dob = getDoB([row, coord_dob_column])
+    // Increment the subscription count that validates for a DoB. This will tell us
+    // how many subscription suitable for competitor we can expect to be
+    // purchased.
+    for (var subscription in comp_subscription_map) {
+      comp_subscription_map[subscription].IncrementAttributedSubscriptionCountIfDoB(dob)
+    }
+  }
+
+  // Collect the amount of subscriptions that have be declared for purchase.
+  for (var subscription in comp_subscription_map) {
+    comp_subscription_map[subscription].UpdatePurchasedSubscriptionAmount()
+  }
+
+  // Verification:
+  // 1- For each category, the number of licenses purchased matches the number of
+  //    licensees.
+  // 2- The number of licensee in one category can only be either 0 or 1
+  // 3- A category rank (1st, 2nd, etc...) can only be filled if all the previous
+  //    ranks have been filled.
+  for (index in comp_subscription_categories) {
+    var category = comp_subscription_categories[index]
+    var total_existing = 0
+    var total_purchased = 0
+    for (var rank = 1; rank <= 4; rank += 1) {
+      var indexed_category = rank + category
+      // The number of existing competitor in an age range has already been accumulated.
+      // just capture it. The number of purchased competitor needs to be accumulated as it's
+      // spread over several cells
+      total_existing = comp_subscription_map[indexed_category].AttributedSubscriptionCount()
+      var current_purchased = comp_subscription_map[indexed_category].PurchasedSubscriptionAmount()
+      if (current_purchased > 1 || current_purchased < 0 || ~~current_purchased != current_purchased) {
+        return ('Le nombre d\'adhésion(s) ' + category + ' achetée(s) (' + 
+                current_purchased + ') n\'est pas valide.')
+      }
+      // If we have a current purchased subscription past rank 1, we should have a purchased
+      // subscription in the previous ranks for all categories
+      if (rank > 1 && current_purchased == 1) {
+        var subscription_other_category = 0
+        for (var reversed_rank = rank - 1; reversed_rank >= 1; reversed_rank -= 1) {
+          for (var reversed_category_index in comp_subscription_categories) {
+            var reversed_indexed_category = (reversed_rank +
+                                             comp_subscription_categories[reversed_category_index])
+            subscription_other_category += 
+              comp_subscription_map[reversed_indexed_category].PurchasedSubscriptionAmount()
+          }
+          if (subscription_other_category == 0) {
+            return ('Une adhésion compétition existe pour un(e) ' + nthString(rank) + ' ' + category +
+                    ' sans adhésion déclarée pour un ' + nthString(rank-1) +
+                    ' enfant')
+          }
+        }
+      }
+      total_purchased += current_purchased
+    }
+    // For that category, the total number of purchased licenses must match
+    // the number of accumulated purchases accross all ranks.
+    if (total_existing != total_purchased) {
+      return (total_purchased + ' adhésion(s) compétition ' + category +
+              ' achetée(s) pour ' + total_existing +
+              ' license(s) compétiteur dans cette tranche d\'âge')
+    }
+  }
+  // 4- Only one category can be filled per rank. That loops needs
+  //    to start for each rank so the loop above can not be used.
+  for (var rank = 1; rank <= 4; rank += 1) {
+    var total_purchased_for_rank = 0
+    for (index in comp_subscription_categories) {
+      var category = comp_subscription_categories[index] 
+      var indexed_category = rank + category
+      total_purchased_for_rank += comp_subscription_map[indexed_category].PurchasedSubscriptionAmount()
+      if (total_purchased_for_rank > 1) {
+        return (total_purchased_for_rank + ' adhésions compétition achetées pour un ' + 
+                nthString(rank) + ' enfant. Ce nombre ne peut dépasser 1')
+      }
+    }
+  }
+  return ''
+}
+
+function validateCompSkiPasses() {
+  updateStatusBar("✔ Validation des forfaits compétition...", "grey", add=true)
+  var ski_passes_map = createSkipassMap(SpreadsheetApp.getActiveSheet())
+  for (var index in coords_identity_rows) {
+    var row = coords_identity_rows[index];
+    var selected_license = getLicenseAt([row, coord_license_column]);
+    if (! isLicenseComp(selected_license)) {
+      continue
+    }
+    var dob = getDoB([row, coord_dob_column])
+    // Increment the ski pass count that validates for a DoB. This will tell us
+    // how many ski passes suitable for competitor we can expect to be
+    // purchased.
+    for (var skipass in ski_passes_map) {
+      ski_passes_map[skipass].IncrementAttributedSkiPassCountIfDoB(dob)
+    }
+  }
+
+  // Collect the amount of skipasses that have be declared for purchase.
+  for (var skipass in ski_passes_map) {
+    ski_passes_map[skipass].UpdatePurchasedSkiPassAmount()
+  }
+
+  // Go over all the skipass that apply to a competitor and perform the verification:
+  // If the occurence count of a skipass that can apply to a competitor
+  // is above than the purchased amount, we have an error (some competitor are not
+  // buying a ski pass). If it's below it means that the amount of purchased ski passes
+  // includes competitors and non competitors which is fine.
+  for (var index in competitor_ski_passes) {
+    var skipass_name = competitor_ski_passes[index]
+    var skipass = ski_passes_map[skipass_name]
+    if (skipass.AttributedSkiPassCount() > skipass.PurchasedSkiPassAmount()) {
+      return (skipass.PurchasedSkiPassAmount() + ' forfait(s) ' + skipass_name +
+              ' acheté(s) pour ' + skipass.AttributedSkiPassCount() +
+              ' license(s) compétiteur dans cette tranche d\'âge')
+    }
+  }
+  return ''
 }
 
 // Validation of non competitor subscriptions. This method is invoked after all
@@ -1469,263 +1726,6 @@ function validateSkiPassPurchase(dobs) {
     }
   }
   return error;
-}
-
-function validateCompSkiPasses() {
-  updateStatusBar("✔ Validation des forfaits compétition...", "grey", add=true)
-  var ski_passes_map = createSkipassMap(SpreadsheetApp.getActiveSheet())
-  for (var index in coords_identity_rows) {
-    var row = coords_identity_rows[index];
-    var selected_license = getLicenseAt([row, coord_license_column]);
-    if (! isLicenseComp(selected_license)) {
-      continue
-    }
-    var dob = getDoB([row, coord_dob_column])
-    // Increment the ski pass count that validates for a DoB. This will tell us
-    // how many ski passes suitable for competitor we can expect to be
-    // purchased.
-    for (var skipass in ski_passes_map) {
-      ski_passes_map[skipass].IncrementAttributedSkiPassCountIfDoB(dob)
-    }
-  }
-
-  // Collect the amount of skipasses that have be declared for purchase.
-  for (var skipass in ski_passes_map) {
-    ski_passes_map[skipass].UpdatePurchasedSkiPassAmount()
-  }
-
-  // Go over all the skipass that apply to a competitor and perform the verification:
-  // If the occurence count of a skipass that can apply to a competitor
-  // is above than the purchased amount, we have an error (some competitor are not
-  // buying a ski pass). If it's below it means that the amount of purchased ski passes
-  // includes competitors and non competitors which is fine.
-  for (var index in competitor_ski_passes) {
-    var skipass_name = competitor_ski_passes[index]
-    var skipass = ski_passes_map[skipass_name]
-    if (skipass.AttributedSkiPassCount() > skipass.PurchasedSkiPassAmount()) {
-      return (skipass.PurchasedSkiPassAmount() + ' forfait(s) ' + skipass_name +
-              ' acheté(s) pour ' + skipass.AttributedSkiPassCount() +
-              ' license(s) compétiteur dans cette tranche d\'âge')
-    }
-  }
-  return ''
-}
-
-function validateCompSubscriptions() {
-  updateStatusBar("✔ Validation des adhésions compétition...", "grey", add=true)
-  var comp_subscription_map = createCompSubscriptionMap(SpreadsheetApp.getActiveSheet())
-  for (var index in coords_identity_rows) {
-    var row = coords_identity_rows[index];
-    var selected_license = getLicenseAt([row, coord_license_column]);
-    if (! isLicenseComp(selected_license)) {
-      continue
-    }
-    var dob = getDoB([row, coord_dob_column])
-    // Increment the subscription count that validates for a DoB. This will tell us
-    // how many subscription suitable for competitor we can expect to be
-    // purchased.
-    for (var subscription in comp_subscription_map) {
-      comp_subscription_map[subscription].IncrementAttributedSubscriptionCountIfDoB(dob)
-    }
-  }
-
-  // Collect the amount of subscriptions that have be declared for purchase.
-  for (var subscription in comp_subscription_map) {
-    comp_subscription_map[subscription].UpdatePurchasedSubscriptionAmount()
-  }
-
-  // Verification:
-  // 1- For each category, the number of licenses purchased matches the number of
-  //    licensees.
-  // 2- The number of licensee in one category can only be either 0 or 1
-  // 3- A category rank (1st, 2nd, etc...) can only be filled if all the previous
-  //    ranks have been filled.
-  for (index in comp_subscription_categories) {
-    var category = comp_subscription_categories[index]
-    var total_existing = 0
-    var total_purchased = 0
-    for (var rank = 1; rank <= 4; rank += 1) {
-      var indexed_category = rank + category
-      // The number of existing competitor in an age range has already been accumulated.
-      // just capture it. The number of purchased competitor needs to be accumulated as it's
-      // spread over several cells
-      total_existing = comp_subscription_map[indexed_category].AttributedSubscriptionCount()
-      var current_purchased = comp_subscription_map[indexed_category].PurchasedSubscriptionAmount()
-      if (current_purchased > 1 || current_purchased < 0 || ~~current_purchased != current_purchased) {
-        return ('Le nombre d\'adhésion(s) ' + category + ' achetée(s) (' + 
-                current_purchased + ') n\'est pas valide.')
-      }
-      // If we have a current purchased subscription past rank 1, we should have a purchased
-      // subscription in the previous ranks for all categories
-      if (rank > 1 && current_purchased == 1) {
-        var subscription_other_category = 0
-        for (var reversed_rank = rank - 1; reversed_rank >= 1; reversed_rank -= 1) {
-          for (var reversed_category_index in comp_subscription_categories) {
-            var reversed_indexed_category = (reversed_rank +
-                                             comp_subscription_categories[reversed_category_index])
-            subscription_other_category += 
-              comp_subscription_map[reversed_indexed_category].PurchasedSubscriptionAmount()
-          }
-          if (subscription_other_category == 0) {
-            return ('Une adhésion compétition existe pour un(e) ' + nthString(rank) + ' ' + category +
-                    ' sans adhésion déclarée pour un ' + nthString(rank-1) +
-                    ' enfant')
-          }
-        }
-      }
-      total_purchased += current_purchased
-    }
-    // For that category, the total number of purchased licenses must match
-    // the number of accumulated purchases accross all ranks.
-    if (total_existing != total_purchased) {
-      return (total_purchased + ' adhésion(s) compétition ' + category +
-              ' achetée(s) pour ' + total_existing +
-              ' license(s) compétiteur dans cette tranche d\'âge')
-    }
-  }
-  // 4- Only one category can be filled per rank. That loops needs
-  //    to start for each rank so the loop above can not be used.
-  for (var rank = 1; rank <= 4; rank += 1) {
-    var total_purchased_for_rank = 0
-    for (index in comp_subscription_categories) {
-      var category = comp_subscription_categories[index] 
-      var indexed_category = rank + category
-      total_purchased_for_rank += comp_subscription_map[indexed_category].PurchasedSubscriptionAmount()
-      if (total_purchased_for_rank > 1) {
-        return (total_purchased_for_rank + ' adhésions compétition achetées pour un ' + 
-                nthString(rank) + ' enfant. Ce nombre ne peut dépasser 1')
-      }
-    }
-  }
-  return ''
-}
-
-// Cross check the attributed licenses with the ones selected for payment
-function validateLicenses(license_map, dobs) {
-  function returnError(v) {
-    return [v, {}];
-  }
-  
-  updateStatusBar("✔ Validation du choix des licenses...", "grey", add=true)
-  // Collect the attributed licenses
-  for (var index in coords_identity_rows) {
-    var row = coords_identity_rows[index];
-    var selected_license = getLicenseAt([row, coord_license_column]);
-    // You can't have no first/last name and an assigned license
-    var first_name = getStringAt([row, coord_first_name_column]);
-    var last_name = getStringAt([row, coord_last_name_column]);
-    // If there's no name on that row, the only possible value is None. Note that
-    // this should have been verified in validateFamilyMembers().
-    if (first_name === '' && last_name === '') {
-      if (isLicenseDefined(selected_license)) {
-        return returnError("'" + selected_license +
-                           "' attribuée à un membre de famile inexistant!");
-      }
-      continue;
-    }
-
-    // Sanity check: the selected license must exist and increment
-    // the count number for the license at hand.
-    if (!license_map.hasOwnProperty(selected_license)) {
-      return returnError("'" + selected_license +
-                         "' n'est pas une license attribuée possible!");
-    }
-    license_map[selected_license].IncrementAttributedLicenseCount()
-
-    // Executive license requires a city of birth
-    if (isExecLicense(selected_license)) {
-      var city = getStringAt([row, coord_cob_column]);
-      if (city == '') {
-        return returnError(first_name + " " + last_name + ": une license " +
-                           selected_license +
-                           " requiert de renseigner une ville et un pays de " +
-                           "naissance");
-      }
-    }
-    
-    // If we don't have a license, we can stop now. No need to
-    // validate the DoB
-    if (isLicenseNotDefined(selected_license)) {
-      continue;
-    }
-    
-    // Validate DoB against the type of license
-    var dob = getDoB([row, coord_dob_column])
-    var yob = getDoBYear(dob)
-    if (! license_map[selected_license].ValidateDoB(dob)) {
-      return returnError(first_name + " " + last_name +
-                         ": l'année de naissance " + yob +
-                         " ne correspond aux années de validité de la " +
-                         "license choisie: " + selected_license + ", " +
-                         license_map[selected_license].ValidDoBRangeMessage() + '.')
-    }
-  }
-
-  // Collect the amount of purchased licenses for all licenses
-  for (var index in license_map) {
-    license_map[index].UpdatePurchasedLicenseAmount()
-  }
-  
-  // Perform the verification
-  
-  // First verify the family non comp license because it's special.
-  // 1- Family license requires at last four declared family members
-  //    selecting it
-  // 2- One family license should have been purchased
-  // 3- Other checks are carried out still as they can be determined
-  //    valid or not
-  //    even with a family license purchased.
-  var family_license_attributed_count = license_map[getNonCompFamilyLicenseString()].AttributedLicenseCount()
-  if (family_license_attributed_count != 0) {
-    // A least four declared participants
-    if (family_license_attributed_count < 4) {
-      return returnError(
-        "Il faut attribuer une licence famille à au moins 4 membres " +
-        "d'une même famille. Seulement " + 
-        family_license_attributed_count +
-        " ont été attribuées.");
-    }
-    // Check that one family license was purchased.
-    var family_license_purchased = license_map[getNonCompFamilyLicenseString()].PurchasedLicenseAmount()
-    if (family_license_purchased != 1) {
-      return returnError(
-        "Vous devez acheter une licence loisir famille, vous en avez " +
-        "acheté pour l'instant " + family_license_purchased);
-    }
-    // Last verification: two adults and two+ kids
-    // FIXME: countAdultsAndKids is probably not counting 17 years old adults.
-    //        Double check again with Marie-Pierre.
-    // FIXME: one adult.
-    var res = countAdultsAndKids(dobs);
-    var count_adults = res[0];
-    var count_children = res[1];
-    if (count_adults < 2 || count_adults + count_children < 4) {
-      return returnError(
-        "Seulement " + count_adults + " adulte(s) déclaré(s) et " +
-        count_children + " enfants(s) de moins de 17 ans déclaré(s) " +
-        "pour la license famille.");
-    }
-  }
-  
-  var attributed_licenses = {}
-  for (var index in license_map) {
-    attributed_licenses[index] = license_map[index].AttributedLicenseCount()
-    // Entry indicating no license is skipped because it can't
-    // be collected. Entry indicating a family license skipped because
-    // it's been already verified
-    if (isLicenseNotDefined(index) || isLicenseFamily(index)) {
-      continue
-    }
-    // What you attributed must match what you're purchasing...
-    if (license_map[index].PurchasedLicenseAmount() != license_map[index].AttributedLicenseCount()) {
-      return returnError(
-        "Le nombre de licence(s) '" + index + "' attribuée(s) (au nombre de " +
-        license_map[index].AttributedLicenseCount() + ")\n" +
-        "ne correspond pas au nombre de licence(s) achetée(s) (au nombre de " +
-        license_map[index].PurchasedLicenseAmount() + ")")
-    }
-  }
-  return ["", attributed_licenses];
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -2033,6 +2033,22 @@ function validateInvoice() {
     }
   }
 
+    // Validate the competitor subscriptions
+  var validate_subscription_comp_error = validateCompSubscriptions()
+  if (validate_subscription_comp_error) {
+    if (! displayYesNoPanel(augmentEscapeHatch(validate_subscription_comp_error))) {
+      return {};
+    }      
+  }
+
+  // Validate de competitor ski passes
+  var validate_ski_pass_comp_error = validateCompSkiPasses()
+  if (validate_ski_pass_comp_error) {
+    if (! displayYesNoPanel(augmentEscapeHatch(validate_ski_pass_comp_error))) {
+      return {};
+    }      
+  }
+
   // 2- Verify the subscriptions. The operator may choose to continue
   //    as some situation are un-verifiable automatically.
   if (advanced_validation.AdvancedVerificationSubscription()) {
@@ -2058,21 +2074,7 @@ function validateInvoice() {
     }
   }
 
-  // Validate the competitor subscriptions
-  var validate_subscription_comp_error = validateCompSubscriptions()
-  if (validate_subscription_comp_error) {
-    if (! displayYesNoPanel(augmentEscapeHatch(validate_subscription_comp_error))) {
-      return {};
-    }      
-  }
 
-  // Validate de competitor ski passes
-  var validate_ski_pass_comp_error = validateCompSkiPasses()
-  if (validate_ski_pass_comp_error) {
-    if (! displayYesNoPanel(augmentEscapeHatch(validate_ski_pass_comp_error))) {
-      return {};
-    }      
-  }
   
   // Validate the parental consent.
   var consent = validateAndReturnDropDownValue(
