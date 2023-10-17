@@ -1081,7 +1081,7 @@ function validateAndReturnDropDownValue(coord, message) {
 // ------------------------------+---------------------------------------------+----------------
 // validateSkiPassPurchase       | Validation of non competitor ski pass       | YES.
 //                               | purchases. FIXME: Needs to be rewritten for | String if error
-//                               | 2023/2024. Call it validateNonCompSkiPass   |
+//                               | 2023/2024. Call it validateNonCompSkiPasses |
 // ------------------------------+---------------------------------------------+----------------
 // validateCompSkiPasses         | Competitor ski pass purchases validation    | NO
 //                               | This code is complete                       | String if error
@@ -1197,12 +1197,14 @@ function validateFamilyMembers() {
 }
 
 // Cross check the attributed licenses with the ones selected for payment
-function validateLicenses(license_map, dobs) {
+function validateLicenses(dobs) {
   function returnError(v) {
     return [v, {}];
   }
   
   updateStatusBar("✔ Validation du choix des licenses...", "grey", add=true)
+  var license_map = createLicensesMap(SpreadsheetApp.getActiveSheet())
+
   // Collect the attributed licenses
   for (var index in coords_identity_rows) {
     var row = coords_identity_rows[index];
@@ -2011,22 +2013,17 @@ function validateInvoice() {
     displayErrorPanel(family_validation_error);
     return {};
   }
-  // FIXME: No longer useful
+  // FIXME: No longer useful?
   var dobs = ret[1];
-
-  var validation_noncomp_subscription2_error = validateNonCompSubscriptions2()
-  if (validation_noncomp_subscription2_error) {
-    displayErrorPanel(validation_noncomp_subscription2_error)
-    return {}
-  }
-
   // Now performing the optional/advanced validations... 
   //
   // 1- Validate the licenses requested by this family
+  // FIXME: no longer needed when we only rely on validateNonCompSubscriptions2
+  var collected_attributed_licenses_values = {} 
   if (advanced_validation.AdvancedVerificationFamilyLicenses()) {
-    var license_map = createLicensesMap(SpreadsheetApp.getActiveSheet())
-    var ret = validateLicenses(license_map, dobs);
+    var ret = validateLicenses(dobs);
     var license_cross_check_error = ret[0]
+    collected_attributed_licenses_values = ret[1];
     if (license_cross_check_error) {
       displayErrorPanel(license_cross_check_error);
       return {};
@@ -2051,8 +2048,16 @@ function validateInvoice() {
 
   // 2- Verify the subscriptions. The operator may choose to continue
   //    as some situation are un-verifiable automatically.
+  // FIXME: validateNonCompSubscriptions should go and be replaced by
+  //        validateNonCompSubscriptions2.
+
+  var validation_noncomp_subscription2_error = validateNonCompSubscriptions2()
+  if (validation_noncomp_subscription2_error) {
+    displayErrorPanel(validation_noncomp_subscription2_error)
+    return {}
+  }
+
   if (advanced_validation.AdvancedVerificationSubscription()) {
-    var collected_attributed_licenses_values = ret[1];
     // Validate requested licenses and subscriptions
     var subscription_validation_error = 
         validateNonCompSubscriptions(collected_attributed_licenses_values);
@@ -2073,8 +2078,6 @@ function validateInvoice() {
       }    
     }
   }
-
-
   
   // Validate the parental consent.
   var consent = validateAndReturnDropDownValue(
