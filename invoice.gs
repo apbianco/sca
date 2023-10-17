@@ -1066,10 +1066,10 @@ function validateAndReturnDropDownValue(coord, message) {
 //                               | first/last name are defined, there must be. | FIXME
 //                               | a first/last name defined                   |
 // ------------------------------+---------------------------------------------+--------------
-// validateLicenseCrossCheck     | Validate selected licenses with the one     | YES
+// validateLicenses              | Validate selected licenses with the one     | NO
 //                               | selected for payment. Args: license_map and | Map selected
 //                               | DoB - maybe could be obtained within.       | licenses. Why?
-//                               | Lots of FIXMEs, and rename it please.       | FIXME
+//                               | Lots of FIXMEs.                             | FIXME
 // ------------------------------+---------------------------------------------+----------------
 // validateNonCompSubscriptions2 | Validate the non competitor subscriptions.  | NO.
 //                               | Should replace validateNonCompSubscriptions | String if error
@@ -1081,15 +1081,24 @@ function validateAndReturnDropDownValue(coord, message) {
 // ------------------------------+---------------------------------------------+----------------
 // validateSkiPassPurchase       | Validation of non competitor ski pass       | YES.
 //                               | purchases. FIXME: Needs to be rewritten for | String if error
-//                               | 2023/2024                                   |
+//                               | 2023/2024. Call it validateNonCompSkiPass   |
 // ------------------------------+---------------------------------------------+----------------
-// validateSkiPassComp           | Competitor ski pass purchases validation    | NO
+// validateCompSkiPasses         | Competitor ski pass purchases validation    | NO
 //                               | This code is complete                       | String if error
 // ------------------------------+---------------------------------------------+----------------
-// validateSubscriptionsComp     | Competitor subscription validation          | NO
+// validateCompSubscriptions     | Competitor subscription validation          | NO
 //                               | This code is complete                       | String if error
 // ------------------------------+---------------------------------------------+----------------
 //
+// Execution order (desired, not actual: FIXME)
+//
+// - validateFamilyMembers()      | if error, bail
+// - validateLicenses()           | if error, bail
+// - validateCompSubscriptions    | if error, Yes/No
+// - validateCompSkiPasses        | if error, Yes/No
+// - validateNonCompSubscriptions | if error, bail. TOO STRONG?
+// - validateNonCompSkiPass       | if error, Yes/No.
+
 // Verify that family members have a first name, 
 // last name, a DoB and a sex assigned to them.
 // Return an error and also a list of collected DoBs.
@@ -1098,6 +1107,7 @@ function validateFamilyMembers() {
     return [m, []]
   }
 
+  updateStatusBar("✔ Validation des données de la famille...", "grey")
   dobs = [];
   for (var index in coords_identity_rows) {
     var first_name = getStringAt([coords_identity_rows[index], coord_first_name_column]);
@@ -1198,6 +1208,8 @@ function validateNonCompSubscriptions2() {
             (isFirstKid(level_or_subscription) &&
              subscription_map[getRiderLevelString()].PurchasedSubscriptionAmount() > 0))
   }
+
+  updateStatusBar("✔ Validation des adhésions loisir...", "grey", add=true)
   var subscription_map = createNonCompSubscriptionMap(SpreadsheetApp.getActiveSheet())
 
   // Update the number of noncomp subscription registered
@@ -1288,6 +1300,8 @@ function validateNonCompSubscriptions(attributed_licenses) {
     return ("La valeur du champ 'Adhésion / Stage / Transport - enfant " +
             index + "' ne peut prendre que la valeur 0 ou 1.")
   }
+
+  updateStatusBar("✔ Validation des adhésions loisir...", "grey", add=true)
 
   // Validation of the selection of the subscriptions:
   //   - A rider counts as a first subscription. The value can only be 1.
@@ -1382,6 +1396,7 @@ function validateSkiPassPurchase(dobs) {
     return getNumberAt(coord_purchased_ski_pass[ski_pass_type]);
   }
 
+  updateStatusBar("✔ Validation des forfaits loisir...", "grey", add=true)
   var family4 = getSkiPassFamily4String();
   var family5 = getSkiPassFamily5String();
   // Verify the family passes first
@@ -1456,7 +1471,8 @@ function validateSkiPassPurchase(dobs) {
   return error;
 }
 
-function validateSkiPassComp() {
+function validateCompSkiPasses() {
+  updateStatusBar("✔ Validation des forfaits compétition...", "grey", add=true)
   var ski_passes_map = createSkipassMap(SpreadsheetApp.getActiveSheet())
   for (var index in coords_identity_rows) {
     var row = coords_identity_rows[index];
@@ -1495,7 +1511,8 @@ function validateSkiPassComp() {
   return ''
 }
 
-function validateSubscriptionsComp() {
+function validateCompSubscriptions() {
+  updateStatusBar("✔ Validation des adhésions compétition...", "grey", add=true)
   var comp_subscription_map = createCompSubscriptionMap(SpreadsheetApp.getActiveSheet())
   for (var index in coords_identity_rows) {
     var row = coords_identity_rows[index];
@@ -1584,11 +1601,12 @@ function validateSubscriptionsComp() {
 }
 
 // Cross check the attributed licenses with the ones selected for payment
-function validateLicenseCrossCheck(license_map, dobs) {
+function validateLicenses(license_map, dobs) {
   function returnError(v) {
     return [v, {}];
   }
   
+  updateStatusBar("✔ Validation du choix des licenses...", "grey", add=true)
   // Collect the attributed licenses
   for (var index in coords_identity_rows) {
     var row = coords_identity_rows[index];
@@ -2007,7 +2025,7 @@ function validateInvoice() {
   // 1- Validate the licenses requested by this family
   if (advanced_validation.AdvancedVerificationFamilyLicenses()) {
     var license_map = createLicensesMap(SpreadsheetApp.getActiveSheet())
-    var ret = validateLicenseCrossCheck(license_map, dobs);
+    var ret = validateLicenses(license_map, dobs);
     var license_cross_check_error = ret[0]
     if (license_cross_check_error) {
       displayErrorPanel(license_cross_check_error);
@@ -2041,7 +2059,7 @@ function validateInvoice() {
   }
 
   // Validate the competitor subscriptions
-  var validate_subscription_comp_error = validateSubscriptionsComp()
+  var validate_subscription_comp_error = validateCompSubscriptions()
   if (validate_subscription_comp_error) {
     if (! displayYesNoPanel(augmentEscapeHatch(validate_subscription_comp_error))) {
       return {};
@@ -2049,7 +2067,7 @@ function validateInvoice() {
   }
 
   // Validate de competitor ski passes
-  var validate_ski_pass_comp_error = validateSkiPassComp()
+  var validate_ski_pass_comp_error = validateCompSkiPasses()
   if (validate_ski_pass_comp_error) {
     if (! displayYesNoPanel(augmentEscapeHatch(validate_ski_pass_comp_error))) {
       return {};
@@ -2141,7 +2159,11 @@ function maybeEmailLicenseSCA(invoice) {
   MailApp.sendEmail(email_options)
 }
 
-function updateStatusBar(message, color) {
+function updateStatusBar(message, color, add=false) {
+  var content = message
+  if (add) {
+    message = getStringAt(coord_status) + '\n' + message
+  }
   setStringAt(coord_status, message, color)
   SpreadsheetApp.flush()
 }
