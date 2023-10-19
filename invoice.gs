@@ -1196,10 +1196,9 @@ function validateLicenses() {
   function returnError(v) {
     return [v, {}];
   }
-  
+
   updateStatusBar("✔ Validation du choix des licenses...", "grey", add=true)
   var license_map = createLicensesMap(SpreadsheetApp.getActiveSheet())
-  var dobs = []
   // Collect the attributed licenses
   for (var index in coords_identity_rows) {
     var row = coords_identity_rows[index];
@@ -1252,7 +1251,6 @@ function validateLicenses() {
                          "license choisie: " + selected_license + ", " +
                          license_map[selected_license].ValidDoBRangeMessage() + '.')
     }
-    dobs.push(dob)
   }
 
   // Collect the amount of purchased licenses for all licenses
@@ -1284,19 +1282,6 @@ function validateLicenses() {
       return returnError(
         "Vous devez acheter une licence loisir famille, vous en avez " +
         "acheté pour l'instant " + family_license_purchased);
-    }
-    // Last verification: two adults and two+ kids
-    // FIXME: countAdultsAndKids is probably not counting 17 years old adults.
-    //        Double check again with Marie-Pierre.
-    // FIXME: one adult.
-    var res = countAdultsAndKids(dobs);
-    var count_adults = res[0];
-    var count_children = res[1];
-    if (count_adults < 2 || count_adults + count_children < 4) {
-      return returnError(
-        "Seulement " + count_adults + " adulte(s) déclaré(s) et " +
-        count_children + " enfants(s) de moins de 17 ans déclaré(s) " +
-        "pour la license famille.");
     }
   }
   
