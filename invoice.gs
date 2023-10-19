@@ -1103,10 +1103,6 @@ function validateAndReturnDropDownValue(coord, message) {
 // last name, a DoB and a sex assigned to them.
 // Return an error and also a list of collected DoBs.
 function validateFamilyMembers() {
-  function returnError(m) {
-    return [m, []]
-  }
-
   updateStatusBar("✔ Validation des données de la famille...", "grey")
   dobs = [];
   for (var index in coords_identity_rows) {
@@ -1130,17 +1126,17 @@ function validateFamilyMembers() {
     if (first_name == "" && last_name == "") {
       if (isLicenseDefined(license) || dob != undefined || isLevelDefined(level) ||
           sex != '' || city != '' || license_number != '') {
-        return returnError(nthString(index) + " membre de famille: information définie (naissance, sexe, etc...) " +
-                           "sans prénom on nom de famille renseigné")        
+        return (nthString(index) + " membre de famille: information définie (naissance, sexe, etc...) " +
+                "sans prénom on nom de famille renseigné")        
       }
       continue;
     }
     // We need both a first name and a last name
     if (! first_name) {
-      return returnError("Pas de nom de prénom fournit pour " + last_name);
+      return ("Pas de nom de prénom fournit pour " + last_name);
     }
     if (! last_name) {
-      return returnError("Pas de nom de famille fournit pour " + first_name);
+      return ("Pas de nom de famille fournit pour " + first_name);
     }
     // Write the first and last name back as it's been normalized
     setStringAt([coords_identity_rows[index], coord_first_name_column], first_name, "black");
@@ -1150,14 +1146,12 @@ function validateFamilyMembers() {
     // defined, we save it.
     if (dob == undefined) {
       if (isLicenseDefined(license)) {
-        return returnError(
+        return (
           "Pas de date de naissance fournie pour " +
           first_name + " " + last_name +
           " ou date de naissance mal formatée (JJ/MM/AAAA)\n" +
           " ou année de naissance fantaisiste.");
       }
-    } else {
-      dobs.push(dob);
     }
     // Level validation. A level is needed:
     //.  1- A license is needed when a level is defined
@@ -1169,22 +1163,23 @@ function validateFamilyMembers() {
     //  We establishing here is that a junior non comp entry must have a level set to something.
     //  A level set to something is an other way of identifying a non comp license.
     if (isLevelDefined(level) && isLicenseNotDefined(license)) {
-      return returnError(first_name + " " + last_name + " est un loisir junior avec un niveau de ski " +
-                         "défini ce qui traduit l'intention de prendre une adhésion au club. Choisissez " +
-                         "une license appropriée (CN Jeune Loisir ou Famille) pour cette personne")
+      return (first_name + " " + last_name + " est un loisir junior avec un niveau de ski " +
+              "défini ce qui traduit l'intention de prendre une adhésion au club. Choisissez " +
+              "une license appropriée (CN Jeune Loisir ou Famille) pour cette personne")
     }
     if (isLevelNotDefined(level) && isMinor(dob) && isLicenseNonComp(license)) {
-      return returnError(
-          "Vous devez fournir un niveau pour le junior non compétiteur " + first_name + " " + last_name         
+      return (
+        "Vous devez fournir un niveau pour le junior non compétiteur " + 
+        first_name + " " + last_name         
       )
     }
     if (isLevelDefined(level) && isLicenseComp(license)) {
-      return returnError(first_name + " " + last_name + " est un compétiteur. Ne définissez pas " +
-                         "de niveau pour un compétiteur")
+      return (first_name + " " + last_name + " est un compétiteur. Ne définissez pas " +
+              "de niveau pour un compétiteur")
     }
     if (isLevelDefined(level) && isExecLicense(license)) {
-      return returnError(first_name + " " + last_name + " est un cadre/dirigeant. Ne définissez pas " +
-                         "de niveau pour un cadre/dirigeant")      
+      return (first_name + " " + last_name + " est un cadre/dirigeant. Ne définissez pas " +
+              "de niveau pour un cadre/dirigeant")      
     }
 
     // We need a properly defined sex
@@ -1193,18 +1188,18 @@ function validateFamilyMembers() {
                          first_name + " " + last_name);
     }
   }
-  return ["", dobs];
+  return ''
 }
 
 // Cross check the attributed licenses with the ones selected for payment
-function validateLicenses(dobs) {
+function validateLicenses() {
   function returnError(v) {
     return [v, {}];
   }
   
   updateStatusBar("✔ Validation du choix des licenses...", "grey", add=true)
   var license_map = createLicensesMap(SpreadsheetApp.getActiveSheet())
-
+  var dobs = []
   // Collect the attributed licenses
   for (var index in coords_identity_rows) {
     var row = coords_identity_rows[index];
@@ -1257,6 +1252,7 @@ function validateLicenses(dobs) {
                          "license choisie: " + selected_license + ", " +
                          license_map[selected_license].ValidDoBRangeMessage() + '.')
     }
+    dobs.push(dob)
   }
 
   // Collect the amount of purchased licenses for all licenses
@@ -1271,8 +1267,7 @@ function validateLicenses(dobs) {
   //    selecting it
   // 2- One family license should have been purchased
   // 3- Other checks are carried out still as they can be determined
-  //    valid or not
-  //    even with a family license purchased.
+  //    valid or not even with a family license purchased.
   var family_license_attributed_count = license_map[getNonCompFamilyLicenseString()].AttributedLicenseCount()
   if (family_license_attributed_count != 0) {
     // A least four declared participants
@@ -2007,21 +2002,18 @@ function validateInvoice() {
   // Validate all the entered family members. This will make sure that
   // a non comp license is matched by a level, something that the validation
   // of non comp subscription depends on.
-  var ret = validateFamilyMembers();
-  var family_validation_error = ret[0];
+  var family_validation_error = validateFamilyMembers();
   if (family_validation_error) {
     displayErrorPanel(family_validation_error);
     return {};
   }
-  // FIXME: No longer useful?
-  var dobs = ret[1];
   // Now performing the optional/advanced validations... 
   //
   // 1- Validate the licenses requested by this family
   // FIXME: no longer needed when we only rely on validateNonCompSubscriptions2
   var collected_attributed_licenses_values = {} 
   if (advanced_validation.AdvancedVerificationFamilyLicenses()) {
-    var ret = validateLicenses(dobs);
+    var ret = validateLicenses();
     var license_cross_check_error = ret[0]
     collected_attributed_licenses_values = ret[1];
     if (license_cross_check_error) {
