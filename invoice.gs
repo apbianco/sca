@@ -363,7 +363,7 @@ function createNonCompSubscriptionMap(sheet) {
 }
 
 function getNoLevelString() {
-  return 'Non défini'
+  return 'Non déterminé'
 }
 
 // This is almost useless - a syntatic sugar
@@ -371,8 +371,8 @@ function getLevelAt(coord) {
   return getStringAt(coord)
 }
 
-// NOTE: A level is not defined when it has not been entered. Notably: a level
-// of getNotLevelString() value *DEFINES* a level.
+// NOTE: A level is not defined when it has not been entered.
+// NOTABLY: a level of getNotLevelString() value *DEFINES* a level.
 function isLevelNotDefined(level) {
   return level == ''
 }
@@ -581,43 +581,6 @@ var competitor_ski_passes = [
   'Collet Enfant',
 ]
 
-var ski_pass_values = [
-  'Famille 4',
-  'Famille 5',
-  'Senior',
-  'Adulte',
-  'Étudiant',
-  'Junior',
-  'Enfant',
-  'Peluche'];
-//
-// - Skipass DoB validations per type. change the
-//   start of end of ranges not featuring a negative number
-//
-var ski_pass_dob_validation = {
-  'Famille 4': [-1,   2051],
-  'Famille 5': [-1,   2051],
-  'Senior-70-75':    [1900, 1958],
-  'Senior-75+': [1900, 1958],
-  'Adulte':    [1959, 2004],
-  'Étudiant':  [1993, 2004],
-  'Junior':    [2005, 2012],
-  'Enfant':    [2013, 2017],
-  'Peluche':   [2018, 2050]};
-//
-// - Skipass purchase indicator coordinates
-//
-var coord_purchased_ski_pass = {
-  'Famille 4': [23, 5],
-  'Famille 5': [24, 5],
-  'Senior':    [25, 5],
-  'Senior-70-75':    [25, 5],
-  'Adulte-75+':    [26, 5],
-  'Étudiant':  [27, 5],
-  'Junior':    [28, 5],
-  'Enfant':    [29, 5],
-  'Peluche':   [30, 5]};
-
 // Email configuration - these shouldn't change very often
 var allowed_user = 'inscriptions.sca@gmail.com'
 var email_loisir = 'sca.loisir@gmail.com'
@@ -628,18 +591,6 @@ var email_license = 'licence.sca@gmail.com'
 ///////////////////////////////////////////////////////////////////////////////
 // Accessors to the data defined above
 ///////////////////////////////////////////////////////////////////////////////
-
-function getSkiPassFamily4String() {
-  return ski_pass_values[0];
-}
-
-function getSkiPassFamily5String() {
-  return ski_pass_values[1];
-}
-
-function getSkiPassStudentString() {
-  return ski_pass_values[4];
-}
 
 function getRiderSubscriptionCoordinates() {
   return coord_purchased_subscriptions_non_comp[0];
@@ -941,21 +892,6 @@ function isMinor(dob) {
   return ! isAdult(dob)
 }
 
-// Given a list of DoBs, count the number of adults and kids in it.
-function countAdultsAndKids(dobs) {
-  var count_adults = 0;
-  var count_children = 0;
-  for (var index in dobs) {
-    // Fixme: need to convert to date?
-    if (isAdult(dobs[index])) {
-      count_adults += 1;
-    } else {
-      count_children += 1;
-    }
-  }
-  return [count_adults, count_children];
-}
-
 // Given a dd/MM/YYYY dob or a Date object, return the YoB.
 function getDoBYear(dob) {
   if (typeof dob === 'string') {
@@ -1111,9 +1047,8 @@ function validateAndReturnDropDownValue(coord, message) {
 //                               | FXIME To be replaced by the previously      | String if error
 //                               | described method                            |
 // ------------------------------+---------------------------------------------+----------------
-// validateSkiPassPurchase       | Validation of non competitor ski pass       | YES.
-//                               | purchases. FIXME: Needs to be rewritten for | String if error
-//                               | 2023/2024. Call it validateNonCompSkiPasses |
+// validateNonCompSkiPasses      | Validation of non competitor ski pass       | YES.
+//                               | purchases.                                  | String if error
 // ------------------------------+---------------------------------------------+----------------
 // validateCompSkiPasses         | Competitor ski pass purchases validation    | NO
 //                               | This code is complete                       | String if error
@@ -1130,6 +1065,11 @@ function validateAndReturnDropDownValue(coord, message) {
 // - validateCompSkiPasses        | if error, Yes/No
 // - validateNonCompSubscriptions | if error, bail. TOO STRONG?
 // - validateNonCompSkiPass       | if error, Yes/No.
+
+function VALIDATION_TEST() {
+  var error = validateFamilyMembers();
+  error = error
+}
 
 // Verify that family members have a first name, 
 // last name, a DoB and a sex assigned to them.
@@ -1174,17 +1114,22 @@ function validateFamilyMembers() {
     setStringAt([coords_identity_rows[index], coord_first_name_column], first_name, "black");
     setStringAt([coords_identity_rows[index], coord_last_name_column], last_name, "black");
 
-    // We need a DoB but only if a license has been requested. If a DoB is
-    // defined, we save it.
+    // We need a DoB but only if a license or a level has been requested.
     if (dob == undefined) {
-      if (isLicenseDefined(license)) {
+      if (isLicenseDefined(license) || isLevelDefined(level)) {
         return (
-          "Pas de date de naissance fournie pour " +
-          first_name + " " + last_name +
-          " ou date de naissance mal formatée (JJ/MM/AAAA)\n" +
+          "Licence ou niveau défini pour " + first_name + " " + last_name +
+          " mais pas de date de naissance fournie ou date de naissance mal formatée (JJ/MM/AAAA)\n" +
           " ou année de naissance fantaisiste.");
       }
+      continue
     }
+
+    // We need a properly defined sex
+    if (sex != "Fille" && sex != "Garçon") {
+      return ("Pas de sexe défini pour " + first_name + " " + last_name);
+    }
+
     // Level validation. A level is needed:
     //.  1- A license is needed when a level is defined
     //   2- Only for a non competitor license
@@ -1202,7 +1147,7 @@ function validateFamilyMembers() {
     if (isLevelNotDefined(level) && isMinor(dob) && isLicenseNonComp(license)) {
       return (
         "Vous devez fournir un niveau pour le junior non compétiteur " + 
-        first_name + " " + last_name         
+        first_name + " " + last_name + " qui prend une license " + license         
       )
     }
     if (isLevelDefined(level) && isLicenseComp(license)) {
@@ -1212,12 +1157,6 @@ function validateFamilyMembers() {
     if (isLevelDefined(level) && isExecLicense(license)) {
       return (first_name + " " + last_name + " est un cadre/dirigeant. Ne définissez pas " +
               "de niveau pour un cadre/dirigeant")      
-    }
-
-    // We need a properly defined sex
-    if (sex != "Fille" && sex != "Garçon") {
-      return returnError("Pas de sexe défini pour " +
-                         first_name + " " + last_name);
     }
   }
   return ''
@@ -1651,99 +1590,9 @@ function validateNonCompSubscriptions(attributed_licenses) {
   return "";
 }
 
-function validateSkiPassPurchase(dobs) {
-  function numberOfDoBsInRange(dobs, min, max) {
-    var count = 0;
-    for (var index in dobs) {
-      var yob = getDoBYear(dobs[index]);
-      if (yob >= min && yob <= max) {
-        count += 1;
-      }
-    }
-    return count;
-  }
-  
-  function getSkiPassTypeQuantity(ski_pass_type) {
-    return getNumberAt(coord_purchased_ski_pass[ski_pass_type]);
-  }
-
-  updateStatusBar("✔ Validation des forfaits loisir...", "grey", add=true)
-  var family4 = getSkiPassFamily4String();
-  var family5 = getSkiPassFamily5String();
-  // Verify the family passes first
-  // For a family pass of four, verify that we have two adults and two childs
-  family4_quantity = getSkiPassTypeQuantity(family4);
-  if (family4_quantity != 0) {
-    if (family4_quantity != 1) {
-      return (family4_quantity +
-              " forfaits Annuel Famille 4 personnes sélectionnés.");
-      // Verify that we have two adults and two child
-    }
-    var res = countAdultsAndKids(dobs);
-    var count_adults = res[0];
-    var count_children = res[1];
-    if (count_adults != 2 || count_children != 2) {
-      return ("Seulement " + count_adults + " adulte(s) déclaré(s) et " +
-              count_children + " enfants(s) de moins de 17 ans déclaré(s) " +
-              "pour le forfait Annuel Famille 4 personnes sélectionné.");
-    }
-  }
-  // For a family pass of five, verify that we have two adults and three childs
-  family5_quantity = getSkiPassTypeQuantity(family5);
-  if (family5_quantity != 0) {
-    if (family5_quantity != 1) {
-      return (family5_quantity +
-              " forfaits Annuel Famille 5 personnes sélectionné");
-    }
-    var res = countAdultsAndKids(dobs);
-    var count_adults = res[0];
-    var count_children = res[1];
-    if (count_adults != 2 || count_children != 3) {
-      return ("Seulement " + count_adults + " adulte(s) déclaré(s) et " +
-              count_children + " enfants(s) de moins de 17 ans déclaré(s) " +
-              "pour le forfait Annuel Famille 5 personnes sélectionné.");
-    }
-  }
-
-  if (family4_quantity == 1 && family5_quantity == 1) {
-    return ("Deux forfaits annuels Famille 4 personnes et 5 personnes sélectionnés.")
-  }
-  
-  var error = ""
-  // If we validated a family pass, return now. The rest of the validation is
-  // going to be too complicated.
-  if (family4_quantity != 0 || family5_quantity != 0) {
-    return error;
-  }
-  
-  var student = getSkiPassStudentString();
-  // Match the number of reserved ski pass entries for a given age range with
-  // the number of entries in that age range.
-  for (var index in ski_pass_values) {
-    var ski_pass_type = ski_pass_values[index];
-    // Family passes have already been verified
-    if (ski_pass_type == family4 || ski_pass_type == family5) {
-      continue;
-    }
-    var ski_pass_purchased = getSkiPassTypeQuantity(ski_pass_type);
-    var dob_start = ski_pass_dob_validation[ski_pass_type][0];
-    var dob_end = ski_pass_dob_validation[ski_pass_type][1]
-    var dobs_found = numberOfDoBsInRange(dobs, dob_start, dob_end);
-    if (dobs_found != ski_pass_purchased) {
-      error += (ski_pass_purchased + " forfait(s) " + ski_pass_type +
-                " acheté(s) pour " + dobs_found + " individu(s) né(s) " + 
-                dobRangeToString(dob_start, dob_end));
-      if (ski_pass_type == student) {
-        error += " (Avez vous un adulte étudiant?)";
-      }
-      error += "\n";
-    }
-  }
-  return error;
-}
-
 function validateNonCompSkiPasses() {
   updateStatusBar("✔ Validation des forfaits loisir...", "grey", add=true)
+  // Always clear the rebate section before eventually recomputing it at the end
   clearRange(coord_rebate_family_of_4_count)
   clearRange(coord_rebate_family_of_4_amount)
   clearRange(coord_rebate_family_of_5_count)
@@ -1816,6 +1665,8 @@ function validateNonCompSkiPasses() {
               'tranche d\'âge (' + ski_passes_map[zone1].ValidDoBRangeMessage() + ")")
     }
   }
+
+  // FIXME: Validation of the students
 
   if (number_of_non_student_adults == 2) {
     if (family_size == 4) {
@@ -2170,7 +2021,7 @@ function validateInvoice() {
   // 3- Verify the ski pass purchases. The operator may choose to continue
   //    as some situation are un-verifiable automatically.
   if (advanced_validation.AdvancedVerificationSkipass()) {
-    var skipass_validation_error = validateSkiPassPurchase(dobs);
+    var skipass_validation_error = validateNonCompSkiPasses()
     if (skipass_validation_error) {
       if (! displayYesNoPanel(augmentEscapeHatch(skipass_validation_error))) {
         return {};
