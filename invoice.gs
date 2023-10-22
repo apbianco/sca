@@ -1073,6 +1073,8 @@ function VALIDATION_TEST() {
 
 // Verify that family members are properly defined, especially with regard to
 // what they are claiming to be associated to (level, type of license, etc...)
+// When this succeeds, the family members should be defined in such a way that
+// other validations are easier to implement.
 function validateFamilyMembers() {
   updateStatusBar("✔ Validation des données de la famille...", "grey")
   // Get a licene map so that we can immediately verify the age picked
@@ -1167,8 +1169,8 @@ function validateFamilyMembers() {
     // 2- An exec license requires a city of birth
     // 3- An existing non exec license doesn't require a city of birth
     if (!license_map.hasOwnProperty(license)) {
-      return (first_name + " " + last_name + "La licence sélectionée '" + selected_license +
-              "' n'est pas une license attribuée possible!")
+      return (first_name + " " + last_name + "La licence attribuée '" + license +
+              "' n'est pas une license existante !")
     }    
     if (! license_map[license].ValidateDoB(dob)) {
       return (first_name + " " + last_name +
@@ -1178,12 +1180,12 @@ function validateFamilyMembers() {
               license_map[license].ValidDoBRangeMessage() + '.')
     }
     if (isExecLicense(license) && city == '') {
-      return (first_name + " " + last_name + ": une license " +
-              license + " requiert de renseigner une ville et un pays de naissance");
+      return (first_name + " " + last_name + ": la licence attribuée (" +
+              license + ") requiert de renseigner une ville et un pays de naissance");
     }
     if (isLicenseDefined(license) && !isExecLicense(license) && city != '') {
-      return (first_name + " " + last_name + ": une license " +
-              license + " ne requiert pas de renseigner une ville et un pays de naissance. " +
+      return (first_name + " " + last_name + ": la licence attribuée (" +
+              license + ") ne requiert pas de renseigner une ville et un pays de naissance. " +
               "Supprimez cette donnée")
     }
   }
