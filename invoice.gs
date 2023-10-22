@@ -403,7 +403,6 @@ function isLevelNotRider(level) {
   return isLevelDefined(level) && ! isLevelRider(level)
 }
 
-
 // FIXME: This can be migrated to a validation similar to the thing we do
 // for competitors.
 var coord_purchased_subscriptions_non_comp = [
@@ -413,6 +412,7 @@ var coord_purchased_subscriptions_non_comp = [
   [48, 5],  // Child 3
   [49, 5]   // Child 4
 ];
+
 //
 // Skipass section:
 //
@@ -428,6 +428,8 @@ class SkiPass {
     this.dob_validation_method = dob_validation_method
     this.purchased_amount = 0
     this.occurence_count = 0
+    this.student = isSkipassStudent(name)
+    this.adult = isSkipassAdult(name)
   }
 
   Name() { return this.name }
@@ -439,6 +441,14 @@ class SkiPass {
                                          this.purchase_range.getColumn()])
   }
   PurchasedSkiPassAmount() { return this.purchased_amount }
+
+  // When this method run, we return the total amount paid a given skipass kind 
+  // that we fetch at the row for this ski pass but in column G so two columns
+  // to the right of the purchased amount column
+  GetTotalPrice() {
+    return getNumberAt([this.purchase_range.getRow(),
+                        this.purchase_range.getColumn() + 2])
+  }
 
   IncrementAttributedSkiPassCountIfDoB(dob) {
     if (this.ValidateDoB(dob)) {
@@ -456,6 +466,9 @@ class SkiPass {
   ValidDoBRangeMessage() {
     return this.valid_dob_range_message
   }
+
+  IsStudent() { return this.student}
+  IsAdult() { return this.adult }
 }
 
 // FIXME: All date intervals need to be adjustable globals. Include the YoB for an adult.
@@ -465,12 +478,12 @@ function createSkipassMap(sheet) {
       'Collet Senior',
       sheet.getRange(25, 5),
       (dob) => {return ageVerificationRangeIncluded(dob, 70, 74)},
-      "70 à 75 ans révolus"),
+      "70 à 74 ans révolus"),
     'Collet Vermeil': new SkiPass(
       'Collet Vermeil',
       sheet.getRange(26, 5),
       (dob) => {return ageVerificationStrictlyOldOrOlder(dob, 75)},
-      '+75 ans'),
+      'plus de 75 ans'),
     'Collet Adulte': new SkiPass(
       'Collet Adulte',
       sheet.getRange(27, 5),
@@ -494,18 +507,19 @@ function createSkipassMap(sheet) {
     'Collet Bambin': new SkiPass(
       'Collet Bambin',
       sheet.getRange(31, 5),
-      (dob) => {return ageVerificationBornBeforeDateIncluded(dob, new Date("December 31, 2017"))}),
+      (dob) => {return ageVerificationBornAfterDateIncluded(dob, new Date("January 1, 2018"))},
+      'A partir du 1er Janvier 2018 et après'),
 
     '3 Domaines Senior': new SkiPass(
       '3 Domaines Senior',
       sheet.getRange(33, 5),
       (dob) => {return ageVerificationRangeIncluded(dob, 70, 74)},
-      "70 à 75 ans révolus"),
+      "70 à 74 ans révolus"),
     '3 Domaines Vermeil': new SkiPass(
       '3 Domaines Vermeil',
       sheet.getRange(34, 5),
       (dob) => {return ageVerificationStrictlyOldOrOlder(dob, 75)},
-      '+75 ans'),
+      'plus de 75 ans'),
     '3 Domaines Adulte': new SkiPass(
       '3 Domaines Adulte',
       sheet.getRange(35, 5),
@@ -529,19 +543,37 @@ function createSkipassMap(sheet) {
     '3 Domaines Bambin': new SkiPass(
       '3 Domaines Bambin',
       sheet.getRange(39, 5),
-      (dob) => {return ageVerificationBornBeforeDateIncluded(dob, new Date("December 31, 2017"))}),
-  }
-  for (var license in to_return) {
-    if (to_return[license].Name() != license) {
-      displayErrorPanel('Erreur validation license_map: ' +
-                        'to_return[' + license + '].Name() = ' + to_return[license].Name())
-    }
+      (dob) => {return ageVerificationBornAfterDateIncluded(dob, new Date("December 31, 2017"))},
+      'A partir du 1er Janvier 2018 et après'),
   }
   validateClassInstancesMap(to_return, 'skipass_map')
   return to_return
 }
 
-// Identifier we retain as ski passes valid for competitor
+var coord_rebate_family_of_4_amount = [23, 4]
+var coord_rebate_family_of_4_count = [23, 5]
+var coord_rebate_family_of_5_amount = [24, 4]
+var coord_rebate_family_of_5_count = [24, 5]
+
+function isSkipassStudent(ski_pass) {
+  return (ski_pass == '3 Domaines Étudiant' || ski_pass == 'Collet Étudiant')
+}
+
+function isSkipassAdult(ski_pass) {
+  return (ski_pass == '3 Domaines Adulte' || ski_pass == 'Collet Adulte')
+}
+
+function getSkiPassesPairs() {
+  var to_return = []
+  var entries = ['Senior', 'Vermeil', 'Adulte', 'Étudiant', 'Junior', 'Enfant', 'Bambin']
+  entries.forEach(function(entry) {
+    to_return.push(['Collet ' + entry, '3 Domaines ' + entry])
+  })
+  return to_return
+}
+
+// Identifier we retain as ski passes valid for competitor. Ideally, we should be adding
+// the 3 domains
 var competitor_ski_passes = [
   'Collet Adulte',
   'Collet Étudiant',
@@ -785,8 +817,8 @@ function generatePDF() {
 // Spreadsheet data access methods
 ///////////////////////////////////////////////////////////////////////////////
 
-function clearRange(sheet, coord) {
-  sheet.getRange(coord[0],coord[1]).clear();
+function clearRange(coord) {
+  SpreadsheetApp.getActiveSheet().getRange(coord[0],coord[1]).clearContent();
 }
 
 function setStringAt(coord, text, color) {
@@ -1071,7 +1103,7 @@ function validateAndReturnDropDownValue(coord, message) {
 //                               | DoB - maybe could be obtained within.       | licenses. Why?
 //                               | Lots of FIXMEs.                             | FIXME
 // ------------------------------+---------------------------------------------+----------------
-// validateNonCompSubscriptions2 | Validate the non competitor subscriptions.  | NO.
+// validateNonCompSubscriptions2 | Validate the non competitor subscriptions.  | SHOULD.
 //                               | Should replace validateNonCompSubscriptions | String if error
 //                               | when we've verify parity                    |
 // ------------------------------+---------------------------------------------+----------------
@@ -1710,6 +1742,97 @@ function validateSkiPassPurchase(dobs) {
   return error;
 }
 
+function validateNonCompSkiPasses() {
+  updateStatusBar("✔ Validation des forfaits loisir...", "grey", add=true)
+  clearRange(coord_rebate_family_of_4_count)
+  clearRange(coord_rebate_family_of_4_amount)
+  clearRange(coord_rebate_family_of_5_count)
+  clearRange(coord_rebate_family_of_5_amount)
+  SpreadsheetApp.flush();
+
+  var ski_passes_map = createSkipassMap(SpreadsheetApp.getActiveSheet())
+
+  for (var index in coords_identity_rows) {
+    var row = coords_identity_rows[index];
+    var dob = getDoB([row, coord_dob_column])
+    // Undefined DoB marks a non existing entry that we skip
+    if (dob == undefined) {
+      continue
+    }
+    var selected_license = getLicenseAt([row, coord_license_column]);
+    // Skip anything that looks like a competitor
+    if (isLicenseComp(selected_license)) {
+      continue
+    }
+    // Increment the ski pass count that validates for a DoB. This will tell us
+    // how many ski passes suitable for a non competitor we can expect to be
+    // purchased.
+    for (var skipass in ski_passes_map) {
+      ski_passes_map[skipass].IncrementAttributedSkiPassCountIfDoB(dob)    
+    }
+  }
+
+  // Collect the amount of skipasses that have be declared for purchase.
+  // We also use this loop to compute the size of the familly to see if a rebate is
+  // going to apply. A family member for a rebate is anyone who is not a student.
+  var family_size = 0
+  var number_of_non_student_adults = 0
+  var total_paid_skipass = 0
+  for (var skipass_name in ski_passes_map) {
+    skipass = ski_passes_map[skipass_name]
+    skipass.UpdatePurchasedSkiPassAmount()
+    if (! skipass.IsStudent() && skipass.PurchasedSkiPassAmount() > 0) {
+      if (skipass.IsAdult()) {
+        number_of_non_student_adults += skipass.AttributedSkiPassCount()
+      }
+      family_size += skipass.AttributedSkiPassCount()
+      total_paid_skipass += skipass.GetTotalPrice() 
+    }
+  }
+
+  var ski_passes_pairs = getSkiPassesPairs()
+  for (index in ski_passes_pairs) {
+    var pair = ski_passes_pairs[index]
+    var zone1 = pair[0]
+    var zone2 = pair[1]
+    // Skip students in this verification, we'll do it separately
+    if (isSkipassStudent(zone1)) {
+      if (! isSkipassStudent(zone2)) {
+        return ('Error interne: zone1=' + zone1 + ', zone2=' + zone2)
+      }
+      continue
+    }
+    var zone1_count = ski_passes_map[zone1].AttributedSkiPassCount()
+    var zone2_count = ski_passes_map[zone2].AttributedSkiPassCount()
+    if (zone1_count != zone2_count) {
+      return ('Error interne: ' + zone1 + '=' + zone1_count + ', ' +
+              zone2 + '=' + zone2_count)
+    }
+    var total_purchased = (ski_passes_map[zone1].PurchasedSkiPassAmount() + 
+                           ski_passes_map[zone2].PurchasedSkiPassAmount())
+    if (zone1_count > total_purchased) {
+      return (total_purchased + ' forfait(s) ' + zone1 + '/' + zone2 +
+              ' acheté(s) pour ' + zone1_count + ' personne(s) dans cette ' +
+              'tranche d\'âge (' + ski_passes_map[zone1].ValidDoBRangeMessage() + ")")
+    }
+  }
+
+  if (number_of_non_student_adults == 2) {
+    if (family_size == 4) {
+      var rebate = -(total_paid_skipass * 0.1)
+      setStringAt(coord_rebate_family_of_4_count , "1")
+      setStringAt(coord_rebate_family_of_4_amount, rebate)
+    }
+    if (family_size >= 5) {
+      var rebate = -(total_paid_skipass * 0.15)
+      setStringAt(coord_rebate_family_of_5_count , "1")
+      setStringAt(coord_rebate_family_of_5_amount, rebate)    
+    }
+    SpreadsheetApp.flush();
+  }
+  return ''
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 // Invoice meta information management
 ///////////////////////////////////////////////////////////////////////////////
@@ -1818,7 +1941,6 @@ function findFirstEmptySlot(sheet, range) {
 }
 
 function doUpdateAggregationTrix(data, allow_overwrite) {
-  
   // Search for elements in data in sheet over range. If we can't find data,
   // return a range on the first empty slot we find. If we can find data
   // return its range unless allow_overwrite is false, in which case we
