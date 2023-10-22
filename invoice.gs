@@ -237,13 +237,13 @@ function createLicensesMap(sheet) {
       sheet.getRange(41, 5),
       // Born after 2009 is born on 1/1/2009 or later.
       (dob) => {return ageVerificationBornAfterDateIncluded(dob, new Date("January 1, 2009"))},
-      "2009 et après"),
+      "être né en 2009 et après"),
     'CN Adulte (Loisir)': new License(
       getNonCompAdultLicenseString(),
       sheet.getRange(42, 5),
       // Born on 2008 and before means 12/1/2008 or before.
       (dob) => {return ageVerificationBornBeforeDateIncluded(dob, new Date("December 31, 2008"))},
-      "2008 et avant"),
+      "être né en 2008 et avant"),
     'CN Famille (Loisir)': new License(
       getNonCompFamilyLicenseString(),
       sheet.getRange(43, 5),
@@ -253,17 +253,17 @@ function createLicensesMap(sheet) {
       getExecutiveLicenseString(),
       sheet.getRange(44, 5),
       (dob) => {return isAdult(dob)},
-      "adulte"),
+      "être adulte (18 ans ou plus)"),
     'CN Jeune (Compétition)': new License(
       getCompJuniorLicenseString(),
       sheet.getRange(51, 5),
       (dob) => {return ageVerificationBornAfterDateIncluded(dob, new Date("January 1, 2009"))},
-      "2009 et après"),
+      "être né en 2009 et après"),
     'CN Adulte (Compétition)': new License(
       getCompAdultLicenseString(),
       sheet.getRange(52, 5),
       (dob) => {return ageVerificationBornBeforeDateIncluded(dob, new Date("December 31, 2008"))},
-      "2008 et avant"),
+      "être né 2008 et avant"),
   }
   validateClassInstancesMap(to_return, 'license_map')
   return to_return
@@ -1071,12 +1071,13 @@ function VALIDATION_TEST() {
   error = error
 }
 
-// Verify that family members have a first name, 
-// last name, a DoB and a sex assigned to them.
-// Return an error and also a list of collected DoBs.
+// Verify that family members are properly defined, especially with regard to
+// what they are claiming to be associated to (level, type of license, etc...)
 function validateFamilyMembers() {
   updateStatusBar("✔ Validation des données de la famille...", "grey")
-  dobs = [];
+  // Get a licene map so that we can immediately verify the age picked
+  // for a license is correct.
+  var license_map = createLicensesMap(SpreadsheetApp.getActiveSheet())
   for (var index in coords_identity_rows) {
     var first_name = getStringAt([coords_identity_rows[index], coord_first_name_column]);
     var last_name = getStringAt([coords_identity_rows[index], coord_last_name_column]);
@@ -1130,15 +1131,16 @@ function validateFamilyMembers() {
       return ("Pas de sexe défini pour " + first_name + " " + last_name);
     }
 
-    // Level validation. A level is needed:
-    //.  1- A license is needed when a level is defined
-    //   2- Only for a non competitor license
-    //   3- Only for non adults (because a non competitor license can be a family license)
-    //   4- A competitor can not declare a level, it will confuse the rest of the validation
-    //   5- An executive can not declare a level, it will confuse the rest of the validation
+    // Level validation. We establishing here is that a junior non comp entry must have
+    // a level set to something. The rest of the code assumes that a level set to something
+    // is an other way of identifying a non comp license.
     //
-    //  We establishing here is that a junior non comp entry must have a level set to something.
-    //  A level set to something is an other way of identifying a non comp license.
+    //   1- When a level is defined, a license must be defined.
+    //   2- A level must be defined for non competitor minor
+    //   3- A competitor can not declare a level, it will confuse the rest of the validation
+    //   4- An executive can not declare a level, it will confuse the rest of the validation
+    //
+
     if (isLevelDefined(level) && isLicenseNotDefined(license)) {
       return (first_name + " " + last_name + " est un loisir junior avec un niveau de ski " +
               "défini ce qui traduit l'intention de prendre une adhésion au club. Choisissez " +
@@ -1158,6 +1160,32 @@ function validateFamilyMembers() {
       return (first_name + " " + last_name + " est un cadre/dirigeant. Ne définissez pas " +
               "de niveau pour un cadre/dirigeant")      
     }
+
+    // License validation:
+    //
+    // 1- A license must match the age of the person it's attributed to
+    // 2- An exec license requires a city of birth
+    // 3- An existing non exec license doesn't require a city of birth
+    if (!license_map.hasOwnProperty(license)) {
+      return (first_name + " " + last_name + "La licence sélectionée '" + selected_license +
+              "' n'est pas une license attribuée possible!")
+    }    
+    if (! license_map[license].ValidateDoB(dob)) {
+      return (first_name + " " + last_name +
+              ": l'année de naissance " + getDoBYear(dob) +
+              " ne correspond critère de validité de la " +
+              "license choisie: (" + license + "): " +
+              license_map[license].ValidDoBRangeMessage() + '.')
+    }
+    if (isExecLicense(license) && city == '') {
+      return (first_name + " " + last_name + ": une license " +
+              license + " requiert de renseigner une ville et un pays de naissance");
+    }
+    if (isLicenseDefined(license) && !isExecLicense(license) && city != '') {
+      return (first_name + " " + last_name + ": une license " +
+              license + " ne requiert pas de renseigner une ville et un pays de naissance. " +
+              "Supprimez cette donnée")
+    }
   }
   return ''
 }
@@ -1174,54 +1202,7 @@ function validateLicenses() {
   for (var index in coords_identity_rows) {
     var row = coords_identity_rows[index];
     var selected_license = getLicenseAt([row, coord_license_column]);
-    // You can't have no first/last name and an assigned license
-    var first_name = getStringAt([row, coord_first_name_column]);
-    var last_name = getStringAt([row, coord_last_name_column]);
-    // If there's no name on that row, the only possible value is None. Note that
-    // this should have been verified in validateFamilyMembers().
-    if (first_name === '' && last_name === '') {
-      if (isLicenseDefined(selected_license)) {
-        return returnError("'" + selected_license +
-                           "' attribuée à un membre de famile inexistant!");
-      }
-      continue;
-    }
-
-    // Sanity check: the selected license must exist and increment
-    // the count number for the license at hand.
-    if (!license_map.hasOwnProperty(selected_license)) {
-      return returnError("'" + selected_license +
-                         "' n'est pas une license attribuée possible!");
-    }
     license_map[selected_license].IncrementAttributedLicenseCount()
-
-    // Executive license requires a city of birth
-    if (isExecLicense(selected_license)) {
-      var city = getStringAt([row, coord_cob_column]);
-      if (city == '') {
-        return returnError(first_name + " " + last_name + ": une license " +
-                           selected_license +
-                           " requiert de renseigner une ville et un pays de " +
-                           "naissance");
-      }
-    }
-    
-    // If we don't have a license, we can stop now. No need to
-    // validate the DoB
-    if (isLicenseNotDefined(selected_license)) {
-      continue;
-    }
-    
-    // Validate DoB against the type of license
-    var dob = getDoB([row, coord_dob_column])
-    var yob = getDoBYear(dob)
-    if (! license_map[selected_license].ValidateDoB(dob)) {
-      return returnError(first_name + " " + last_name +
-                         ": l'année de naissance " + yob +
-                         " ne correspond aux années de validité de la " +
-                         "license choisie: " + selected_license + ", " +
-                         license_map[selected_license].ValidDoBRangeMessage() + '.')
-    }
   }
 
   // Collect the amount of purchased licenses for all licenses
