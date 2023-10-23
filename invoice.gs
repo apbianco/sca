@@ -825,17 +825,23 @@ function getDoB(coords) {
 
 // Return true if DoB happened after date
 function ageVerificationBornAfterDateIncluded(dob, date) {
-  return dob.valueOf() >= date.valueOf()
+  // Apparently, the date formating in a cell sets the date to the first
+  // hours of the day: 31/12/2008 will in fact be 31/12/2008, 1:00am. So we
+  // remove one hour to get the exact date.
+  var dob_valueof = dob.valueOf() - 3600000
+  return dob_valueof >= date.valueOf()
 }
 
 // Return true if DoB happened before date
 function ageVerificationBornBeforeDateIncluded(dob, date) {
-  return dob.valueOf() <= date.valueOf()
+  var dob_valueof = dob.valueOf() - 3600000
+  return dob_valueof <= date.valueOf()
 }
 
 // Return true if DoB happened between first and last date included.
 function ageVerificationBornBetweenDatesIncluded(dob, first, last) {
-  return (dob.valueOf() >= first.valueOf() && dob.valueOf() <= last.valueOf())
+  var dob_valueof = dob.valueOf() - 3600000
+  return (dob_valueof >= first.valueOf() && dob_valueof <= last.valueOf())
 }
 
 function ageVerificationBornBetweenYearsIncluded(dob, first, last) {
@@ -1024,16 +1030,16 @@ function validateAndReturnDropDownValue(coord, message) {
 // For some, failing is a  show stopper. For others, it's possible to decline accepting
 // there's an error and continue (escape hatch)
 //
-// ------------------------------+---------------------------------------------+--------------
+// ------------------------------+---------------------------------------------+----------------
 // Name                          |What                                         |Esc. Hatch
 //                               |                                             |RETURN:
-// ------------------------------+---------------------------------------------+--------------
+// ------------------------------+---------------------------------------------+----------------
 // validateFamilyMembers         | Validation of all family members, including | NO
 //                               | some invariants like: junion non comp       | RETURN: List
 //                               | must have a level. If anything other than   | of DoB. Why?
 //                               | first/last name are defined, there must be. | FIXME
 //                               | a first/last name defined                   |
-// ------------------------------+---------------------------------------------+--------------
+// ------------------------------+---------------------------------------------+----------------
 // validateLicenses              | Validate selected licenses with the one     | NO
 //                               | selected for payment. Args: license_map and | Map selected
 //                               | DoB - maybe could be obtained within.       | licenses. Why?
@@ -1067,7 +1073,9 @@ function validateAndReturnDropDownValue(coord, message) {
 // - validateNonCompSkiPass       | if error, Yes/No.
 
 function VALIDATION_TEST() {
-  var error = validateFamilyMembers();
+  var error = ''
+  error = validateFamilyMembers()
+  error = validateLicenses();
   error = error
 }
 
