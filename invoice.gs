@@ -426,6 +426,7 @@ class SkiPass {
     this.purchase_range = purchase_range
     // The DoB validation method
     this.dob_validation_method = dob_validation_method
+    this.valid_dob_range_message = valid_dob_range_message
     this.purchased_amount = 0
     this.occurence_count = 0
     this.student = isSkipassStudent(name)
@@ -1063,13 +1064,14 @@ function validateAndReturnDropDownValue(coord, message) {
 // - validateCompSubscriptions    | if error, Yes/No
 // - validateCompSkiPasses        | if error, Yes/No
 // - validateNonCompSubscriptions | if error, Yes/No
-// - validateNonCompSkiPass       | if error, Yes/No.
+// - validateNonCompSkiPasses     | if error, Yes/No.
 
 function VALIDATION_TEST() {
   var error = ''
   error = validateFamilyMembers()
   error = validateLicenses()
-  error = validateNonCompSubscriptions2()
+  error = validateNonCompSubscriptions()
+  error = validateNonCompSkiPasses()
   error = error
 }
 
@@ -1378,8 +1380,13 @@ function validateCompSkiPasses() {
   for (var index in competitor_ski_passes) {
     var skipass_name = competitor_ski_passes[index]
     var skipass = ski_passes_map[skipass_name]
-    if (skipass.AttributedSkiPassCount() > skipass.PurchasedSkiPassAmount()) {
-      return (skipass.PurchasedSkiPassAmount() + ' forfait(s) ' + skipass_name +
+    var purchased_amount = skipass.PurchasedSkiPassAmount()
+    if (purchased_amount < 0 || isNaN(purchased_amount)) {
+      return (purchased_amount + ' forfait ' + skipass_name + 
+              ' acheté n\'est pas un nombre valide')
+    }
+    if (skipass.AttributedSkiPassCount() > purchased_amount) {
+      return (purchased_amount + ' forfait(s) ' + skipass_name +
               ' acheté(s) pour ' + skipass.AttributedSkiPassCount() +
               ' license(s) compétiteur dans cette tranche d\'âge')
     }
@@ -1524,7 +1531,12 @@ function validateNonCompSkiPasses() {
   for (var skipass_name in ski_passes_map) {
     skipass = ski_passes_map[skipass_name]
     skipass.UpdatePurchasedSkiPassAmount()
-    if (! skipass.IsStudent() && skipass.PurchasedSkiPassAmount() > 0) {
+    var purchased_amount = skipass.PurchasedSkiPassAmount()
+    if (purchased_amount < 0 || isNaN(purchased_amount)) {
+      return (purchased_amount + ' forfait ' + skipass_name + 
+              ' acheté n\'est pas un nombre valide')
+    }
+    if (! skipass.IsStudent() && purchased_amount > 0) {
       if (skipass.IsAdult()) {
         number_of_non_student_adults += skipass.AttributedSkiPassCount()
       }
@@ -1553,7 +1565,7 @@ function validateNonCompSkiPasses() {
     }
     var total_purchased = (ski_passes_map[zone1].PurchasedSkiPassAmount() + 
                            ski_passes_map[zone2].PurchasedSkiPassAmount())
-    if (zone1_count > total_purchased) {
+    if (zone1_count != total_purchased) {
       return (total_purchased + ' forfait(s) ' + zone1 + '/' + zone2 +
               ' acheté(s) pour ' + zone1_count + ' personne(s) dans cette ' +
               'tranche d\'âge (' + ski_passes_map[zone1].ValidDoBRangeMessage() + ")")
