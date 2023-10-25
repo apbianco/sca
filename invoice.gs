@@ -345,7 +345,7 @@ function createCompSubscriptionMap(sheet) {
   return to_return
 }
 
-var noncomp_subscription_categories = ['Rider', '1er Enfant', '2ème Enfant', '3ème Enfant', '4ème Enfant']
+var noncomp_subscription_categories = ['Rider', '1er enfant', '2ème enfant', '3ème enfant', '4ème enfant']
 
 function createNonCompSubscriptionMap(sheet) {
   var to_return = {}
@@ -1035,23 +1035,16 @@ function validateAndReturnDropDownValue(coord, message) {
 //                               |                                             |RETURN:
 // ------------------------------+---------------------------------------------+----------------
 // validateFamilyMembers         | Validation of all family members, including | NO
-//                               | some invariants like: junion non comp       | RETURN: List
-//                               | must have a level. If anything other than   | of DoB. Why?
-//                               | first/last name are defined, there must be. | FIXME
+//                               | some invariants like: junion non comp       | string if error
+//                               | must have a level. If anything other than   | 
+//                               | first/last name are defined, there must be  | 
 //                               | a first/last name defined                   |
 // ------------------------------+---------------------------------------------+----------------
 // validateLicenses              | Validate selected licenses with the one     | NO
-//                               | selected for payment. Args: license_map and | Map selected
-//                               | DoB - maybe could be obtained within.       | licenses. Why?
-//                               | Lots of FIXMEs.                             | FIXME
+//                               | selected for payment.                       | string if error
 // ------------------------------+---------------------------------------------+----------------
-// validateNonCompSubscriptions2 | Validate the non competitor subscriptions.  | SHOULD.
-//                               | Should replace validateNonCompSubscriptions | String if error
-//                               | when we've verify parity                    |
-// ------------------------------+---------------------------------------------+----------------
-// validateNonCompSubscriptions  | Old validation of non comp subscription.    | YES.
-//                               | FXIME To be replaced by the previously      | String if error
-//                               | described method                            |
+// validateNonCompSubscriptions  | Validate the non competitor subscriptions.  | YES
+//                               |                                             | string if error
 // ------------------------------+---------------------------------------------+----------------
 // validateNonCompSkiPasses      | Validation of non competitor ski pass       | YES.
 //                               | purchases.                                  | String if error
@@ -1069,13 +1062,14 @@ function validateAndReturnDropDownValue(coord, message) {
 // - validateLicenses()           | if error, bail
 // - validateCompSubscriptions    | if error, Yes/No
 // - validateCompSkiPasses        | if error, Yes/No
-// - validateNonCompSubscriptions | if error, bail. TOO STRONG?
+// - validateNonCompSubscriptions | if error, Yes/No
 // - validateNonCompSkiPass       | if error, Yes/No.
 
 function VALIDATION_TEST() {
   var error = ''
   error = validateFamilyMembers()
-  error = validateLicenses();
+  error = validateLicenses()
+  error = validateNonCompSubscriptions2()
   error = error
 }
 
@@ -1202,10 +1196,6 @@ function validateFamilyMembers() {
 
 // Cross check the attributed licenses with the ones selected for payment
 function validateLicenses() {
-  function returnError(v) {
-    return [v, {}];
-  }
-
   updateStatusBar("✔ Validation du choix des licenses...", "grey", add=true)
   var license_map = createLicensesMap(SpreadsheetApp.getActiveSheet())
   // Collect the attributed licenses
@@ -1232,7 +1222,7 @@ function validateLicenses() {
   if (family_license_attributed_count != 0) {
     // A least four declared participants
     if (family_license_attributed_count < 4) {
-      return returnError(
+      return (
         "Il faut attribuer une licence famille à au moins 4 membres " +
         "d'une même famille. Seulement " + 
         family_license_attributed_count +
@@ -1241,7 +1231,7 @@ function validateLicenses() {
     // Check that one family license was purchased.
     var family_license_purchased = license_map[getNonCompFamilyLicenseString()].PurchasedLicenseAmount()
     if (family_license_purchased != 1) {
-      return returnError(
+      return (
         "Vous devez acheter une licence loisir famille, vous en avez " +
         "acheté pour l'instant " + family_license_purchased);
     }
@@ -1400,7 +1390,7 @@ function validateCompSkiPasses() {
 // Validation of non competitor subscriptions. This method is invoked after all
 // family members have been validated, which means that we are guaranteed here
 // that people declared to have a non comp license also have a level entered.
-function validateNonCompSubscriptions2() {
+function validateNonCompSubscriptions() {
   // Return true if:
   //   1- level_or_subscription is Rider
   //   2- level_or_subscription is FirstKid and there's one or more rider defined
@@ -1436,8 +1426,8 @@ function validateNonCompSubscriptions2() {
   // and the perform the verification
   var subscribed_rider_number = subscription_map[getRiderLevelString()].PurchasedSubscriptionAmount()
   if (rider_number != subscribed_rider_number) {
-    return ("Le nombre d'adhésion(s) rider (" + rider_number + ") ne correspond pas au nombre " +
-            "de rider(s) renseigné(s) (" + subscribed_rider_number + ")")
+    return ("Le nombre d'adhésion(s) rider souscrite(s) (" + subscribed_rider_number + ") ne correspond pas au nombre " +
+            "de rider(s) renseigné(s) (" + rider_number + ")")
   }
 
   // If we have a rider, the first subscription can not exist, we jump directly to the second kid
@@ -1487,98 +1477,11 @@ function validateNonCompSubscriptions2() {
     subscribed_non_rider_number += found_non_rider_number
   }
   if (subscribed_non_rider_number != non_rider_number) {
-    return ("Le nombre d'adhésion(s) non rider (" + subscribed_non_rider_number + ") " +
+    return ("Le nombre d'adhésion(s) NON rider souscrite(s) (" + subscribed_non_rider_number + ") " +
             "ne correspond pas au nombre " +
-            "de non rider(s) renseigné(s) (" + non_rider_number + ")")    
+            "de NON rider(s) renseigné(s) (" + non_rider_number + ")")    
   }
   return ''
-}
-
-// Loosely cross checks attributed licenses with delivered subscriptions...
-function validateNonCompSubscriptions(attributed_licenses) {
-
-  function errorMessageBadSubscriptionValue(index) {
-    return ("La valeur du champ 'Adhésion / Stage / Transport - enfant " +
-            index + "' ne peut prendre que la valeur 0 ou 1.")
-  }
-
-  updateStatusBar("✔ Validation des adhésions loisir...", "grey", add=true)
-
-  // Validation of the selection of the subscriptions:
-  //   - A rider counts as a first subscription. The value can only be 1.
-  //     This is a limitation but that's OK.
-  //   - We can't have a rider and a first subscription.
-  //   - Past a rider/first subscription, the value can for a subscription
-  //     can only be 1 or 0 and when it reaches 0, it can't be 1 again.
-
-  // Rider cell value validation
-  var rider = getNumberAt(getRiderSubscriptionCoordinates())
-  var first_subscription = getNumberAt(getFirstNonRiderSubscriptionCoordinate())
-  if (rider < 0) {
-    return ("La valeur du champ 'Adhésion Rider / Stage / Sortie hors station / Transport'" +
-            " ne peut prendre la valeur " + rider);
-  }
-  // First subscription cell validation
-  if (first_subscription != 0 && first_subscription != 1) {
-    return errorMessageBadSubscriptionValue(1)
-  }
-
-  // Can't have a rider and a first cell
-  if (rider >= 1 && first_subscription == 1) {
-    return ("L'adhésion rider compte comme une première Adhésion / Stage / Transport")
-  }
-
-  var total_non_comp = 0;
-  var reached_zero = false;
-  if (rider >= 1 || first_subscription == 1) {
-    total_non_comp = rider + first_subscription;
-  }
-  if (rider == 0 && first_subscription == 0) {
-    reached_zero = true;
-  }
-
-  // Validate the subscriptions past the rider/first subscription.
-  for (var index in coord_purchased_subscriptions_non_comp) {
-    // We verified the rider and the first subscription, we are only verifying
-    // the subscriptions past those - hence the test index > 1 (rider is index 0,
-    // first subscription is index 1)
-    if (index > 1) {
-      value = getNumberAt(coord_purchased_subscriptions_non_comp[index]);
-      if (value != 1 && value != 0) {
-        return errorMessageBadSubscriptionValue(index)
-      }
-      if (value == 1 && reached_zero) {
-        return (
-          "La valeur du champ 'Adhésion / Stage / Transport - enfant " +
-          index +
-          "' ne peut pas prendre la valeur 1 alors que la valeur du champ " +
-          "'Adhésion / Stage / Transport - enfant " +
-          (index-1) + "' est de 0.");
-      }
-      if (value == 0) {
-        reached_zero = true;
-      }
-      total_non_comp += value;
-    }
-  }
-  // The number of non competition registrations should be equal to the 
-  // number of non competition CNs purchased
-  var juniors = attributed_licenses[getNonCompJuniorLicenseString()];
-  var adults = attributed_licenses[getNonCompAdultLicenseString()];
-  var family = attributed_licenses[getNonCompFamilyLicenseString()];
-  var total_attributed_licenses = juniors + adults + family;
-  if (total_attributed_licenses != total_non_comp) {
-    detail = ("• " + getNonCompJuniorLicenseString() + ": " + juniors + "\n" +
-              "• " + getNonCompAdultLicenseString() + ": " + adults + "\n" +
-              "• " + getNonCompFamilyLicenseString() + ": " + family + "\n" +
-              "• TOTAL: " + total_attributed_licenses) + "\n";
-    return ("Le nombre total de license(s) Loisir attribuée(s):\n\n" + detail + 
-            "\nne correspond pas au nombre d'adhésion(s) Loisir saisie(s) " +
-            "qui est de " + total_non_comp + ".\n\n" +
-            "Une ou plusieurs personnes (enfants, adultes) prennent une " +
-            "license mais pas d'adhésion?");
-  }
-  return "";
 }
 
 function validateNonCompSkiPasses() {
@@ -1948,62 +1851,49 @@ function validateInvoice() {
     return {}
   }
   
+  var validation_error = ''
   // Validate all the entered family members. This will make sure that
   // a non comp license is matched by a level, something that the validation
   // of non comp subscription depends on.
-  var family_validation_error = validateFamilyMembers();
-  if (family_validation_error) {
-    displayErrorPanel(family_validation_error);
+  validation_error = validateFamilyMembers();
+  if (validation_error) {
+    displayErrorPanel(validation_error);
     return {};
   }
   // Now performing the optional/advanced validations... 
   //
   // 1- Validate the licenses requested by this family
-  // FIXME: no longer needed when we only rely on validateNonCompSubscriptions2
-  var collected_attributed_licenses_values = {} 
   if (advanced_validation.AdvancedVerificationFamilyLicenses()) {
-    var ret = validateLicenses();
-    var license_cross_check_error = ret[0]
-    collected_attributed_licenses_values = ret[1];
-    if (license_cross_check_error) {
-      displayErrorPanel(license_cross_check_error);
+    validation_error = validateLicenses();
+    if (validation_error) {
+      displayErrorPanel(validation_error);
       return {};
     }
   }
 
-    // Validate the competitor subscriptions
-  var validate_subscription_comp_error = validateCompSubscriptions()
-  if (validate_subscription_comp_error) {
-    if (! displayYesNoPanel(augmentEscapeHatch(validate_subscription_comp_error))) {
+  // Validate the competitor subscriptions
+  validation_error = validateCompSubscriptions()
+  if (validation_error) {
+    if (! displayYesNoPanel(augmentEscapeHatch(validation_error))) {
       return {};
     }      
   }
 
   // Validate de competitor ski passes
-  var validate_ski_pass_comp_error = validateCompSkiPasses()
-  if (validate_ski_pass_comp_error) {
-    if (! displayYesNoPanel(augmentEscapeHatch(validate_ski_pass_comp_error))) {
+  validation_error = validateCompSkiPasses()
+  if (validation_error) {
+    if (! displayYesNoPanel(augmentEscapeHatch(validation_error))) {
       return {};
     }      
   }
 
   // 2- Verify the subscriptions. The operator may choose to continue
   //    as some situation are un-verifiable automatically.
-  // FIXME: validateNonCompSubscriptions should go and be replaced by
-  //        validateNonCompSubscriptions2.
-
-  var validation_noncomp_subscription2_error = validateNonCompSubscriptions2()
-  if (validation_noncomp_subscription2_error) {
-    displayErrorPanel(validation_noncomp_subscription2_error)
-    return {}
-  }
-
   if (advanced_validation.AdvancedVerificationSubscription()) {
     // Validate requested licenses and subscriptions
-    var subscription_validation_error = 
-        validateNonCompSubscriptions(collected_attributed_licenses_values);
-    if (subscription_validation_error) {
-      if (! displayYesNoPanel(augmentEscapeHatch(subscription_validation_error))) {
+    validation_error = validateNonCompSubscriptions()
+    if (validation_error) {
+      if (! displayYesNoPanel(augmentEscapeHatch(validation_error))) {
         return {};
       }
     }
@@ -2012,9 +1902,9 @@ function validateInvoice() {
   // 3- Verify the ski pass purchases. The operator may choose to continue
   //    as some situation are un-verifiable automatically.
   if (advanced_validation.AdvancedVerificationSkipass()) {
-    var skipass_validation_error = validateNonCompSkiPasses()
-    if (skipass_validation_error) {
-      if (! displayYesNoPanel(augmentEscapeHatch(skipass_validation_error))) {
+    validation_error = validateNonCompSkiPasses()
+    if (validation_error) {
+      if (! displayYesNoPanel(augmentEscapeHatch(validation_error))) {
         return {};
       }    
     }
