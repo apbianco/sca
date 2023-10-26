@@ -1,4 +1,4 @@
-// Version: 2023-10-06
+// Version: 2023-10-26
 // This validates the invoice sheet (more could be done BTW) and
 // sends an email with the required attached pieces.
 
@@ -39,12 +39,9 @@ class AdvancedFeatures {
     var result = not_b_not_c || ab
     if (!result) {
       displayErrorPanel(
-        "verification_family_licenses: " +
-        this.verification_family_licenses +
-        "\nverification_subscriptions: " +
-        this.verification_subscriptions +
-        "\nverification_skipass: " +
-        this.verification_skipass)
+        "verification_family_licenses: " + this.verification_family_licenses +
+        "\nverification_subscriptions: " + this.verification_subscriptions +
+        "\nverification_skipass: " + this.verification_skipass)
     }
   }
 
@@ -406,16 +403,6 @@ function isLevelNotRider(level) {
   return isLevelDefined(level) && ! isLevelRider(level)
 }
 
-// FIXME: This can be migrated to a validation similar to the thing we do
-// for competitors.
-var coord_purchased_subscriptions_non_comp = [
-  [45, 5],  // First Rider. We can have more than one rider registered
-  [46, 5],  // Child 1
-  [47, 5],  // Child 2
-  [48, 5],  // Child 3
-  [49, 5]   // Child 4
-];
-
 //
 // Skipass section:
 //
@@ -591,18 +578,6 @@ var email_loisir = 'sca.loisir@gmail.com'
 var email_comp = 'skicluballevardin@gmail.com'
 var email_dev = 'apbianco@gmail.com'
 var email_license = 'licence.sca@gmail.com'
-
-///////////////////////////////////////////////////////////////////////////////
-// Accessors to the data defined above
-///////////////////////////////////////////////////////////////////////////////
-
-function getRiderSubscriptionCoordinates() {
-  return coord_purchased_subscriptions_non_comp[0];
-}
-
-function getFirstNonRiderSubscriptionCoordinate() {
-  return coord_purchased_subscriptions_non_comp[1];
-}
 
 //
 // There's nothing else to configure past that point
@@ -1041,7 +1016,7 @@ function validateAndReturnDropDownValue(coord, message) {
 
 // Validation routines table. They must be running in a specific order defined here after.
 // For some, failing is a  show stopper. For others, it's possible to decline accepting
-// there's an error and continue (escape hatch)
+// there's an error and continue (escape hatch). Most can be skipped when #yolo is active.
 //
 // ------------------------------+---------------------------------------------+----------------
 // Name                          |What                                         |Esc. Hatch
@@ -1787,6 +1762,7 @@ function updateAggregationTrix() {
 
 ///////////////////////////////////////////////////////////////////////////////
 // Updating the tab tracking registration with issues in the aggregation trix
+// with a link and some context.
 ///////////////////////////////////////////////////////////////////////////////
 
 function updateProblematicRegistration(link, context) {
