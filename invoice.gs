@@ -231,7 +231,9 @@ class License {
 function createLicensesMap(sheet) {
   var to_return = {
     'Aucune': new License(
-      getNoLicenseString(), null, null),
+      getNoLicenseString(),
+      null,
+      (dob) => {return true}),
     'CN Jeune (Loisir)': new License(
       getNonCompJuniorLicenseString(),
       sheet.getRange(41, 5),
@@ -1080,7 +1082,7 @@ function VALIDATION_TEST() {
 // When this succeeds, the family members should be defined in such a way that
 // other validations are easier to implement.
 function validateFamilyMembers() {
-  updateStatusBar("✔ Validation des données de la famille...", "grey")
+  updateStatusBar("✔ Validation des données de la famille...", "grey", add=true)
   // Get a licene map so that we can immediately verify the age picked
   // for a license is correct.
   var license_map = createLicensesMap(SpreadsheetApp.getActiveSheet())
@@ -1175,8 +1177,9 @@ function validateFamilyMembers() {
     if (!license_map.hasOwnProperty(license)) {
       return (first_name + " " + last_name + "La licence attribuée '" + license +
               "' n'est pas une license existante !")
-    }    
-    if (! license_map[license].ValidateDoB(dob)) {
+    }   
+    // When a license for a family member, it must match the dob requirement
+    if (isLicenseDefined(license) && ! license_map[license].ValidateDoB(dob)) {
       return (first_name + " " + last_name +
               ": l'année de naissance " + getDoBYear(dob) +
               " ne correspond critère de validité de la " +
@@ -1257,7 +1260,7 @@ function validateLicenses() {
         license_map[index].PurchasedLicenseAmount() + ")")
     }
   }
-  return ["", attributed_licenses];
+  return ''
 }
 
 function validateCompSubscriptions() {
@@ -1825,6 +1828,7 @@ function validateInvoice() {
     return {};
   }
   
+  updateStatusBar("✔ Validation des coordonées...", "grey")
   // Validation: proper civility
   var civility = validateAndReturnDropDownValue(
     coord_family_civility,
@@ -1923,6 +1927,7 @@ function validateInvoice() {
   }
   
   // Validate the parental consent.
+  updateStatusBar("✔ Validation autorisation/questionaire...", "grey", add=true)
   var consent = validateAndReturnDropDownValue(
     coord_parental_consent,
     "Vous n'avez pas renseigné la nécessitée ou non de devoir " +
@@ -1947,6 +1952,7 @@ function validateInvoice() {
   }
   
   // Update the timestamp. 
+  updateStatusBar("✔ Mise à jour de la version...", "grey", add=true)
   setStringAt(coord_timestamp,
               'Dernière MAJ le ' +
               Utilities.formatDate(new Date(),
@@ -2011,6 +2017,11 @@ function updateStatusBar(message, color, add=false) {
   var content = message
   if (add) {
     message = getStringAt(coord_status) + '\n' + message
+    var messages = message.split("\n")
+    if (messages.length > 3) {
+      messages.splice(0, 1)
+      message = messages.join("\n")
+    }
   }
   setStringAt(coord_status, message, color)
   SpreadsheetApp.flush()
