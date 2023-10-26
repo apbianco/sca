@@ -1538,9 +1538,9 @@ function validateNonCompSkiPasses() {
     }
     if (! skipass.IsStudent() && purchased_amount > 0) {
       if (skipass.IsAdult()) {
-        number_of_non_student_adults += skipass.AttributedSkiPassCount()
+        number_of_non_student_adults += purchased_amount
       }
-      family_size += skipass.AttributedSkiPassCount()
+      family_size += purchased_amount
       total_paid_skipass += skipass.GetTotalPrice() 
     }
   }
