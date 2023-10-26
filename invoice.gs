@@ -26,50 +26,50 @@ dev_or_prod = "dev"
 class AdvancedFeatures {
   constructor() {
     // a
-    this.advanced_verification_family_licenses = false
+    this.verification_family_licenses = false
     // b
-    this.advanced_verification_subscriptions = false
+    this.verification_subscriptions = false
     // c
-    this.advanced_verification_skipass = false
+    this.verification_skipass = false
   }
 
   Validate() {
-    var not_b_not_c = ! this.advanced_verification_subscriptions && ! this.advanced_verification_skipass
-    var ab = this.advanced_verification_family_licenses && this.advanced_verification_subscriptions
+    var not_b_not_c = ! this.verification_subscriptions && ! this.verification_skipass
+    var ab = this.verification_family_licenses && this.verification_subscriptions
     var result = not_b_not_c || ab
     if (!result) {
       displayErrorPanel(
-        "advanced_verification_family_licenses: " +
-        this.advanced_verification_family_licenses +
-        "\nadvanced_verification_subscriptions: " +
-        this.advanced_verification_subscriptions +
-        "\nadvanced_verification_skipass: " +
-        this.advanced_verification_skipass)
+        "verification_family_licenses: " +
+        this.verification_family_licenses +
+        "\nverification_subscriptions: " +
+        this.verification_subscriptions +
+        "\nverification_skipass: " +
+        this.verification_skipass)
     }
   }
 
   SetAdvancedVerificationFamilyLicenses() {
-    this.advanced_verification_family_licenses = true
+    this.verification_family_licenses = true
     this.Validate()
   }
   AdvancedVerificationFamilyLicenses() {
-    return this.advanced_verification_family_licenses
+    return this.verification_family_licenses
   }
 
   SetAdvancedVerificationSubscriptions() {
-    this.advanced_verification_subscriptions = true
+    this.verification_subscriptions = true
     this.Validate()
   }
   AdvancedVerificationSubscription() {
-    return this.advanced_verification_subscriptions
+    return this.verification_subscriptions
   }
 
   SetAdvancedVerificationSkipass() {
-    this.advanced_verification_skipass = true
+    this.verification_skipass = true
     this.Validate()
   }
   AdvancedVerificationSkipass() {
-    return this.advanced_verification_skipass
+    return this.verification_skipass
   }
 }
 
@@ -129,6 +129,7 @@ var coord_version =          [86, 3]
 var coord_parental_consent = [86, 5]
 var coord_medical_form =     [86, 7]
 var coord_callme_phone =     [86, 9]
+var coord_yolo =             [87, 3]
 var coord_status =           [88, 4]
 var coord_generated_pdf =    [88, 6]
 //
@@ -637,6 +638,15 @@ function checkEmail(email) {
   return email
 }
 
+function yolo() {
+    if (getStringAt(coord_yolo) == "#yolo") {
+      updateStatusBar("🍀 #yolo", "red")
+      setStringAt(coord_yolo, "")
+      return true
+    }
+    return false
+  }
+
 ///////////////////////////////////////////////////////////////////////////////
 // Debugging methods
 ///////////////////////////////////////////////////////////////////////////////
@@ -1128,7 +1138,7 @@ function validateFamilyMembers() {
       if (isLicenseDefined(license) || isLevelDefined(level)) {
         return (
           "Licence ou niveau défini pour " + first_name + " " + last_name +
-          " mais pas de date de naissance fournie ou date de naissance mal formatée (JJ/MM/AAAA)\n" +
+          " mais pas de date de naissance fournie ou date de naissance mal formatée (JJ/MM/AAAA)" +
           " ou année de naissance fantaisiste.");
       }
       continue
@@ -1868,64 +1878,66 @@ function validateInvoice() {
   }
   
   var validation_error = ''
-  // Validate all the entered family members. This will make sure that
-  // a non comp license is matched by a level, something that the validation
-  // of non comp subscription depends on.
-  validation_error = validateFamilyMembers();
-  if (validation_error) {
-    displayErrorPanel(validation_error);
-    return {};
-  }
-  // Now performing the optional/advanced validations... 
-  //
-  // 1- Validate the licenses requested by this family
-  if (advanced_validation.AdvancedVerificationFamilyLicenses()) {
-    validation_error = validateLicenses();
+  // Validation phase that can be entirely skipped if #yolo
+  if (! yolo()) {
+    // Validate all the entered family members. This will make sure that
+    // a non comp license is matched by a level, something that the validation
+    // of non comp subscription depends on.
+    validation_error = validateFamilyMembers();
     if (validation_error) {
       displayErrorPanel(validation_error);
       return {};
     }
-  }
 
-  // Validate the competitor subscriptions
-  validation_error = validateCompSubscriptions()
-  if (validation_error) {
-    if (! displayYesNoPanel(augmentEscapeHatch(validation_error))) {
-      return {};
-    }      
-  }
+    // Now performing the optional/advanced validations.
+    if (advanced_validation.AdvancedVerificationFamilyLicenses()) {
+      validation_error = validateLicenses();
+      if (validation_error) {
+        displayErrorPanel(validation_error);
+        return {};
+      }
+    }
 
-  // Validate de competitor ski passes
-  validation_error = validateCompSkiPasses()
-  if (validation_error) {
-    if (! displayYesNoPanel(augmentEscapeHatch(validation_error))) {
-      return {};
-    }      
-  }
-
-  // 2- Verify the subscriptions. The operator may choose to continue
-  //    as some situation are un-verifiable automatically.
-  if (advanced_validation.AdvancedVerificationSubscription()) {
-    // Validate requested licenses and subscriptions
-    validation_error = validateNonCompSubscriptions()
+    // Validate the competitor subscriptions
+    validation_error = validateCompSubscriptions()
     if (validation_error) {
       if (! displayYesNoPanel(augmentEscapeHatch(validation_error))) {
         return {};
+      }      
+    }
+
+    // Validate de competitor ski passes
+    validation_error = validateCompSkiPasses()
+    if (validation_error) {
+      if (! displayYesNoPanel(augmentEscapeHatch(validation_error))) {
+        return {};
+      }      
+    }
+
+    // 2- Verify the subscriptions. The operator may choose to continue
+    //    as some situation are un-verifiable automatically.
+    if (advanced_validation.AdvancedVerificationSubscription()) {
+      // Validate requested licenses and subscriptions
+      validation_error = validateNonCompSubscriptions()
+      if (validation_error) {
+        if (! displayYesNoPanel(augmentEscapeHatch(validation_error))) {
+          return {};
+        }
+      }
+    }
+
+    // 3- Verify the ski pass purchases. The operator may choose to continue
+    //    as some situation are un-verifiable automatically.
+    if (advanced_validation.AdvancedVerificationSkipass()) {
+      validation_error = validateNonCompSkiPasses()
+      if (validation_error) {
+        if (! displayYesNoPanel(augmentEscapeHatch(validation_error))) {
+          return {};
+        }    
       }
     }
   }
 
-  // 3- Verify the ski pass purchases. The operator may choose to continue
-  //    as some situation are un-verifiable automatically.
-  if (advanced_validation.AdvancedVerificationSkipass()) {
-    validation_error = validateNonCompSkiPasses()
-    if (validation_error) {
-      if (! displayYesNoPanel(augmentEscapeHatch(validation_error))) {
-        return {};
-      }    
-    }
-  }
-  
   // Validate the parental consent.
   updateStatusBar("✔ Validation autorisation/questionaire...", "grey", add=true)
   var consent = validateAndReturnDropDownValue(
