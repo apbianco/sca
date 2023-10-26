@@ -1263,7 +1263,7 @@ function validateLicenses() {
     }
     // What you attributed must match what you're purchasing...
     if (license_map[index].PurchasedLicenseAmount() != license_map[index].AttributedLicenseCount()) {
-      return returnError(
+      return (
         "Le nombre de licence(s) '" + index + "' attribuée(s) (au nombre de " +
         license_map[index].AttributedLicenseCount() + ")\n" +
         "ne correspond pas au nombre de licence(s) achetée(s) (au nombre de " +
@@ -1878,8 +1878,9 @@ function validateInvoice() {
   }
   
   var validation_error = ''
+  var is_yolo = yolo()
   // Validation phase that can be entirely skipped if #yolo
-  if (! yolo()) {
+  if (! is_yolo) {
     // Validate all the entered family members. This will make sure that
     // a non comp license is matched by a level, something that the validation
     // of non comp subscription depends on.
@@ -1936,40 +1937,41 @@ function validateInvoice() {
         }    
       }
     }
+ 
+    // Validate the parental consent.
+    updateStatusBar("✔ Validation autorisation/questionaire...", "grey", add=true)
+    var consent = validateAndReturnDropDownValue(
+      coord_parental_consent,
+      "Vous n'avez pas renseigné la nécessitée ou non de devoir " +
+      "recevoir l'autorisation parentale.");
+    if (consent == '') {
+      return {}
+    }
+    var consent = getStringAt(coord_parental_consent);
+    if (consent == 'Non fournie') {
+      displayErrorPanel(
+        "L'autorisation parentale doit être signée aujourd'hui pour " +
+        "valider le dossier et terminer l'inscription");
+      return {};
+    }
+
+    // Validate the medical form
+    var medical_form = validateAndReturnDropDownValue(
+      coord_medical_form,
+      "Vous n'avez pas renseigné votre réponse (OUI/NON) au questionaire médicale.")
+    if (consent == '') {
+      return {}
+    }
   }
 
-  // Validate the parental consent.
-  updateStatusBar("✔ Validation autorisation/questionaire...", "grey", add=true)
-  var consent = validateAndReturnDropDownValue(
-    coord_parental_consent,
-    "Vous n'avez pas renseigné la nécessitée ou non de devoir " +
-    "recevoir l'autorisation parentale.");
-  if (consent == '') {
-    return {}
-  }
-  var consent = getStringAt(coord_parental_consent);
-  if (consent == 'Non fournie') {
-    displayErrorPanel(
-      "L'autorisation parentale doit être signée aujourd'hui pour " +
-      "valider le dossier et terminer l'inscription");
-    return {};
-  }
-
-  // Validate the medical form
-  var medical_form = validateAndReturnDropDownValue(
-    coord_medical_form,
-    "Vous n'avez pas renseigné votre réponse (OUI/NON) au questionaire médicale.")
-  if (consent == '') {
-    return {}
-  }
-  
   // Update the timestamp. 
   updateStatusBar("✔ Mise à jour de la version...", "grey", add=true)
   setStringAt(coord_timestamp,
               'Dernière MAJ le ' +
               Utilities.formatDate(new Date(),
                                    Session.getScriptTimeZone(),
-                                   "dd-MM-YY, HH:mm"), 'black')
+                                   "dd-MM-YY, HH:mm") + (is_yolo ? "\n#yolo" : ""), 'black')
+
 
   return {'civility': civility,
           'family_name': family_name,
