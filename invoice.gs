@@ -362,8 +362,15 @@ function createNonCompSubscriptionMap(sheet) {
   return to_return
 }
 
+// This defines a level: the level is undetermined
 function getNoLevelString() {
   return 'Non déterminé'
+}
+
+// This DOES NOT define a level. It's equivalent to not
+// setting anything.
+function getNALevelString() {
+  return 'Pas Concerné'
 }
 
 // This is almost useless - a syntatic sugar
@@ -371,10 +378,11 @@ function getLevelAt(coord) {
   return getStringAt(coord)
 }
 
-// NOTE: A level is not defined when it has not been entered.
+// NOTE: A level is not defined when it has not been entered or
+// when it has been set to getNALevelString()
 // NOTABLY: a level of getNotLevelString() value *DEFINES* a level.
 function isLevelNotDefined(level) {
-  return level == ''
+  return level == '' || level == getNALevelString()
 }
 
 function getRiderLevelString() {
