@@ -437,6 +437,13 @@ function createNewFamilySheetFromOld(sheet, family_name) {
         normalized_last_name = Normalize(source_cell.getValue().toString().trim().toUpperCase(), true)
         dest_cell.setValue(normalized_last_name);
       }
+      // Fourth column is city of birth. Copy it only of the license is an
+      // executive license.
+      else if (column == 4) {
+        if (old_license_range.getCell(row, 1).getValue().toString() == 'CN Dirigeant') {
+          dest_cell.setValue(source_cell.getValue().toString())
+        }
+      }
       // Fifth column is sex conversion
       // FIXME: 2023/2024: I think this is no longer needed
       else if (column == 5) {
@@ -469,6 +476,11 @@ function createNewFamilySheetFromOld(sheet, family_name) {
   var all_members_range = new_sheet.getRange(ranges_current_season['All']);
   all_members_range.sort([{column: all_members_range.getColumn()+1},
                          {column: all_members_range.getColumn()+2, ascending: false}])
+}
+
+function TESTGenerateEntry() {
+  var sheet = SpreadsheetApp.getActiveSheet();
+  createNewFamilySheetFromOld(sheet, 'BADOUARD');
 }
 
 // This call back is attached to the button used to create a new entry.
