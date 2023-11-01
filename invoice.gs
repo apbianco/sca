@@ -486,7 +486,7 @@ function createSkipassMap(sheet) {
     'Collet Adulte': new SkiPass(
       'Collet Adulte',
       sheet.getRange(27, 5),
-      (dob) => {return isAdultByYoB(dob) && ageVerificationStrictlyYounger(dob, 70)},
+      (dob) => {return ageVerificationBornBeforeDateIncluded(dob, new Date("December 31, 2004")) && ageVerificationStrictlyYounger(dob, 70)},
       "Adulte non étudiant de moins de 70 ans"),
     'Collet Étudiant': new SkiPass(
       'Collet Étudiant',
@@ -522,7 +522,7 @@ function createSkipassMap(sheet) {
     '3 Domaines Adulte': new SkiPass(
       '3 Domaines Adulte',
       sheet.getRange(35, 5),
-      (dob) => {return isAdultByYoB(dob) && ageVerificationStrictlyYounger(dob, 70)},
+      (dob) => {return ageVerificationBornBeforeDateIncluded(dob, new Date("December 31, 2004")) && ageVerificationStrictlyYounger(dob, 70)},
       "Adulte non étudiant de moins de 70 ans"),
     '3 Domaines Étudiant': new SkiPass(
       '3 Domaines Étudiant',
@@ -956,8 +956,13 @@ function displayErrorPanel(message) {
   ui.alert("❌ Erreur:\n\n" + message, ui.ButtonSet.OK);
 }
 
-// Display a OK/Cancel panel, returns true if OK was pressed.
+// Display a OK/Cancel panel, returns true if OK was pressed. If the message
+// carries the value indicating it's been previously answered with No, return
+// the value associated to NO.
 function displayYesNoPanel(message) {
+  if (message == 'BUTTON_NO') {
+    return false
+  }
   var ui = SpreadsheetApp.getUi();
   var response = ui.alert("⚠️ Attention:\n\n" +
       message, ui.ButtonSet.OK_CANCEL);
@@ -1532,6 +1537,7 @@ function validateNonCompSkiPasses() {
       return (purchased_amount + ' forfait ' + skipass_name + 
               ' acheté n\'est pas un nombre valide')
     }
+    // Family size MUST exclude students
     if (! skipass.IsStudent() && purchased_amount > 0) {
       if (skipass.IsAdult()) {
         number_of_non_student_adults += purchased_amount
@@ -1555,16 +1561,24 @@ function validateNonCompSkiPasses() {
     }
     var zone1_count = ski_passes_map[zone1].AttributedSkiPassCount()
     var zone2_count = ski_passes_map[zone2].AttributedSkiPassCount()
+    // zone1_count should be exactly zone2_count. Verify this here.    
     if (zone1_count != zone2_count) {
       return ('Error interne: ' + zone1 + '=' + zone1_count + ', ' +
               zone2 + '=' + zone2_count)
     }
     var total_purchased = (ski_passes_map[zone1].PurchasedSkiPassAmount() + 
                            ski_passes_map[zone2].PurchasedSkiPassAmount())
+    // There's a discrepancy between the number of qualified person in a ski pass 
+    // DoB validity range and the amount purchased. Offer here to continue the verification
+    // or return indicating that the entered value must be checked. This can happen for
+    // instance when one adult purchases a license but doesn't purchase a ski pass...
     if (zone1_count != total_purchased) {
-      return (total_purchased + ' forfait(s) ' + zone1 + '/' + zone2 +
-              ' acheté(s) pour ' + zone1_count + ' personne(s) dans cette ' +
-              'tranche d\'âge (' + ski_passes_map[zone1].ValidDoBRangeMessage() + ")")
+      var message = (total_purchased + ' forfait(s) ' + zone1 + '/' + zone2 +
+                     ' acheté(s) pour ' + zone1_count + ' personne(s) dans cette ' +
+                     'tranche d\'âge (' + ski_passes_map[zone1].ValidDoBRangeMessage() + ")")
+      if (! displayYesNoPanel(augmentEscapeHatch(message))) {
+        return 'BUTTON_NO'
+      }
     }
   }
 
@@ -1792,14 +1806,21 @@ function updateProblematicRegistration(link, context) {
 // Top level invoice validation
 ///////////////////////////////////////////////////////////////////////////////
 
+function augmentEscapeHatch(source) {
+  // If the source indicates the error has already acknowledged as one, return
+  // the same error. Otherwise, wrap it around a message.
+  if (source == 'BUTTON_NO') {
+    return source
+  }
+  return source + ("\n\nChoisissez 'OK' pour continuer à générer la facture.\n" +
+                  "Choisissez 'Annuler' pour ne pas générer la facture et " +
+                  "vérifier les valeurs saisies...");
+}
+
 // Validate the invoice and return a dictionary of values
 // to use during invoice generation.
 function validateInvoice() {
-  function augmentEscapeHatch(source) {
-    return source + ("\n\nChoisissez 'OK' pour continuer à générer la facture.\n" +
-                    "Choisissez 'Annuler' pour ne pas générer la facture et " +
-                    "vérifier les valeurs saisies...");
-  }
+
   // Reformat the phone numbers  
   formatPhoneNumbers();
 
