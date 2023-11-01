@@ -520,17 +520,30 @@ function GenerateEntry() {
   var already_exists = checkAlreadyExists(db_folder, family_name);
   if (already_exists[0] != '') {
     var sheet_id = getSheetFromFolderID(already_exists[1], already_exists[0]);
-    var extra_text = '';
     if (sheet_id) {
-      extra_text = ("\n\nVous pouvez directement l'ouvrir en copiant le lien ci-dessous " +
-                    "et en le collant dans la barre de navigation du navitateur web:\n\n" +
-                    "https://docs.google.com/spreadsheets/d/" + sheet_id + "/edit#gid=0");
+      var message = (
+        "⚠️ Un dossier d'inscription existe déjà sous cette dénomination: " +
+        already_exists[0] + "\n\nIl va vous être proposé à l'ouverture.\n\nCependant, " +
+        "vérifiez bien que vous voulez reprendre cette facture et non en créer " +
+        "une autre. Le cas échéant, adapter le nom de famille pour qu'il ne " +
+        "corresponde pas à une famille déjà dans référencée.")
+      var ui = SpreadsheetApp.getUi()
+      ui.alert(message, ui.ButtonSet.OK)
+      var link = createHyperLinkFromDocId(sheet_id, "Ouvrir " + already_exists[0]);
+      var x = coord_download_link[0];
+      var y = coord_download_link[1];
+      sheet.getRange(x, y).setFormula(link);
+      clearRange(sheet, coord_family_name);
+      setRangeTextColor(sheet, coord_status_info,
+  		    "✅ Le dossier existe déjà. Cliquez sur le lien en bas de cette page " +
+  		    "pour charger la facture.", "orange");
+      return
     }
     displayErrorPannel(
       sheet,
       "⚠️ Un dossier d'inscription existe déjà sous cette dénomination: " +
-      already_exists[0] + extra_text);
-    return;
+      already_exists[0] + " mais n'a pu être localisé");
+      return;
   }
   
   // We have a valid family name, indicate that we're preparing the
