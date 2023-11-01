@@ -542,7 +542,7 @@ function createSkipassMap(sheet) {
     '3 Domaines Bambin': new SkiPass(
       '3 Domaines Bambin',
       sheet.getRange(39, 5),
-      (dob) => {return ageVerificationBornAfterDateIncluded(dob, new Date("December 31, 2017"))},
+      (dob) => {return ageVerificationBornAfterDateIncluded(dob, new Date("January 1, 2018"))},
       'A partir du 1er Janvier 2018 et après'),
   }
   validateClassInstancesMap(to_return, 'skipass_map')
