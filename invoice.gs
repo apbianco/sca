@@ -732,7 +732,10 @@ function createPDF(sheet) {
 function generatePDF() {
   function setResetRebate(coord, color) {
     var row = coord[0]
-    var column = coord[1]
+    // Do not change the color for the number - it shouldn't be there
+    // anyways (doing so would write back a string that would invalidate
+    // formulas that dependend on the value of that cell)
+    var column = coord[1] - 1
     while(column > 0) {
       setStringAt([row, column], getStringAt([row, column]), color)
       column -= 1
@@ -754,7 +757,7 @@ function generatePDF() {
   var pdf_filename = spreadsheet.getName() + '-' + pdf_number + '.pdf';
   var file = savePDF(blob, pdf_filename)
 
-  // Always for the rebate area to be back in black 🤘.
+  // Always for the rebate/charge area to be back in black 🤘.
   setResetRebate(coord_rebate, "black")
   setResetRebate(coord_charge, "black")
 
@@ -2223,7 +2226,7 @@ function generatePDFAndMaybeSendEmail(send_email, just_the_invoice) {
   updateStatusBar(final_status[0], final_status[1])
 
   displayPDFLink(pdf_file)
-  SpreadsheetApp.flush()
+  SpreadsheetApp.flush()  
 }
 
 ///////////////////////////////////////////////////////////////////////////////
