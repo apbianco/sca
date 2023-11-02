@@ -1088,7 +1088,7 @@ function VALIDATION_TEST() {
 // When this succeeds, the family members should be defined in such a way that
 // other validations are easier to implement.
 function validateFamilyMembers() {
-  updateStatusBar("✔ Validation des données de la famille...", "grey", add=true)
+  updateStatusBar("Validation des données de la famille...", "grey", add=true)
   // Get a licene map so that we can immediately verify the age picked
   // for a license is correct.
   var license_map = createLicensesMap(SpreadsheetApp.getActiveSheet())
@@ -1207,7 +1207,7 @@ function validateFamilyMembers() {
 
 // Cross check the attributed licenses with the ones selected for payment
 function validateLicenses() {
-  updateStatusBar("✔ Validation du choix des licenses...", "grey", add=true)
+  updateStatusBar("Validation du choix des licenses...", "grey", add=true)
   var license_map = createLicensesMap(SpreadsheetApp.getActiveSheet())
   // Collect the attributed licenses
   for (var index in coords_identity_rows) {
@@ -1270,7 +1270,7 @@ function validateLicenses() {
 }
 
 function validateCompSubscriptions() {
-  updateStatusBar("✔ Validation des adhésions compétition...", "grey", add=true)
+  updateStatusBar("Validation des adhésions compétition...", "grey", add=true)
   var comp_subscription_map = createCompSubscriptionMap(SpreadsheetApp.getActiveSheet())
   for (var index in coords_identity_rows) {
     var row = coords_identity_rows[index];
@@ -1359,7 +1359,7 @@ function validateCompSubscriptions() {
 }
 
 function validateCompSkiPasses() {
-  updateStatusBar("✔ Validation des forfaits compétition...", "grey", add=true)
+  updateStatusBar("Validation des forfaits compétition...", "grey", add=true)
   var ski_passes_map = createSkipassMap(SpreadsheetApp.getActiveSheet())
   for (var index in coords_identity_rows) {
     var row = coords_identity_rows[index];
@@ -1416,7 +1416,7 @@ function validateNonCompSubscriptions() {
              subscription_map[getRiderLevelString()].PurchasedSubscriptionAmount() > 0))
   }
 
-  updateStatusBar("✔ Validation des adhésions loisir...", "grey", add=true)
+  updateStatusBar("Validation des adhésions loisir...", "grey", add=true)
   var subscription_map = createNonCompSubscriptionMap(SpreadsheetApp.getActiveSheet())
 
   // Update the number of noncomp subscription registered
@@ -1501,7 +1501,7 @@ function validateNonCompSubscriptions() {
 }
 
 function validateNonCompSkiPasses() {
-  updateStatusBar("✔ Validation des forfaits loisir...", "grey", add=true)
+  updateStatusBar("Validation des forfaits loisir...", "grey", add=true)
   // Always clear the rebate section before eventually recomputing it at the end
   clearRange(coord_rebate_family_of_4_count)
   clearRange(coord_rebate_family_of_4_amount)
@@ -1851,7 +1851,7 @@ function validateInvoice() {
     return {};
   }
   
-  updateStatusBar("✔ Validation des coordonées...", "grey")
+  updateStatusBar("Validation des coordonées...", "grey")
   // Validation: proper civility
   var civility = validateAndReturnDropDownValue(
     coord_family_civility,
@@ -1952,7 +1952,7 @@ function validateInvoice() {
     }
  
     // Validate the parental consent.
-    updateStatusBar("✔ Validation autorisation/questionaire...", "grey", add=true)
+    updateStatusBar("Validation autorisation/questionaire...", "grey", add=true)
     var consent = validateAndReturnDropDownValue(
       coord_parental_consent,
       "Vous n'avez pas renseigné la nécessitée ou non de devoir " +
@@ -1978,7 +1978,7 @@ function validateInvoice() {
   }
 
   // Update the timestamp. 
-  updateStatusBar("✔ Mise à jour de la version...", "grey", add=true)
+  updateStatusBar("Mise à jour de la version...", "grey", add=true)
   setStringAt(coord_timestamp,
               'Dernière MAJ le ' +
               Utilities.formatDate(new Date(),
@@ -2043,7 +2043,7 @@ function maybeEmailLicenseSCA(invoice) {
 function updateStatusBar(message, color, add=false) {
   var content = message
   if (add) {
-    message = getStringAt(coord_status) + '\n' + message
+    message = getStringAt(coord_status) + ' ✔\n' + message
     var messages = message.split("\n")
     if (messages.length > 3) {
       messages.splice(0, 1)
