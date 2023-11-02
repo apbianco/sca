@@ -120,6 +120,7 @@ var coord_family_phone2 =   [10, 5]
 //   a the bottom of the invoice.
 // 
 var coord_rebate =           [76, 4]
+var coord_charge =           [77, 4]
 var coord_personal_message = [85, 3]
 var coord_timestamp =        [86, 2]
 var coord_version =          [86, 3]
@@ -746,12 +747,16 @@ function generatePDF() {
   if (getNumberAt(coord_rebate) == 0) {
     setResetRebate(coord_rebate, "white")
   }
+  if (getNumberAt(coord_charge) == 0) {
+    setResetRebate(coord_charge, "white")
+  }
   var blob = createPDF(spreadsheet) 
   var pdf_filename = spreadsheet.getName() + '-' + pdf_number + '.pdf';
   var file = savePDF(blob, pdf_filename)
 
   // Always for the rebate area to be back in black 🤘.
   setResetRebate(coord_rebate, "black")
+  setResetRebate(coord_charge, "black")
 
   var spreadsheet_folder_id =
     DriveApp.getFolderById(spreadsheet.getId()).getParents().next().getId()
@@ -2218,7 +2223,7 @@ function generatePDFAndMaybeSendEmail(send_email, just_the_invoice) {
   updateStatusBar(final_status[0], final_status[1])
 
   displayPDFLink(pdf_file)
-  SpreadsheetApp.flush()  
+  SpreadsheetApp.flush()
 }
 
 ///////////////////////////////////////////////////////////////////////////////
