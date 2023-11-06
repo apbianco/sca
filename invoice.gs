@@ -1359,6 +1359,8 @@ function validateCompSubscriptions() {
 }
 
 function validateCompSkiPasses() {
+  // FIXME: This method can be removed I think. Don't forget to remove the documentation above.
+  return
   updateStatusBar("Validation des forfaits compétition...", "grey", add=true)
   var ski_passes_map = createSkipassMap(SpreadsheetApp.getActiveSheet())
   for (var index in coords_identity_rows) {
@@ -1519,10 +1521,6 @@ function validateNonCompSkiPasses() {
       continue
     }
     var selected_license = getLicenseAt([row, coord_license_column]);
-    // Skip anything that looks like a competitor
-    if (isLicenseComp(selected_license)) {
-      continue
-    }
     // Increment the ski pass count that validates for a DoB. This will tell us
     // how many ski passes suitable for a non competitor we can expect to be
     // purchased.
