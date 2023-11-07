@@ -1,3 +1,5 @@
+// Version 2023-11-07 BAS
+//
 // Code implementing the trigger for the 2023/2024 seasons
 //
 // The goal of the trigger is to generate a new fresh sheet from
