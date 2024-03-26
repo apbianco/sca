@@ -1,3 +1,23 @@
+# Prend en entre un fichier inscription et recrache en sortie un fichier
+# inscription avec la colone Equipe qui prend la valeur Club
+#
+# Par exemple de:
+#
+# | Nom  | Prenom  | S | A    | Cat | Club         | Equipe       |
+# | BUGER| MARIANA | F | 2006 | U16 | GUC GRENOBLE |              |
+#
+# Vers:
+#
+# | Nom  | Prenom  | S | A    | Cat | Club         | Equipe       |
+# | BUGER| MARIANA | F | 2006 | U16 | GUC GRENOBLE | GUG GRENOBLE |
+#
+# Utilisation: A partir de l'Invite de Commandes:
+#
+# python3 teams.py sos101.sav
+#
+# Et la moulinette sortira equipe.sav qu'il suffira d'importer dans
+# skiFFS.
+
 import sys
 
 def ReadRace(filename):
