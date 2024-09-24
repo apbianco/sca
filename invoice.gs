@@ -89,23 +89,24 @@ var season = "2024/2025"
 //
 var db_folder = '1GmOdaWlEwH1V9xGx3pTp1L3Z4zXQdjjn'
 //
-// -- Continue here.
 //
 // Level aggregation trix to update when a new entry is added
 //
-var license_trix = '13akc77rrPaI6g6mNDr13FrsXjkStShviTnBst78xSVY'
+var license_trix = '1tR3HvdpXWwjziRziBkeVxr4CIp10rHWyfTosv20dG_I'
 //
 // - ID of attachements to be sent with the invoice - some may change
 //   from one season to an other when they are refreshed.
 //
 // PDF content to insert in a registration bundle.
 //
-var parental_consent_pdf = '1y68LVW5iZBSlRTEOIqM5umJFFi6o3ZCP'
-var rules_pdf = '10zOpUgU0gt8qYpsLBJoJQT5RyBCdeAm1'
-var parents_note_pdf = '1RewmJD4EvDJYUW0DXN0o36LTAA7r6n6-'
-var information_leaflet_pdf = '1jpclCIoqu0eNh8fhwY0kklCNzH2d5EYO'
+var parental_consent_pdf = '1hWpKniwYxUpNogXjBuvXgWleG1T8NbtY'
+var rules_pdf = '1U-eeiEFelWN4aHMwjHJ9IQRH3h2mZJoW'
+var parents_note_pdf = '1fVb5J3o8YikPcn4DDAplt9X-XtP9QdYS'
+var information_leaflet_pdf = '1zxP502NjvVo0AKFt_6FCxs1lQeJnNxmV'
 // The page in information_leaflet_pdf parents should sign
 var information_leaflet_page = 16
+
+// 24/10/2024: Continue configuration here.
 
 // Spreadsheet parameters (row, columns, etc...). Adjust as necessary
 // when the master invoice is modified.
