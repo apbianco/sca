@@ -1,11 +1,11 @@
-// Version: 2023-11-07 BAS
+// Version: 2024-10-24 BAS
 // This validates the invoice sheet (more could be done BTW) and
 // sends an email with the required attached pieces.
 
 // Dev or prod? "dev" sends all email to email_dev. Prod is the
 // real thing: family will receive invoices, and so will email_license,
 // unless the trigger in use is the TEST trigger.
-dev_or_prod = "prod"
+dev_or_prod = "dev"
 
 // Enable/disable new features - first entry set to false
 // requires all following entries set to false. Note that
@@ -34,8 +34,11 @@ class AdvancedFeatures {
   }
 
   Validate() {
+    // !b!c
     var not_b_not_c = ! this.verification_subscriptions && ! this.verification_skipass
+    // ab
     var ab = this.verification_family_licenses && this.verification_subscriptions
+    // !b!c + ab
     var result = not_b_not_c || ab
     if (!result) {
       displayErrorPanel(
@@ -80,22 +83,22 @@ advanced_validation.SetAdvancedVerificationSkipass()
 // Seasonal parameters - change for each season
 // 
 // - Name of the season
-var season = "2023/2024"
+var season = "2024/2025"
 //
 // - Storage for the current season's database.
 //
-var db_folder = '1vTYVaHHs1oRvdbQ3mvmYfUvYGipXPaf3'
+var db_folder = '1GmOdaWlEwH1V9xGx3pTp1L3Z4zXQdjjn'
 //
-// - ID of attachements to be sent with the invoice - some may change
-//   from one season to an other when they are refreshed.
+// -- Continue here.
 //
 // Level aggregation trix to update when a new entry is added
 //
 var license_trix = '13akc77rrPaI6g6mNDr13FrsXjkStShviTnBst78xSVY'
 //
+// - ID of attachements to be sent with the invoice - some may change
+//   from one season to an other when they are refreshed.
+//
 // PDF content to insert in a registration bundle.
-// TODO: Might need to change for 2023/2024 if the content changes
-//       after validation by the folks in charge.
 //
 var parental_consent_pdf = '1y68LVW5iZBSlRTEOIqM5umJFFi6o3ZCP'
 var rules_pdf = '10zOpUgU0gt8qYpsLBJoJQT5RyBCdeAm1'
