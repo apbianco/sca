@@ -106,8 +106,6 @@ var information_leaflet_pdf = '1zxP502NjvVo0AKFt_6FCxs1lQeJnNxmV'
 // The page in information_leaflet_pdf parents should sign
 var information_leaflet_page = 16
 
-// 24/10/2024: Continue configuration here.
-
 // Spreadsheet parameters (row, columns, etc...). Adjust as necessary
 // when the master invoice is modified.
 // 
@@ -240,15 +238,15 @@ function createLicensesMap(sheet) {
     'CN Jeune (Loisir)': new License(
       getNonCompJuniorLicenseString(),
       sheet.getRange(41, 5),
-      // Born after 2009 is born on 1/1/2009 or later.
-      (dob) => {return ageVerificationBornAfterDateIncluded(dob, new Date("January 1, 2009"))},
-      "être né en 2009 et après"),
+      // Born after 2010 is born on 1/1/2010 or later.
+      (dob) => {return ageVerificationBornAfterDateIncluded(dob, new Date("January 1, 2010"))},
+      "être né en 2010 et après"),
     'CN Adulte (Loisir)': new License(
       getNonCompAdultLicenseString(),
       sheet.getRange(42, 5),
-      // Born on 2008 and before means 12/1/2008 or before.
-      (dob) => {return ageVerificationBornBeforeDateIncluded(dob, new Date("December 31, 2008"))},
-      "être né en 2008 et avant"),
+      // Born on 2009 and before means 12/1/2009 or before.
+      (dob) => {return ageVerificationBornBeforeDateIncluded(dob, new Date("December 31, 2009"))},
+      "être né en 2009 et avant"),
     'CN Famille (Loisir)': new License(
       getNonCompFamilyLicenseString(),
       sheet.getRange(43, 5),
@@ -262,13 +260,13 @@ function createLicensesMap(sheet) {
     'CN Jeune (Compétition)': new License(
       getCompJuniorLicenseString(),
       sheet.getRange(51, 5),
-      (dob) => {return ageVerificationBornAfterDateIncluded(dob, new Date("January 1, 2009"))},
-      "être né en 2009 et après"),
+      (dob) => {return ageVerificationBornAfterDateIncluded(dob, new Date("January 1, 2010"))},
+      "être né en 2010 et après"),
     'CN Adulte (Compétition)': new License(
       getCompAdultLicenseString(),
       sheet.getRange(52, 5),
-      (dob) => {return ageVerificationBornBeforeDateIncluded(dob, new Date("December 31, 2008"))},
-      "être né 2008 et avant"),
+      (dob) => {return ageVerificationBornBeforeDateIncluded(dob, new Date("December 31, 2009"))},
+      "être né 2009 et avant"),
   }
   validateClassInstancesMap(to_return, 'license_map')
   return to_return
@@ -491,28 +489,28 @@ function createSkipassMap(sheet) {
     'Collet Adulte': new SkiPass(
       'Collet Adulte',
       sheet.getRange(27, 5),
-      (dob) => {return ageVerificationBornBeforeDateIncluded(dob, new Date("December 31, 2004")) && ageVerificationStrictlyYounger(dob, 70)},
+      (dob) => {return ageVerificationBornBeforeDateIncluded(dob, new Date("December 31, 2005")) && ageVerificationStrictlyYounger(dob, 70)},
       "Adulte non étudiant de moins de 70 ans"),
     'Collet Étudiant': new SkiPass(
       'Collet Étudiant',
       sheet.getRange(28, 5),
-      (dob) => {return ageVerificationBornBetweenDatesIncluded(dob, new Date("January 1, 1993"), new Date("December 31, 2004"))},
-      '1er janvier 1993 et le 31 décembre 2004'),
+      (dob) => {return ageVerificationBornBetweenDatesIncluded(dob, new Date("January 1, 1994"), new Date("December 31, 2005"))},
+      '1er janvier 1994 et le 31 décembre 2005'),
     'Collet Junior': new SkiPass(
       'Collet Junior',
       sheet.getRange(29, 5),
-      (dob) => {return ageVerificationBornBetweenDatesIncluded(dob, new Date("January 1, 2005"), new Date("December 31, 2012"))},
-      '1er janvier 2005 et le 31 décembre 2012'),
+      (dob) => {return ageVerificationBornBetweenDatesIncluded(dob, new Date("January 1, 2006"), new Date("December 31, 2013"))},
+      '1er janvier 2006 et le 31 décembre 2013'),
     'Collet Enfant': new SkiPass(
       'Collet Enfant',
       sheet.getRange(30, 5),
-      (dob) => {return ageVerificationBornBetweenDatesIncluded(dob, new Date("January 1, 2013"), new Date("December 31, 2017"))},
-      "1er janvier 2013 et le 31 décembre 2017"),
+      (dob) => {return ageVerificationBornBetweenDatesIncluded(dob, new Date("January 1, 2014"), new Date("December 31, 2018"))},
+      "1er janvier 2014 et le 31 décembre 2018"),
     'Collet Bambin': new SkiPass(
       'Collet Bambin',
       sheet.getRange(31, 5),
-      (dob) => {return ageVerificationBornAfterDateIncluded(dob, new Date("January 1, 2018"))},
-      'A partir du 1er Janvier 2018 et après'),
+      (dob) => {return ageVerificationBornAfterDateIncluded(dob, new Date("January 1, 2019"))},
+      'A partir du 1er Janvier 2019 et après'),
 
     '3 Domaines Senior': new SkiPass(
       '3 Domaines Senior',
@@ -527,28 +525,28 @@ function createSkipassMap(sheet) {
     '3 Domaines Adulte': new SkiPass(
       '3 Domaines Adulte',
       sheet.getRange(35, 5),
-      (dob) => {return ageVerificationBornBeforeDateIncluded(dob, new Date("December 31, 2004")) && ageVerificationStrictlyYounger(dob, 70)},
+      (dob) => {return ageVerificationBornBeforeDateIncluded(dob, new Date("December 31, 2005")) && ageVerificationStrictlyYounger(dob, 70)},
       "Adulte non étudiant de moins de 70 ans"),
     '3 Domaines Étudiant': new SkiPass(
       '3 Domaines Étudiant',
       sheet.getRange(36, 5),
-      (dob) => {return ageVerificationBornBetweenDatesIncluded(dob, new Date("January 1, 1993"), new Date("December 31, 2004"))},
-      '1er janvier 1993 et le 31 décembre 2004'),
+      (dob) => {return ageVerificationBornBetweenDatesIncluded(dob, new Date("January 1, 1994"), new Date("December 31, 2005"))},
+      '1er janvier 1994 et le 31 décembre 2005'),
     '3 Domaines Junior': new SkiPass(
       '3 Domaines Junior',
       sheet.getRange(37, 5),
-      (dob) => {return ageVerificationBornBetweenDatesIncluded(dob, new Date("January 1, 2005"), new Date("December 31, 2012"))},
-      '1er janvier 2005 et le 31 décembre 2012'),
+      (dob) => {return ageVerificationBornBetweenDatesIncluded(dob, new Date("January 1, 2006"), new Date("December 31, 2013"))},
+      '1er janvier 2006 et le 31 décembre 2013'),
     '3 Domaines Enfant': new SkiPass(
       '3 Domaines Enfant',
       sheet.getRange(38, 5),
-      (dob) => {return ageVerificationBornBetweenDatesIncluded(dob, new Date("January 1, 2013"), new Date("December 31, 2017"))},
-      "1er janvier 2013 et le 31 décembre 2017"),
+      (dob) => {return ageVerificationBornBetweenDatesIncluded(dob, new Date("January 1, 2014"), new Date("December 31, 2018"))},
+      "1er janvier 2014 et le 31 décembre 2018"),
     '3 Domaines Bambin': new SkiPass(
       '3 Domaines Bambin',
       sheet.getRange(39, 5),
-      (dob) => {return ageVerificationBornAfterDateIncluded(dob, new Date("January 1, 2018"))},
-      'A partir du 1er Janvier 2018 et après'),
+      (dob) => {return ageVerificationBornAfterDateIncluded(dob, new Date("January 1, 2019"))},
+      'A partir du 1er Janvier 2019 et après'),
   }
   validateClassInstancesMap(to_return, 'skipass_map')
   return to_return
