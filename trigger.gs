@@ -1,6 +1,6 @@
-// Version 2023-11-07 BAS
+// Version 2024-09-28 Comp
 //
-// Code implementing the trigger for the 2023/2024 seasons
+// Code implementing the trigger for the 2024/2025 seasons
 //
 // The goal of the trigger is to generate a new fresh sheet from
 // template, performing some minimal validation of the input.
@@ -24,31 +24,29 @@
 //
 // The ID of the empty invoice to use to create content. Adjust
 // this ID for the new season
-var empty_invoice = '1iHyV80rdaLrX18-TUJmitFmUnWV8TmEWTNgNtMaybTc';
+var empty_invoice = '1JNaXFDwBFlznag23TNPJzbAuFiJyHEVHCCIeFF55S10';
 
 // The spreadsheet that contains the license numbers. Possibly
 // only for the 2023/2024 season
 var license_trix = '1ljYt5unTmygEhJD0PE39kFcOuxLjFG3IEym-15YLIOk'
 
 // The DB folder for the PREVIOUS season
-var previous_db_folder = '1apITLkzOIkqCI7oIxpiKA5W_QR0EM3ey'
+var previous_db_folder = '1RdJ7L3pWDffFa9EGw--NXLcz0b6tKGfY'
 // Ranges to copy from an entry filed last season:
 // - 2023/2024: License types is a separate column to copy since its
 //   destination in the new invoice is shifted to the right to column H
 var ranges_previous_season = {
   'Civility': 'C6:G10',
-  'Members':  'B14:F19',
-  'Licenses': 'G14:G19',
+  'Members':  'B14:I19',
 };
 
 // The DB folder for the CURRENT season
-var db_folder = '1vTYVaHHs1oRvdbQ3mvmYfUvYGipXPaf3';
-// Ranges to copy to for an entry filed this season:
-// - License types is copyied in column H
+var db_folder = '1GmOdaWlEwH1V9xGx3pTp1L3Z4zXQdjjn';
+// Ranges to copy to for an entry filed this season. Seasons 2024/2025:
+// the format didn't change so a wholesale copy is possible.
 var ranges_current_season = {
   'Civility': 'C6:G10',
-  'Members':  'B14:F19',
-  'Licenses': 'H14:H19',
+  'Members':  'B14:I19',
   'All': 'B14:I19',
 };
 
