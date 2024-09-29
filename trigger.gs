@@ -28,25 +28,24 @@
 //      this ID for the new season
 var empty_invoice = '1JNaXFDwBFlznag23TNPJzbAuFiJyHEVHCCIeFF55S10';
 
-// The spreadsheet that contains the license numbers. Possibly
-// only for the 2023/2024 season
-var license_trix = '1ljYt5unTmygEhJD0PE39kFcOuxLjFG3IEym-15YLIOk'
-
 // 2.b- The DB folder for the PREVIOUS season
-var previous_db_folder = '1RdJ7L3pWDffFa9EGw--NXLcz0b6tKGfY'
+var previous_db_folder = '1vTYVaHHs1oRvdbQ3mvmYfUvYGipXPaf3'
 // 2.c- Ranges to copy from an entry filed last season:
 var ranges_previous_season = {
   'Civility': 'C6:G10',
   'Members':  'B14:I19',
+  'Licenses':  'H14:H19',
+  'All': 'B14:I19',  
 };
 
 // 2.d- The DB folder for the CURRENT season
-var db_folder = '1GmOdaWlEwH1V9xGx3pTp1L3Z4zXQdjjn';
+var db_folder = '1L0NaifkQbytc67qsM2frxKmteHtAlkED';
 // 2.e- Ranges to copy to for an entry filed this season. Seasons 2024/2025:
 //      the format didn't change so a wholesale copy is possible.
 var ranges_current_season = {
   'Civility': 'C6:G10',
   'Members':  'B14:I19',
+  'Licenses': 'H14:H19',
   'All': 'B14:I19',
 };
 
@@ -354,27 +353,20 @@ function createNewFamilySheetFromOld(sheet, family_name) {
     return;
   }
   
-  // Load the trix that contains the licenses numbers
-  var license_sheet = SpreadsheetApp.openById(license_trix).getSheetByName('FFS');
-  // Define a range to which the important license numbers will be copied
-  var new_license_value_range = new_sheet.getRange('I14:I19')
-  
   // Perform a blind copy on the first range which contains the 
   // civility values.
   var old_civility_range = old_sheet.getRange(ranges_previous_season['Civility']);
   var new_civility_range = new_sheet.getRange(ranges_current_season['Civility']);
   new_civility_range.setValues(old_civility_range.getValues());
 
-  // Perform a blind copy on the third range which contains the 
-  // license values
-  var old_license_range = old_sheet.getRange(ranges_previous_season['Licenses']);
-  var new_license_range = new_sheet.getRange(ranges_current_season['Licenses']);
-  new_license_range.setValues(old_license_range.getValues());
-
   // Perform a copy the second range which contains the family
   // information. Uppercase all family names.
   var old_member_range = old_sheet.getRange(ranges_previous_season['Members']);
   var new_member_range = new_sheet.getRange(ranges_current_season['Members']);
+
+  // Pre-compute values we're going to use in the loop: old number of rows,
+  // old number of columns and range for the old licenses.
+  var old_license_range = old_sheet.getRange(ranges_previous_season['Licenses']);
   const rows = old_member_range.getNumRows();
   const columns = old_member_range.getNumColumns();
 
@@ -414,29 +406,10 @@ function createNewFamilySheetFromOld(sheet, family_name) {
           dest_cell.setValue(source_cell.getValue().toString())
         }
       }
-      // Fifth column is sex conversion
-      // FIXME: 2023/2024: I think this is no longer needed
-      else if (column == 5) {
-        var sex = source_cell.getValue().toString();
-        if (sex.toUpperCase() == 'M') {
-          dest_cell.setValue('Garçon');
-        } else if (sex.toUpperCase() == 'F') {
-          dest_cell.setValue('Fille');
-        } else {
-          dest_cell.setValue(sex);
-        }
       // Other columns are copied as is: there's no conversion of
       // the cell to a string because it might not be a string.
-      } else {
+      else {
         dest_cell.setValue(source_cell.getValue())
-      }
-    }
-    // We're done with the column. If we have a normalized first and
-    // last name, try to find its license and insert it.
-    if (normalized_last_name && normalized_first_name) {
-      res = SearchLicense(license_sheet, normalized_first_name, normalized_last_name)
-      if (res) {
-        new_license_value_range.getCell(row, 1).setValue(res)
       }
     }
   }
