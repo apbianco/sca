@@ -30,22 +30,23 @@ var empty_invoice = '1JNaXFDwBFlznag23TNPJzbAuFiJyHEVHCCIeFF55S10';
 
 // 2.b- The DB folder for the PREVIOUS season
 var previous_db_folder = '1vTYVaHHs1oRvdbQ3mvmYfUvYGipXPaf3'
-// 2.c- Ranges to copy from an entry filed last season:
+// 2.c- Ranges to copy from/adjust an entry filed last season:
 var ranges_previous_season = {
   'Civility': 'C6:G10',
   'Members':  'B14:I19',
   'Licenses':  'H14:H19',
+  'Levels': 'G14:G19',
   'All': 'B14:I19',  
 };
 
 // 2.d- The DB folder for the CURRENT season
 var db_folder = '1L0NaifkQbytc67qsM2frxKmteHtAlkED';
-// 2.e- Ranges to copy to for an entry filed this season. Seasons 2024/2025:
-//      the format didn't change so a wholesale copy is possible.
+// 2.e- Ranges to copy from/adjust to for an entry filed this season.
 var ranges_current_season = {
   'Civility': 'C6:G10',
   'Members':  'B14:I19',
   'Licenses': 'H14:H19',
+  'Levels': 'G14:G19',
   'All': 'B14:I19',
 };
 
@@ -367,6 +368,7 @@ function createNewFamilySheetFromOld(sheet, family_name) {
   // Pre-compute values we're going to use in the loop: old number of rows,
   // old number of columns and range for the old licenses.
   var old_license_range = old_sheet.getRange(ranges_previous_season['Licenses']);
+  var old_level_range = old_sheet.getRange(ranges_previous_season['Levels'])
   const rows = old_member_range.getNumRows();
   const columns = old_member_range.getNumColumns();
 
@@ -405,6 +407,16 @@ function createNewFamilySheetFromOld(sheet, family_name) {
         if (old_license_range.getCell(row, 1).getValue().toString() == 'CN Dirigeant') {
           dest_cell.setValue(source_cell.getValue().toString())
         }
+      }
+      // Sixth column is the level obtained last year. We invalidate it and
+      // force user adjustment by adding something in front of it.
+      else if (column == 6) {
+        var new_level = old_level_range.getCell(row, 1).getValue().toString()
+        // Add a ⚠️ in front of the old value only if it's possible to do so.
+        if (new_level[0] != '⚠️' && new_level != '') {
+          new_level = '⚠️ ' + new_level
+        }
+        dest_cell.setValue(new_level)
       }
       // Other columns are copied as is: there's no conversion of
       // the cell to a string because it might not be a string.
