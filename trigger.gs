@@ -94,20 +94,24 @@ function activeRangeInCoord(r, coord) {
 // "List d'éléments":
 //
 // 1- Export last year db-YYYY-YYYY as a zip file from the Drive UI.
+//    This will download a zip file in Downloads/
 // 2- Extract the list of registered families:
 //    LC_CTYPE=C && LANG=C &&  \
-//    unzip -l ~/Desktop/db-2022-2023-20230918T195513Z-001.zip  | \
-//    egrep db- | sed 's@^.*2023/@@g'  | sort -u | sed 's/\/.*$//g' | \
+//    unzip -l ~/Downloads/db-2023-2024-20240929T141950Z-001.zip  | \
+//    egrep db- | sed 's@^.*2024/@@g'  | sort -u | sed 's/\/.*$//g' | \
 //    sed 's/.*_//g' | sort -u > /tmp/LIST
 //
-// 3- Edit LIST to remove undesirable entries
-// 4- Turn the list in to a CSV list:
+// 3- Edit /tmp/LIST to remove undesirable entries
 //
-//    clear; for i in $(cat LIST); do echo -n "$i,"; done | \
-//    sed 's/,$//g'; echo
-//
-//  5- Install in cell B2: populate the F sheet in column A and
-//     set the data validation input to be the content of =F!$A$1:$A$<LAST>
+// 4- Install in cell B2:
+//     - Start by populating the F sheet in column A. The easiest is to just
+//       cat /tmp/LIST after you've done 3- and paste the output into F!A after
+//       having cleared F!A. 
+//     - The go back to the main tab and adjust the data validation definition
+//       to be =F!$A$1:$A$<LAST> (for instance, F!$A$1:$A$155). To do this,
+//       select B2, Click Donnée > Validation des données and in the pannel that
+//       opened to the right, click on the first rule change F!$A$!...
+//     - The click on cell B2 to verify all elements are there.
   
 function setLastSeasonFamilyList(sheet) {
   return;
