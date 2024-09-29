@@ -17,38 +17,64 @@
 //    sheet.
 
 // TODO:
-//  - All FIXMEs
 //  - On click on link replaces the status with a ready message
 
-// Some globals defined here to make changes easy:
+// Things that will change from one season to the other:
 //
-// The ID of the empty invoice to use to create content. Adjust
-// this ID for the new season
+// 1- Edit the trigger to show Famille<YEAR>/<YEAR+1> in cell A2
+// 2- Change the values below
+//
+// 2.a- The ID of the empty invoice to use to create content. Adjust
+//      this ID for the new season
 var empty_invoice = '1JNaXFDwBFlznag23TNPJzbAuFiJyHEVHCCIeFF55S10';
 
 // The spreadsheet that contains the license numbers. Possibly
 // only for the 2023/2024 season
 var license_trix = '1ljYt5unTmygEhJD0PE39kFcOuxLjFG3IEym-15YLIOk'
 
-// The DB folder for the PREVIOUS season
+// 2.b- The DB folder for the PREVIOUS season
 var previous_db_folder = '1RdJ7L3pWDffFa9EGw--NXLcz0b6tKGfY'
-// Ranges to copy from an entry filed last season:
-// - 2023/2024: License types is a separate column to copy since its
-//   destination in the new invoice is shifted to the right to column H
+// 2.c- Ranges to copy from an entry filed last season:
 var ranges_previous_season = {
   'Civility': 'C6:G10',
   'Members':  'B14:I19',
 };
 
-// The DB folder for the CURRENT season
+// 2.d- The DB folder for the CURRENT season
 var db_folder = '1GmOdaWlEwH1V9xGx3pTp1L3Z4zXQdjjn';
-// Ranges to copy to for an entry filed this season. Seasons 2024/2025:
-// the format didn't change so a wholesale copy is possible.
+// 2.e- Ranges to copy to for an entry filed this season. Seasons 2024/2025:
+//      the format didn't change so a wholesale copy is possible.
 var ranges_current_season = {
   'Civility': 'C6:G10',
   'Members':  'B14:I19',
   'All': 'B14:I19',
 };
+
+// 3- Last year's familly need to appear in the list in cell B2 so that they
+//    can be automatically imported over. Before you ask, loading last year's
+//    DB folder content doesn't work directly so it's better to just install
+//    the values in cell B2 as "Validation des données" "List d'éléments".
+//    Here's how to do that:
+//
+// 3.1- Export last year db-YYYY-YYYY as a zip file from the Drive UI.
+//      This will download a zip file in Downloads/
+// 3.2- Extract the list of registered families:
+//      LC_CTYPE=C && LANG=C &&  \
+//      unzip -l ~/Downloads/db-2023-2024-20240929T141950Z-001.zip  | \
+//      egrep db- | sed 's@^.*2024/@@g'  | sort -u | sed 's/\/.*$//g' | \
+//      sed 's/.*_//g' | sort -u > /tmp/LIST
+//
+// 3.3- Edit /tmp/LIST to remove undesirable entries
+//
+// 3.4- Install in cell B2:
+//      - Start by populating the F sheet in column A. The easiest is to just
+//        cat /tmp/LIST after you've done 3- and paste the output into F!A after
+//        having cleared F!A. 
+//      - The go back to the main tab and adjust the data validation definition
+//        to be =F!$A$1:$A$<LAST> (for instance, F!$A$1:$A$155). To do this,
+//        select B2, Click Donnée > Validation des données and in the pannel that
+//        opened to the right, click on the first rule change F!$A$!...
+//      - The click on cell B2 to verify all elements are there.
 
 var allowed_user = 'inscriptions.sca@gmail.com'
 
@@ -81,65 +107,6 @@ function setCellValueAtCoord(sheet, coord, value) {
 // Return true when the active range is at coord.
 function activeRangeInCoord(r, coord) {
   return r.getRow() == coord[0] && r.getColumn() == coord[1];
-}
-
-// If no data exists, read available family name from the previous
-// season folder and use them to build a pull down menu that is used
-// to populate a cell and the existing entry selection is reset.
-// If data already exists, nothing happens, but the existing entry
-// selection is reset.
-//
-// Loading the folder content doesn't work directly so it's better to
-// just install the values in cell B2 as "Validation des données"
-// "List d'éléments":
-//
-// 1- Export last year db-YYYY-YYYY as a zip file from the Drive UI.
-//    This will download a zip file in Downloads/
-// 2- Extract the list of registered families:
-//    LC_CTYPE=C && LANG=C &&  \
-//    unzip -l ~/Downloads/db-2023-2024-20240929T141950Z-001.zip  | \
-//    egrep db- | sed 's@^.*2024/@@g'  | sort -u | sed 's/\/.*$//g' | \
-//    sed 's/.*_//g' | sort -u > /tmp/LIST
-//
-// 3- Edit /tmp/LIST to remove undesirable entries
-//
-// 4- Install in cell B2:
-//     - Start by populating the F sheet in column A. The easiest is to just
-//       cat /tmp/LIST after you've done 3- and paste the output into F!A after
-//       having cleared F!A. 
-//     - The go back to the main tab and adjust the data validation definition
-//       to be =F!$A$1:$A$<LAST> (for instance, F!$A$1:$A$155). To do this,
-//       select B2, Click Donnée > Validation des données and in the pannel that
-//       opened to the right, click on the first rule change F!$A$!...
-//     - The click on cell B2 to verify all elements are there.
-  
-function setLastSeasonFamilyList(sheet) {
-  return;
-
-  // The rest of this code never runs and that's fine.  
-  var x = coord_family_last_season[0];
-  var y = coord_family_last_season[1];
-  if (sheet.getRange(x, y).getDataValidation() != null) {
-    clearRange(sheet, coord_family_last_season);
-    return;
-  }
-	
-  var last_season_entries = getFolderFolderNames(previous_db_folder);
-  var last_season_list = [];
-  for (var index in last_season_entries) {
-    family = last_season_entries[index].split(":")[1];
-    if (family != '' && family != undefined) {
-      last_season_list.push(family)
-    }
-  }
-  if (last_season_list.length != 0) {
-    last_season_list.sort();
-    var rule = SpreadsheetApp.newDataValidation()
-      .requireValueInList(last_season_list, true).build();
-    sheet.getRange(x, y).clearDataValidations()
-      .clearContent().setDataValidation(rule);
-  }
-  clearRange(sheet, coord_family_last_season);
 }
 
 // Warn if the validated family name is already in db/ under any form
@@ -214,7 +181,6 @@ function displayErrorPannel(sheet, message) {
 function resetSheet() {
   var sheet = SpreadsheetApp.getActiveSheet();
   clearRange(sheet, coord_family_name);
-  setLastSeasonFamilyList(sheet);
   setRangeTextColor(sheet, coord_status_info,
                     "➡️ Entrer le nom d'une nouvelle famille ou selectionner " +
                     "une famille de la saison précédente", "green");
@@ -570,6 +536,5 @@ function GenerateEntry() {
     SpreadsheetApp.flush();    
     createNewFamilySheetFromOld(sheet, family_name);
   }
-  setLastSeasonFamilyList(sheet);
   SpreadsheetApp.flush();
 }
