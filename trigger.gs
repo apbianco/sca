@@ -159,7 +159,8 @@ function Normalize(str, to_upper_case=false) {
       replace(/\./g, "-").  // . into -
       replace(/_/g, "-").   // _ into -
       replace(/:/g, "-").   // : into -
-      replace(/-+/g, "-");  // Many - into a single one
+      replace(/-+/g, "-").  // Many - into a single one
+      replace(/\s-$/, "");  // No trailing - or space
   if (to_upper_case) {
     to_return = to_return.toUpperCase()
   }
