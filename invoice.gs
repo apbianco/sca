@@ -381,9 +381,16 @@ function getLevelAt(coord) {
   return getStringAt(coord)
 }
 
+// A level is not adjusted when it starts with "⚠️ "
+function isLevelNotAdjusted(level) {
+  return level.substring(0, 3) == "⚠️ ";
+}
+
 // NOTE: A level is not defined when it has not been entered or
 // when it has been set to getNALevelString()
-// NOTABLY: a level of getNotLevelString() value *DEFINES* a level.
+// NOTABLY:
+//  - A level of getNoLevelString() value *DEFINES* a level.
+//  - A level not yet adjusted *DEFINES* a level.
 function isLevelNotDefined(level) {
   return level == '' || level == getNALevelString()
 }
@@ -950,7 +957,8 @@ function normalizeName(str, to_upper_case=false) {
       replace(/\./g, "-").  // . into -
       replace(/_/g, "-").   // _ into -
       replace(/:/g, "-").   // : into -
-      replace(/-+/g, "-");  // Many - into a single one
+      replace(/-+/g, "-").  // Many - into a single one
+      replace(/\s-$/, "");  // No trailing - or space
   if (to_upper_case) {
     to_return = to_return.toUpperCase()
   }
@@ -1076,7 +1084,9 @@ function validateAndReturnDropDownValue(coord, message) {
 // - validateNonCompSubscriptions | if error, Yes/No
 // - validateNonCompSkiPasses     | if error, Yes/No.
 
-function VALIDATION_TEST() {
+function TESTValidation() {
+  var s = "⚠️ abc";
+  var b = s.substring(0, 3);
   var error = ''
   error = validateFamilyMembers()
   error = validateLicenses()
@@ -1151,11 +1161,17 @@ function validateFamilyMembers() {
     // a level set to something. The rest of the code assumes that a level set to something
     // is an other way of identifying a non comp license.
     //
-    //   1- When a level is defined, a license must be defined.
-    //   2- A level must be defined for non competitor minor
-    //   3- A competitor can not declare a level, it will confuse the rest of the validation
-    //   4- An executive can not declare a level, it will confuse the rest of the validation
+    //   1- When a level is defined, it must have been validated
+    //   2- When a level is defined, a license must be defined.
+    //   3- A level must be defined for non competitor minor
+    //   4- A competitor can not declare a level, it will confuse the rest of the validation
+    //   5- An executive can not declare a level, it will confuse the rest of the validation
     //
+
+    if (isLevelDefined(level) && isLevelNotAdjusted(level)) {
+      return ("Ajuster le niveau de " + first_name + " " + last_name + " en précisant " +
+              "le niveau de pratique pour la saison " + season)
+    }
 
     if (isLevelDefined(level) && isLicenseNotDefined(license)) {
       return (first_name + " " + last_name + " est un loisir junior avec un niveau de ski " +
