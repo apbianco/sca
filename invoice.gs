@@ -102,9 +102,9 @@ var license_trix = '1tR3HvdpXWwjziRziBkeVxr4CIp10rHWyfTosv20dG_I'
 var parental_consent_pdf = '1hWpKniwYxUpNogXjBuvXgWleG1T8NbtY'
 var rules_pdf = '1U-eeiEFelWN4aHMwjHJ9IQRH3h2mZJoW'
 var parents_note_pdf = '1fVb5J3o8YikPcn4DDAplt9X-XtP9QdYS'
-var information_leaflet_pdf = '1zxP502NjvVo0AKFt_6FCxs1lQeJnNxmV'
-// The page in information_leaflet_pdf parents should sign
-var information_leaflet_page = 16
+var ffs_information_leaflet_pdf = '1zxP502NjvVo0AKFt_6FCxs1lQeJnNxmV'
+// The page in ffs_information_leaflet_pdf parents should sign
+var ffs_information_leaflet_page = 16
 
 // Spreadsheet parameters (row, columns, etc...). Adjust as necessary
 // when the master invoice is modified.
@@ -140,7 +140,7 @@ var coord_generated_pdf =    [88, 6]
 // 
 var coords_identity_rows = [14, 15, 16, 17, 18, 19];
 //
-// - Columns where informationa about family members can be found
+// - Columns where information about family members can be found
 //
 var coord_first_name_column = 2
 var coord_last_name_column = 3
@@ -2162,10 +2162,10 @@ function generatePDFAndMaybeSendEmail(send_email, just_the_invoice) {
   } else if (medical_form == 'Toutes réponses NON') {
     medical_form_text = ('<p><b><font color="red">' +
                          'Les réponses que vous avez porté au questionaire médical vous ' +
-                         'obligent à signer la page ' + information_leaflet_page +
+                         'obligent à signer la page ' + ffs_information_leaflet_page +
                          ' de la notice d\'informations ' + season + ' fournie en attachement' +
                          '</font></b>')
-    attachments.push(DriveApp.getFileById(information_leaflet_pdf).getAs(MimeType.PDF))
+    attachments.push(DriveApp.getFileById(ffs_information_leaflet_pdf).getAs(MimeType.PDF))
   }
   
   var subject = ("❄️ [Incription Ski Club Allevardin] " +
