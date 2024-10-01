@@ -113,6 +113,9 @@ var information_leaflet_page = 16
 //
 var coord_family_civility = [6,  3]
 var coord_family_name =     [6,  4]
+var coord_family_street =   [8,  3]
+var coord_family_zip =      [8,  4]
+var coord_family_city =     [8,  5]
 var coord_family_email =    [9,  3]
 var coord_cc =              [9,  5]
 var coord_family_phone1 =   [10, 3]
@@ -1085,14 +1088,26 @@ function validateAndReturnDropDownValue(coord, message) {
 // - validateNonCompSkiPasses     | if error, Yes/No.
 
 function TESTValidation() {
-  var s = "⚠️ abc";
-  var b = s.substring(0, 3);
-  var error = ''
-  error = validateFamilyMembers()
-  error = validateLicenses()
-  error = validateNonCompSubscriptions()
-  error = validateNonCompSkiPasses()
-  error = error
+  function test(f) {
+    var error = f()
+    if (error) {
+      displayErrorPannel(error)
+    }
+  }
+  test(validateFamilyMembers)
+  test(validateLicenses)
+  test(validateNonCompSubscriptions)
+  test(validateNonCompSkiPasses)
+}
+
+function TESTValidateInvoice() {
+  function test(f) {
+    var result = f()
+    if (result == {}) {
+      displayErrorPannel("Error during test")
+    }
+  }
+  test(validateInvoice)
 }
 
 // Verify that family members are properly defined, especially with regard to
@@ -1886,6 +1901,19 @@ function validateInvoice() {
     return {};
   }
 
+  // Validation: a correct address
+  var street_address = getStringAt(coord_family_street)
+  var zip_number = getStringAt(coord_family_zip)
+  var city = getStringAt(coord_family_city)
+  if (street_address == "" || zip_number == "" || city == "") {
+    displayErrorPanel(
+      "Vous n'avez pas correctement renseigné une adresse de facturation:\n" +
+      "numéro de rue, code postale ou commune - ou " +
+      "vous avez oublié \n" +
+      "de valider une valeur entrée par [return] ou [enter]...")
+    return {};
+  }
+
   // Validation: first phone number
   var phone_number = getStringAt(coord_family_phone1)
   if (phone_number == '') {
@@ -1898,7 +1926,7 @@ function validateInvoice() {
 
   // Validation: proper email adress.
   var mail_to = getStringAt(coord_family_email)
-  if (mail_to == '') {
+  if (mail_to == '' || mail_to == '@') {
     displayErrorPanel(
       "Vous n'avez pas saisi d'adresse email principale ou " +
       "vous avez oublié \n" +
