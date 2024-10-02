@@ -1,6 +1,13 @@
 // Version: 2024-10-24 BAS
 // This validates the invoice sheet (more could be done BTW) and
 // sends an email with the required attached pieces.
+//
+// Important note on development and tests:
+// - Development: use Firefox only while inscriptions.sca@gmail.com is
+//   the only account that is connected
+// - Test: use Safari only while inscriptions.sca@gmail.com is
+//   the only account that is connected. Once an invoice has been generated,
+//   it's possible to debug its code in Safari.
 
 // Dev or prod? "dev" sends all email to email_dev. Prod is the
 // real thing: family will receive invoices, and so will email_license,
