@@ -99,7 +99,7 @@ var license_trix = '1tR3HvdpXWwjziRziBkeVxr4CIp10rHWyfTosv20dG_I'
 //
 // PDF content to insert in a registration bundle.
 //
-var parental_consent_pdf = '1hWpKniwYxUpNogXjBuvXgWleG1T8NbtY'
+var legal_disclaimer_pdf = '18jFQWTmLnmBa9HGmPkFS58xr0GjNqERu'
 var rules_pdf = '1U-eeiEFelWN4aHMwjHJ9IQRH3h2mZJoW'
 var parents_note_pdf = '1fVb5J3o8YikPcn4DDAplt9X-XtP9QdYS'
 var ffs_information_leaflet_pdf = '1zxP502NjvVo0AKFt_6FCxs1lQeJnNxmV'
@@ -129,7 +129,7 @@ var coord_charge =           [77, 4]
 var coord_personal_message = [85, 3]
 var coord_timestamp =        [86, 2]
 var coord_version =          [86, 3]
-var coord_parental_consent = [86, 5]
+var coord_legal_disclaimer = [86, 5]
 var coord_medical_form =     [86, 7]
 var coord_callme_phone =     [86, 9]
 var coord_yolo =             [87, 3]
@@ -1041,7 +1041,7 @@ function isLicenseFamily(license) {
 // returned. Otherwise, '' is returned.
 function validateAndReturnDropDownValue(coord, message) {
   var value = getStringAt(coord)
-  if (value == 'Choix non renseigné' || value == '') {
+  if (value == '⚠️ Choix non renseigné' || value == '') {
     displayErrorPanel(message)
     return ''
   }
@@ -1995,28 +1995,28 @@ function validateInvoice() {
       }
     }
  
-    // Validate the parental consent.
+    // Validate the legal disclaimer.
     updateStatusBar("Validation autorisation/questionaire...", "grey", add=true)
-    var consent = validateAndReturnDropDownValue(
-      coord_parental_consent,
+    var legal_disclaimer_validation = validateAndReturnDropDownValue(
+      coord_legal_disclaimer,
       "Vous n'avez pas renseigné la nécessitée ou non de devoir " +
-      "recevoir l'autorisation parentale.");
-    if (consent == '') {
+      "recevoir la mention légale.");
+    if (legal_disclaimer_validation == '') {
       return {}
     }
-    var consent = getStringAt(coord_parental_consent);
-    if (consent == 'Non fournie') {
+    var legal_disclaimer_value = getStringAt(coord_legal_disclaimer);
+    if (legal_disclaimer_value == 'Non fournie') {
       displayErrorPanel(
-        "L'autorisation parentale doit être signée aujourd'hui pour " +
+        "La mention légale doit être signée aujourd'hui pour " +
         "valider le dossier et terminer l'inscription");
       return {};
     }
 
     // Validate the medical form
-    var medical_form = validateAndReturnDropDownValue(
+    var medical_form_validation = validateAndReturnDropDownValue(
       coord_medical_form,
       "Vous n'avez pas renseigné votre réponse (OUI/NON) au questionaire médicale.")
-    if (consent == '') {
+    if (medical_form_validation == '') {
       return {}
     }
   }
@@ -2128,22 +2128,22 @@ function generatePDFAndMaybeSendEmail(send_email, just_the_invoice) {
   
   // Determine whether parental consent needs to be generated. If
   // that's the case, we generate additional attachment content.
-  var parental_consent_text = ''
+  var legal_disclaimer_text = ''
   if (! just_the_invoice) {
     if (consent == 'À fournire') {
       attachments.push(
-        DriveApp.getFileById(parental_consent_pdf).getAs(MimeType.PDF))
+        DriveApp.getFileById(legal_disclaimer_pdf).getAs(MimeType.PDF))
     
-      parental_consent_text = (
-        "<p>Il vous faut compléter, signer et nous retourner l'autorisation " +
-        "parentale fournie en attachment, couvrant le droit à l'image, le " +
-        "règlement intérieur et les interventions médicales.</p>");
+      legal_disclaimer_text = (
+        "<p>Il vous faut compléter, signer et nous retourner la mention " +
+        "légale fournie en attachment, couvrant le droit à l'image, le " +
+        "règlement intérieur, les interventions médicales et la GDPD.</p>");
     }
 
     // Insert the note and rules for the parents anyways
     attachments.push(DriveApp.getFileById(rules_pdf).getAs(MimeType.PDF))
     attachments.push(DriveApp.getFileById(parents_note_pdf).getAs(MimeType.PDF));
-    parental_consent_text += (
+    legal_disclaimer_text += (
       "<p>Vous trouverez également en attachement une note adressée aux " +
       "parents, ainsi que le règlement intérieur. Merci de lire ces deux " +
       "documents attentivement.</p>");
@@ -2204,7 +2204,7 @@ function generatePDFAndMaybeSendEmail(send_email, just_the_invoice) {
       "est disponible en attachement. Veuillez contrôler " +
       "qu\'elle corresponde à vos besoins.</p>" +
     
-      parental_consent_text +
+      legal_disclaimer_text +
       medical_form_text +
 
       "<p>Des questions concernant cette facture? Contacter Marlène: " +
