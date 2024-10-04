@@ -1867,9 +1867,6 @@ function augmentEscapeHatch(source) {
 // to use during invoice generation.
 function validateInvoice() {
 
-  // Reformat the phone numbers  
-  formatPhoneNumbers();
-
   if (! isProd()) {
     Debug("Cette facture est en mode developpement. " +
           "Aucun email ne sera envoyé, " +
@@ -1878,6 +1875,9 @@ function validateInvoice() {
           "les mails serons envoyés à " + email_dev + ".\n\n" +
           "Contacter " + email_dev + " pour obtenir plus d\'aide.")
   }
+  
+  // Reformat the phone numbers  
+  formatPhoneNumbers();
 
   // Make sure only an allowed user runs this.
   if (Session.getEffectiveUser() != allowed_user) {
