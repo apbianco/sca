@@ -1622,6 +1622,10 @@ function validateNonCompSkiPasses() {
       var message = (total_purchased + ' forfait(s) ' + zone1 + '/' + zone2 +
                      ' acheté(s) pour ' + zone1_count + ' personne(s) dans cette ' +
                      'tranche d\'âge (' + ski_passes_map[zone1].ValidDoBRangeMessage() + ")")
+      message += ("\n\nIl ce peut que ce choix de forfait soit valide mais pas " +
+                  "automatiquement vérifiable. C'est le cas lorsque plusieurs options  " +
+                  "correctes existent comment par exemple un membre étudiant qui est aussi " +
+                  "d'âge adulte ou un adulte qui prend un license mais pas de forfait.")                     
       if (! displayYesNoPanel(augmentEscapeHatch(message))) {
         return 'BUTTON_NO'
       }
