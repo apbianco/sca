@@ -2044,8 +2044,8 @@ function validateInvoice() {
   return {'civility': civility,
           'family_name': family_name,
           'mail_to': checkEmail(mail_to),
-          'consent': consent,
-          'medical_form': medical_form};
+          'legal_disclaimer': legal_disclaimer_validation,
+          'medical_form': medical_form_validation};
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -2134,14 +2134,14 @@ function generatePDFAndMaybeSendEmail(send_email, just_the_invoice) {
   var civility = validation['civility'];
   var family_name = validation['family_name'];
   var mail_to = validation['mail_to'];
-  var consent = validation['consent'];
-  var medical_form = validation['medical_form']
+  var legal_disclaimer_validation = validation['legal_disclaimer'];
+  var medical_form_validation = validation['medical_form']
   
   // Determine whether parental consent needs to be generated. If
   // that's the case, we generate additional attachment content.
   var legal_disclaimer_text = ''
   if (! just_the_invoice) {
-    if (consent == 'À fournire') {
+    if (legal_disclaimer_validation == 'À fournire') {
       attachments.push(
         DriveApp.getFileById(legal_disclaimer_pdf).getAs(MimeType.PDF))
     
@@ -2164,13 +2164,13 @@ function generatePDFAndMaybeSendEmail(send_email, just_the_invoice) {
   // 1- Yes: we need to tell that a medical certificate needs to be provided
   // 2- No: a new attachment need to be added.
   var medical_form_text = ''
-  if (medical_form == 'Une réponse OUI') {
+  if (medical_form_validation == 'Une réponse OUI') {
     medical_form_text = ('<p><b><font color="red">' +
                          'Les réponses que vous avez porté au questionaire médicale vous ' +
                          'obligent à transmettre dans au SCA (inscriptions.sca@gmail.com) les plus ' +
                          'brefs délais un certificat médical en cours de validité' +
                          '</font></b>')
-  } else if (medical_form == 'Toutes réponses NON') {
+  } else if (medical_form_validation == 'Toutes réponses NON') {
     medical_form_text = ('<p><b><font color="red">' +
                          'Les réponses que vous avez porté au questionaire médical vous ' +
                          'obligent à signer la page ' + ffs_information_leaflet_page +
