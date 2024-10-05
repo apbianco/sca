@@ -2156,7 +2156,7 @@ function generatePDFAndMaybeSendEmail(send_email, just_the_invoice) {
   // that's the case, we generate additional attachment content.
   var legal_disclaimer_text = ''
   if (! just_the_invoice) {
-    if (legal_disclaimer_validation == 'À fournire') {
+    if (legal_disclaimer_validation == 'À fournire signée') {
       attachments.push(
         DriveApp.getFileById(legal_disclaimer_pdf).getAs(MimeType.PDF))
     
@@ -2181,13 +2181,13 @@ function generatePDFAndMaybeSendEmail(send_email, just_the_invoice) {
   var medical_form_text = ''
   if (medical_form_validation == 'Une réponse OUI') {
     medical_form_text = ('<p><b><font color="red">' +
-                         'Les réponses que vous avez porté au questionaire médicale vous ' +
+                         'La ou les réponses positives que vous avez porté au questionaire médicale vous ' +
                          'obligent à transmettre dans au SCA (inscriptions.sca@gmail.com) les plus ' +
                          'brefs délais un certificat médical en cours de validité' +
                          '</font></b>')
   } else if (medical_form_validation == 'Toutes réponses NON') {
     medical_form_text = ('<p><b><font color="red">' +
-                         'Les réponses que vous avez porté au questionaire médical vous ' +
+                         'Les réponses négative que vous avez porté au questionaire médical vous ' +
                          'obligent à signer la page ' + ffs_information_leaflet_page +
                          ' de la notice d\'informations ' + season + ' fournie en attachement' +
                          '</font></b>')
