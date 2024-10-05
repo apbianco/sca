@@ -1672,8 +1672,10 @@ function getInvoiceNumber() {
   var extracted_num = Number(
     new RegExp("version=([0-9]+)", "gi").exec(version)[1]);
   if (extracted_num < 0) {
+    var human_readable_coord = SpreadsheetApp.getActiveSheet().getRange(coord_version[0],
+                                                                    coord_version[1]).getA1Notation()
     displayErrorPanel("Problème lors de la génération du numéro de document\n" +
-                      "Insérez version=99 en 79C et recommencez l'opération");
+                      "Insérez 'version=99' en " + human_readable_coord + " et recommencez l'opération");
   }
   return extracted_num;
 }
@@ -1686,6 +1688,7 @@ function getAndUpdateInvoiceNumber() {
   return extracted_num;
 }
 
+// Family member description class returned by getListOfFamilyPurchasingALicense.
 class FamilyMember {
   constructor(first_name, last_name, dob, sex, city, license_type, license_number, level) {
     this.first_name = first_name
@@ -1867,10 +1870,25 @@ function augmentEscapeHatch(source) {
                   "vérifier les valeurs saisies...");
 }
 
+// Invoice validation data returned by validateInvoice() after a successful
+// invoice validation.
+class InvoiceValidationData {
+  constructor(error, civility, family_name, mail_to, legal_disclaimer, medical_form) {
+    this.error = error
+    this.civility = civility
+    this.family_name = family_name
+    this.mail_to = mail_to
+    this.legal_disclaimer = legal_disclaimer
+    this.medical_form = medical_form
+  }
+}
+
 // Validate the invoice and return a dictionary of values
 // to use during invoice generation.
 function validateInvoice() {
-
+  function validatationDataError() {
+    return new InvoiceValidationData(true, '', '', '', '', '')
+  }
   if (! isProd()) {
     Debug("Cette facture est en mode developpement. " +
           "Aucun email ne sera envoyé, " +
@@ -1890,7 +1908,7 @@ function validateInvoice() {
       allowed_user + ".\n\n" +
       "Veuillez vous connecter d'abord à ce compte avant " +
       "d'utiliser cette feuille.");
-    return {};
+    return validatationDataError();
   }
   
   updateStatusBar("Validation des coordonées...", "grey")
@@ -1899,7 +1917,7 @@ function validateInvoice() {
     coord_family_civility,
     "Vous n'avez pas renseigné de civilité")
   if (civility == '') {
-    return {};
+    return validatationDataError()
   }
   
   // Validation: a family name
@@ -1909,7 +1927,7 @@ function validateInvoice() {
       "Vous n'avez pas renseigné de nom de famille ou " +
       "vous avez oublié \n" +
       "de valider le nom de famille par [return] ou [enter]...")
-    return {};
+    return validatationDataError()
   }
 
   // Validation: a correct address
@@ -1922,7 +1940,7 @@ function validateInvoice() {
       "numéro de rue, code postale ou commune - ou " +
       "vous avez oublié \n" +
       "de valider une valeur entrée par [return] ou [enter]...")
-    return {};
+    return validatationDataError()
   }
 
   // Validation: first phone number
@@ -1932,7 +1950,7 @@ function validateInvoice() {
       "Vous n'avez pas renseigné de nom de numéro de telephone ou " +
       "vous avez oublié \n" +
       "de valider le numéro de téléphone par [return] ou [enter]...")
-    return {};    
+    return validatationDataError()   
   }
 
   // Validation: proper email adress.
@@ -1942,7 +1960,7 @@ function validateInvoice() {
       "Vous n'avez pas saisi d'adresse email principale ou " +
       "vous avez oublié \n" +
       "de valider l'adresse email par [return] ou [enter]...")
-    return {}
+    return validatationDataError()
   }
   
   var validation_error = ''
@@ -1955,7 +1973,7 @@ function validateInvoice() {
     validation_error = validateFamilyMembers();
     if (validation_error) {
       displayErrorPanel(validation_error);
-      return {};
+      return validatationDataError()
     }
 
     // Now performing the optional/advanced validations.
@@ -1963,7 +1981,7 @@ function validateInvoice() {
       validation_error = validateLicenses();
       if (validation_error) {
         displayErrorPanel(validation_error);
-        return {};
+        return validatationDataError()
       }
     }
 
@@ -1971,7 +1989,7 @@ function validateInvoice() {
     validation_error = validateCompSubscriptions()
     if (validation_error) {
       if (! displayYesNoPanel(augmentEscapeHatch(validation_error))) {
-        return {};
+        return validatationDataError()
       }      
     }
 
@@ -1979,7 +1997,7 @@ function validateInvoice() {
     validation_error = validateCompSkiPasses()
     if (validation_error) {
       if (! displayYesNoPanel(augmentEscapeHatch(validation_error))) {
-        return {};
+        return validatationDataError()
       }      
     }
 
@@ -1990,7 +2008,7 @@ function validateInvoice() {
       validation_error = validateNonCompSubscriptions()
       if (validation_error) {
         if (! displayYesNoPanel(augmentEscapeHatch(validation_error))) {
-          return {};
+          return validatationDataError()
         }
       }
     }
@@ -2001,7 +2019,7 @@ function validateInvoice() {
       validation_error = validateNonCompSkiPasses()
       if (validation_error) {
         if (! displayYesNoPanel(augmentEscapeHatch(validation_error))) {
-          return {};
+          return validatationDataError()
         }    
       }
     }
@@ -2013,14 +2031,14 @@ function validateInvoice() {
       "Vous n'avez pas renseigné la nécessitée ou non de devoir " +
       "recevoir la mention légale.");
     if (legal_disclaimer_validation == '') {
-      return {}
+      return validatationDataError()
     }
     var legal_disclaimer_value = getStringAt(coord_legal_disclaimer);
     if (legal_disclaimer_value == 'Non fournie') {
       displayErrorPanel(
         "La mention légale doit être signée aujourd'hui pour " +
         "valider le dossier et terminer l'inscription");
-      return {};
+      return validatationDataError()
     }
 
     // Validate the medical form
@@ -2028,7 +2046,7 @@ function validateInvoice() {
       coord_medical_form,
       "Vous n'avez pas renseigné votre réponse (OUI/NON) au questionaire médicale.")
     if (medical_form_validation == '') {
-      return {}
+      return validatationDataError()
     }
   }
 
@@ -2041,11 +2059,8 @@ function validateInvoice() {
                                    "dd-MM-YY, HH:mm") + (is_yolo ? "\n#yolo" : ""), 'black')
 
 
-  return {'civility': civility,
-          'family_name': family_name,
-          'mail_to': checkEmail(mail_to),
-          'legal_disclaimer': legal_disclaimer_validation,
-          'medical_form': medical_form_validation};
+  return new InvoiceValidationData(false, civility, family_name, checkEmail(mail_to),
+                                   legal_disclaimer_validation, medical_form_validation)    
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -2112,7 +2127,7 @@ function updateStatusBar(message, color, add=false) {
 function generatePDFAndMaybeSendEmail(send_email, just_the_invoice) {
   updateStatusBar("⏳ Validation de la facture...", "orange")      
   var validation = validateInvoice();
-  if (isEmpty(validation)) {
+  if (validation.error) {
     updateStatusBar("❌ La validation de la facture a échouée", "red")      
     return;
   }
@@ -2131,11 +2146,11 @@ function generatePDFAndMaybeSendEmail(send_email, just_the_invoice) {
                     (send_email? "et envoit " : " ") + "du dossier...", "orange")
   }
   
-  var civility = validation['civility'];
-  var family_name = validation['family_name'];
-  var mail_to = validation['mail_to'];
-  var legal_disclaimer_validation = validation['legal_disclaimer'];
-  var medical_form_validation = validation['medical_form']
+  var civility = validation.civility
+  var family_name = validation.family_name
+  var mail_to = validation.mail_to
+  var legal_disclaimer_validation = validation.legal_disclaimer
+  var medical_form_validation = validation.medical_form
   
   // Determine whether parental consent needs to be generated. If
   // that's the case, we generate additional attachment content.
@@ -2233,10 +2248,12 @@ function generatePDFAndMaybeSendEmail(send_email, just_the_invoice) {
     attachments: attachments
   }
 
-  // Add CC if defined.
-  var cc_to = getStringAt(coord_cc)
-  if (cc_to != "") {
-    email_options.cc = checkEmail(cc_to)
+  // Add CC if defined - do not collect a CC in test/dev mode
+  if (!(isTest() || isDev())) {
+    var cc_to = getStringAt(coord_cc)
+    if (cc_to != "") {
+      email_options.cc = checkEmail(cc_to)
+    }
   }
 
   // For a more precise quota computation, we would need to be able
