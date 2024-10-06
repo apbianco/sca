@@ -962,7 +962,7 @@ function formatPhoneNumbers() {
 // - Other caracters transformed or removes
 // - Optionally, the output can be upcased if required. Default is not to upcase.
 function normalizeName(str, to_upper_case=false) {
-  to_return = str.trim().normalize("NFD").replace(/\p{Diacritic}/gu, "").
+  var to_return = str.trim().normalize("NFD").replace(/\p{Diacritic}/gu, "").
       replace(/\s/g, "-").  // No spaces in the middle
       replace(/\d+/g, "").  // No numbers
       replace(/\//g, "-").  // / into -
@@ -970,7 +970,8 @@ function normalizeName(str, to_upper_case=false) {
       replace(/_/g, "-").   // _ into -
       replace(/:/g, "-").   // : into -
       replace(/-+/g, "-").  // Many - into a single one
-      replace(/\s-$/, "");  // No trailing - or space
+      replace(/-$/, "").    // No trailing
+      replace(/\s$/, "")    // No trailing space
   if (to_upper_case) {
     to_return = to_return.toUpperCase()
   }
