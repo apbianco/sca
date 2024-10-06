@@ -87,8 +87,10 @@ advanced_validation.SetAdvancedVerificationFamilyLicenses()
 advanced_validation.SetAdvancedVerificationSubscriptions()
 advanced_validation.SetAdvancedVerificationSkipass()
 
+///////////////////////////////////////////////////////////////////////////////
 // Seasonal parameters - change for each season
-// 
+///////////////////////////////////////////////////////////////////////////////
+//
 // - Name of the season
 var season = "2024/2025"
 //
@@ -931,7 +933,7 @@ function getDoBYear(dob) {
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-// Input formating
+// Input/output formating
 ///////////////////////////////////////////////////////////////////////////////
 
 // Reformat the phone numbers
@@ -973,6 +975,14 @@ function normalizeName(str, to_upper_case=false) {
     to_return = to_return.toUpperCase()
   }
   return to_return
+}
+
+// Return a plural based on the value of number
+function Plural(number, message) {
+  if (number > 1) {
+    message += 's'
+  }
+  return message
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1075,11 +1085,8 @@ function validateAndReturnDropDownValue(coord, message) {
 // validateNonCompSubscriptions  | Validate the non competitor subscriptions.  | YES
 //                               |                                             | string if error
 // ------------------------------+---------------------------------------------+----------------
-// validateNonCompSkiPasses      | Validation of non competitor ski pass       | YES.
-//                               | purchases.                                  | String if error
-// ------------------------------+---------------------------------------------+----------------
-// validateCompSkiPasses         | Competitor ski pass purchases validation    | NO
-//                               | This code is complete                       | String if error
+// validateSkiPasses             | Validation of ski pass purchases.           | YES.
+//                               |                                             | String if error
 // ------------------------------+---------------------------------------------+----------------
 // validateCompSubscriptions     | Competitor subscription validation          | NO
 //                               | This code is complete                       | String if error
@@ -1090,9 +1097,8 @@ function validateAndReturnDropDownValue(coord, message) {
 // - validateFamilyMembers()      | if error, bail
 // - validateLicenses()           | if error, bail
 // - validateCompSubscriptions    | if error, Yes/No
-// - validateCompSkiPasses        | if error, Yes/No
 // - validateNonCompSubscriptions | if error, Yes/No
-// - validateNonCompSkiPasses     | if error, Yes/No.
+// - validateSkiPasses            | if error, Yes/No.
 
 function TESTValidation() {
   function test(f) {
@@ -1104,7 +1110,7 @@ function TESTValidation() {
   test(validateFamilyMembers)
   test(validateLicenses)
   test(validateNonCompSubscriptions)
-  test(validateNonCompSkiPasses)
+  test(validateSkiPasses)
 }
 
 function TESTValidateInvoice() {
@@ -1398,53 +1404,6 @@ function validateCompSubscriptions() {
   return ''
 }
 
-function validateCompSkiPasses() {
-  // FIXME: This method can be removed I think
-  return
-  updateStatusBar("Validation des forfaits compétition...", "grey", add=true)
-  var ski_passes_map = createSkipassMap(SpreadsheetApp.getActiveSheet())
-  for (var index in coords_identity_rows) {
-    var row = coords_identity_rows[index];
-    var selected_license = getLicenseAt([row, coord_license_column]);
-    if (! isLicenseComp(selected_license)) {
-      continue
-    }
-    var dob = getDoB([row, coord_dob_column])
-    // Increment the ski pass count that validates for a DoB. This will tell us
-    // how many ski passes suitable for competitor we can expect to be
-    // purchased.
-    for (var skipass in ski_passes_map) {
-      ski_passes_map[skipass].IncrementAttributedSkiPassCountIfDoB(dob)
-    }
-  }
-
-  // Collect the amount of skipasses that have be declared for purchase.
-  for (var skipass in ski_passes_map) {
-    ski_passes_map[skipass].UpdatePurchasedSkiPassAmount()
-  }
-
-  // Go over all the skipass that apply to a competitor and perform the verification:
-  // If the occurence count of a skipass that can apply to a competitor
-  // is above than the purchased amount, we have an error (some competitor are not
-  // buying a ski pass). If it's below it means that the amount of purchased ski passes
-  // includes competitors and non competitors which is fine.
-  for (var index in competitor_ski_passes) {
-    var skipass_name = competitor_ski_passes[index]
-    var skipass = ski_passes_map[skipass_name]
-    var purchased_amount = skipass.PurchasedSkiPassAmount()
-    if (purchased_amount < 0 || isNaN(purchased_amount)) {
-      return (purchased_amount + ' forfait ' + skipass_name + 
-              ' acheté n\'est pas un nombre valide')
-    }
-    if (skipass.AttributedSkiPassCount() > purchased_amount) {
-      return (purchased_amount + ' forfait(s) ' + skipass_name +
-              ' acheté(s) pour ' + skipass.AttributedSkiPassCount() +
-              ' license(s) compétiteur dans cette tranche d\'âge')
-    }
-  }
-  return ''
-}
-
 // Validation of non competitor subscriptions. This method is invoked after all
 // family members have been validated, which means that we are guaranteed here
 // that people declared to have a non comp license also have a level entered.
@@ -1542,7 +1501,7 @@ function validateNonCompSubscriptions() {
   return ''
 }
 
-function validateNonCompSkiPasses() {
+function validateSkiPasses() {
   updateStatusBar("Validation des forfaits loisir...", "grey", add=true)
   // Always clear the rebate section before eventually recomputing it at the end
   clearRange(coord_rebate_family_of_4_count)
@@ -1619,9 +1578,10 @@ function validateNonCompSkiPasses() {
     // or return indicating that the entered value must be checked. This can happen for
     // instance when one adult purchases a license but doesn't purchase a ski pass...
     if (zone1_count != total_purchased) {
-      var message = (total_purchased + ' forfait(s) ' + zone1 + '/' + zone2 +
-                     ' acheté(s) pour ' + zone1_count + ' personne(s) dans cette ' +
-                     'tranche d\'âge (' + ski_passes_map[zone1].ValidDoBRangeMessage() + ")")
+      var message = (total_purchased + Plural(total_purchased, ' forfait') + ' ' +
+                     zone1 + '/' + zone2 + Plural(total_purchased, ' acheté') + ' pour ' +
+                     zone1_count + Plural(zone1_count, ' personne') +
+                     ' dans cette tranche d\'âge (' + ski_passes_map[zone1].ValidDoBRangeMessage() + ")")
       message += ("\n\nIl ce peut que ce choix de forfait soit valide mais pas " +
                   "automatiquement vérifiable. C'est le cas lorsque plusieurs options  " +
                   "correctes existent comment par exemple un membre étudiant qui est aussi " +
@@ -1993,14 +1953,6 @@ function validateInvoice() {
       }      
     }
 
-    // Validate de competitor ski passes
-    validation_error = validateCompSkiPasses()
-    if (validation_error) {
-      if (! displayYesNoPanel(augmentEscapeHatch(validation_error))) {
-        return validatationDataError()
-      }      
-    }
-
     // 2- Verify the subscriptions. The operator may choose to continue
     //    as some situation are un-verifiable automatically.
     if (advanced_validation.AdvancedVerificationSubscription()) {
@@ -2016,7 +1968,7 @@ function validateInvoice() {
     // 3- Verify the ski pass purchases. The operator may choose to continue
     //    as some situation are un-verifiable automatically.
     if (advanced_validation.AdvancedVerificationSkipass()) {
-      validation_error = validateNonCompSkiPasses()
+      validation_error = validateSkiPasses()
       if (validation_error) {
         if (! displayYesNoPanel(augmentEscapeHatch(validation_error))) {
           return validatationDataError()
@@ -2072,9 +2024,14 @@ function maybeEmailLicenseSCA(invoice) {
   var family_name = getFamilyName()
   var family_dict = getListOfFamilyPurchasingALicense() 
   var string_family_members = "";
+  var license_count = 0
   for (var index in family_dict) {
     if (family_dict[index].last_name == "") {
       continue
+    }
+    license_number = family_dict[index].license_number
+    if (license_number == '') {
+      license_number = '<font color="red"><b>À créer</b></font>'
     }
     string_family_members += (
       "<tt>" +
@@ -2084,12 +2041,14 @@ function maybeEmailLicenseSCA(invoice) {
       "Fille/Garçon: " + family_dict[index].sex + "<br>" +
       "Ville de Naissance: " + family_dict[index].city + "<br>" +
       "Licence: " + family_dict[index].license_type + "<br>" +
-      "Numéro License: " + family_dict[index].license_number + "<br>" +
+      "Numéro License: " + license_number + "<br>" +
       "----------------------------------------------------</tt><br>\n");
+      license_count += 1;
   }
   if (string_family_members) {
     string_family_members = (
-      "<p>Licence(s) nécessaire(s) pour:</p><blockquote>\n" +
+      "<p>" + license_count + Plural(license_count, " licence")
+      + Plural(license_count, " nécessaire") + " pour:</p><blockquote>\n" +
       string_family_members +
       "</blockquote>\n");
   } else {
