@@ -140,7 +140,7 @@ function getFamilyName(sheet, coord) {
   var x = coord[0];
   var y = coord[1];
   if (sheet.getRange(x, y)) {
-    return Normalize(sheet.getRange(x, y).getValue().toString(), true)
+    return normalizeName(sheet.getRange(x, y).getValue().toString(), true)
   } else {
     return "";
   }
@@ -151,7 +151,7 @@ function getFamilyName(sheet, coord) {
 // - Replace diacritics by their accented counterpart (for instance, é becomes e).
 // - Other caracters transformed or removes
 // - Optionally, the output can be upcased if required. Default is not to upcase.
-function Normalize(str, to_upper_case=false) {
+function normalizeName(str, to_upper_case=false) {
   var to_return = str.trim().normalize("NFD").replace(/\p{Diacritic}/gu, "").
       replace(/\s/g, "-").  // No spaces in the middle
       replace(/\d+/g, "").  // No numbers
@@ -318,8 +318,8 @@ function SearchLicense(sheet, first_name, last_name) {
   for (var row = 1; row <= rows; row++) {
     // getCell() in a range is *relative* to the range. So here everything
     // is at (row, 1)
-    var current_first_name = Normalize(first_name_range.getCell(row, 1).getValue().toString(), true)
-    var current_last_name = Normalize(last_name_range.getCell(row, 1).getValue().toString(), true)
+    var current_first_name = normalizeName(first_name_range.getCell(row, 1).getValue().toString(), true)
+    var current_last_name = normalizeName(last_name_range.getCell(row, 1).getValue().toString(), true)
     // Debug("Search: " + first_name + "/" + last_name + " - " + current_first_name + "/"  + current_last_name)
     if (current_last_name == last_name && current_first_name == first_name) {
       return license_range.getCell(row, 1).getValue().toString().trim()
@@ -393,14 +393,14 @@ function createNewFamilySheetFromOld(sheet, family_name) {
         }
         // First name is inserted normalized but not upcased, we keep an upcased
         // version around to perform the license lookup.
-        first_name = Normalize(first_name)
+        first_name = normalizeName(first_name)
         dest_cell.setValue(first_name)
         normalized_first_name = first_name.toUpperCase()
       }
       // Second column in that range is the familly name which is
       // Normalized and upcased for consistency
       else if (column == 2) {
-        normalized_last_name = Normalize(source_cell.getValue().toString().trim().toUpperCase(), true)
+        normalized_last_name = normalizeName(source_cell.getValue().toString().trim().toUpperCase(), true)
         dest_cell.setValue(normalized_last_name);
       }
       // Fourth column is city of birth. Copy it only of the license is an
