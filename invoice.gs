@@ -2181,15 +2181,15 @@ function generatePDFAndMaybeSendEmail(send_email, just_the_invoice) {
   var medical_form_text = ''
   if (medical_form_validation == 'Une réponse OUI') {
     medical_form_text = ('<p><b><font color="red">' +
-                         'La ou les réponses positives que vous avez porté au questionaire médicale vous ' +
-                         'obligent à transmettre dans au SCA (inscriptions.sca@gmail.com) les plus ' +
-                         'brefs délais un certificat médical en cours de validité' +
+                         'La ou les réponses positives que vous avez porté au questionaire médical vous ' +
+                         'obligent à transmettre au SCA (inscriptions.sca@gmail.com) dans les plus ' +
+                         'brefs délais <u>un certificat médical en cours de validité</u>.' +
                          '</font></b>')
   } else if (medical_form_validation == 'Toutes réponses NON') {
     medical_form_text = ('<p><b><font color="red">' +
                          'Les réponses négative que vous avez porté au questionaire médical vous ' +
-                         'obligent à signer la page ' + ffs_information_leaflet_page +
-                         ' de la notice d\'informations ' + season + ' fournie en attachement' +
+                         'dispense de fournir un certificat médical mais vous obligent à <u>signer la page ' + ffs_information_leaflet_page +
+                         ' de la notice d\'informations FFS ' + season + '</u> fournie en attachement.' +
                          '</font></b>')
     attachments.push(DriveApp.getFileById(ffs_information_leaflet_pdf).getAs(MimeType.PDF))
   }
