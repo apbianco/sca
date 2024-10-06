@@ -272,11 +272,13 @@ function createLicensesMap(sheet) {
     'CN Jeune (Compétition)': new License(
       getCompJuniorLicenseString(),
       sheet.getRange(51, 5),
+      // Born on or after 2010
       (dob) => {return ageVerificationBornAfterDateIncluded(dob, new Date("January 1, 2010"))},
       "être né en 2010 et après"),
     'CN Adulte (Compétition)': new License(
       getCompAdultLicenseString(),
       sheet.getRange(52, 5),
+      // Born in 2009 or before
       (dob) => {return ageVerificationBornBeforeDateIncluded(dob, new Date("December 31, 2009"))},
       "être né 2009 et avant"),
   }
@@ -341,19 +343,19 @@ function createCompSubscriptionMap(sheet) {
     to_return[label] = new Subscription(
       label,
       sheet.getRange(row, 5),
-      (dob) => {return ageVerificationBornBetweenYearsIncluded(dob, 2016, 2017)})
+      (dob) => {return ageVerificationBornBetweenYearsIncluded(dob, 2017, 2018)})
     row += 1;
     label = rank + comp_subscription_categories[1]
     to_return[label] = new Subscription(
       label,
       sheet.getRange(row, 5),
-      (dob) => {return ageVerificationBornBetweenYearsIncluded(dob, 2014, 2015)})
+      (dob) => {return ageVerificationBornBetweenYearsIncluded(dob, 2015, 2016)})
     row += 1
     label = rank + comp_subscription_categories[2]
     to_return[label] = new Subscription(
       label,
       sheet.getRange(row, 5),
-      (dob) => {return ageVerificationBornBeforeYearIncluded(dob, 2013)})
+      (dob) => {return ageVerificationBornBeforeYearIncluded(dob, 2014)})
     row += 1
   }
   validateClassInstancesMap(to_return, 'createCompSubscriptionMap')
