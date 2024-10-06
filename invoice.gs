@@ -14,6 +14,101 @@
 // unless the trigger in use is the TEST trigger.
 dev_or_prod = "dev"
 
+///////////////////////////////////////////////////////////////////////////////
+// Seasonal parameters - change for each season or change when the trix
+// is changing (adding new crows/columns, etc...)
+///////////////////////////////////////////////////////////////////////////////
+//
+// - Name of the season
+var season = "2024/2025"
+//
+// - A map of available licenses and validation dates. This map is used
+//   to create a map of properly configured license objects. Edit this
+//   map when the year of validity is changing.
+var licenses_configuration_array_map = {
+  'CN Jeune (Loisir)': 2010,
+  'CN Jeune (Compétition)': 2010,
+  'CN Adulte (Loisir)': 2009,
+  'CN Adulte (Compétition)': 2009,
+}
+//
+// - Storage for the current season's database.
+//
+var db_folder = '1GmOdaWlEwH1V9xGx3pTp1L3Z4zXQdjjn'
+//
+//
+// Level aggregation trix to update when a new entry is added
+//
+var license_trix = '1tR3HvdpXWwjziRziBkeVxr4CIp10rHWyfTosv20dG_I'
+//
+// - ID of attachements to be sent with the invoice - some may change
+//   from one season to an other when they are refreshed.
+//
+// PDF content to insert in a registration bundle.
+//
+var legal_disclaimer_pdf = '18jFQWTmLnmBa9HGmPkFS58xr0GjNqERu'
+var rules_pdf = '1U-eeiEFelWN4aHMwjHJ9IQRH3h2mZJoW'
+var parents_note_pdf = '1fVb5J3o8YikPcn4DDAplt9X-XtP9QdYS'
+var ffs_information_leaflet_pdf = '1zxP502NjvVo0AKFt_6FCxs1lQeJnNxmV'
+// The page in ffs_information_leaflet_pdf parents should sign
+var ffs_information_leaflet_page = 16
+
+///////////////////////////////////////////////////////////////////////////////
+// Spreadsheet parameters (row, columns, etc...). Adjust as necessary
+// when the master invoice is modified.
+///////////////////////////////////////////////////////////////////////////////
+// 
+// - Locations of family details:
+//
+var coord_family_civility = [6,  3]
+var coord_family_name =     [6,  4]
+var coord_family_street =   [8,  3]
+var coord_family_zip =      [8,  4]
+var coord_family_city =     [8,  5]
+var coord_family_email =    [9,  3]
+var coord_cc =              [9,  5]
+var coord_family_phone1 =   [10, 3]
+var coord_family_phone2 =   [10, 5]
+//
+// - Locations of various status line and collected input, located
+//   a the bottom of the invoice.
+// 
+var coord_rebate =           [76, 4]
+var coord_charge =           [77, 4]
+var coord_personal_message = [85, 3]
+var coord_timestamp =        [86, 2]
+var coord_version =          [86, 3]
+var coord_legal_disclaimer = [86, 5]
+var coord_medical_form =     [86, 7]
+var coord_callme_phone =     [86, 9]
+var coord_yolo =             [87, 3]
+var coord_status =           [88, 4]
+var coord_generated_pdf =    [88, 6]
+//
+// - Rows where the family names are entered
+// 
+var coords_identity_rows = [14, 15, 16, 17, 18, 19];
+//
+// - Columns where information about family members can be found
+//
+var coord_first_name_column = 2
+var coord_last_name_column = 3
+var coord_dob_column = 4
+var coord_cob_column = 5
+var coord_sex_column = 6
+var coord_level_column = 7
+var coord_license_column = 8
+var coord_license_number_column = 9
+//
+// - Parameters defining the valid ranges to be retained during the
+//   generation of the invoice's PDF
+//
+var coords_pdf_row_column_ranges = {'start': [1, 0], 'end': [86, 9]}
+
+///////////////////////////////////////////////////////////////////////////////
+// Advanced functionality and features management
+///////////////////////////////////////////////////////////////////////////////
+
 // Enable/disable new features - first entry set to false
 // requires all following entries set to false. Note that
 // a validation of that constraint is carried out immediately
@@ -87,86 +182,9 @@ advanced_validation.SetAdvancedVerificationFamilyLicenses()
 advanced_validation.SetAdvancedVerificationSubscriptions()
 advanced_validation.SetAdvancedVerificationSkipass()
 
-///////////////////////////////////////////////////////////////////////////////
-// Seasonal parameters - change for each season
-///////////////////////////////////////////////////////////////////////////////
-//
-// - Name of the season
-var season = "2024/2025"
-//
-// - Storage for the current season's database.
-//
-var db_folder = '1GmOdaWlEwH1V9xGx3pTp1L3Z4zXQdjjn'
-//
-//
-// Level aggregation trix to update when a new entry is added
-//
-var license_trix = '1tR3HvdpXWwjziRziBkeVxr4CIp10rHWyfTosv20dG_I'
-//
-// - ID of attachements to be sent with the invoice - some may change
-//   from one season to an other when they are refreshed.
-//
-// PDF content to insert in a registration bundle.
-//
-var legal_disclaimer_pdf = '18jFQWTmLnmBa9HGmPkFS58xr0GjNqERu'
-var rules_pdf = '1U-eeiEFelWN4aHMwjHJ9IQRH3h2mZJoW'
-var parents_note_pdf = '1fVb5J3o8YikPcn4DDAplt9X-XtP9QdYS'
-var ffs_information_leaflet_pdf = '1zxP502NjvVo0AKFt_6FCxs1lQeJnNxmV'
-// The page in ffs_information_leaflet_pdf parents should sign
-var ffs_information_leaflet_page = 16
-
-// Spreadsheet parameters (row, columns, etc...). Adjust as necessary
-// when the master invoice is modified.
-// 
-// - Locations of family details:
-//
-var coord_family_civility = [6,  3]
-var coord_family_name =     [6,  4]
-var coord_family_street =   [8,  3]
-var coord_family_zip =      [8,  4]
-var coord_family_city =     [8,  5]
-var coord_family_email =    [9,  3]
-var coord_cc =              [9,  5]
-var coord_family_phone1 =   [10, 3]
-var coord_family_phone2 =   [10, 5]
-//
-// - Locations of various status line and collected input, located
-//   a the bottom of the invoice.
-// 
-var coord_rebate =           [76, 4]
-var coord_charge =           [77, 4]
-var coord_personal_message = [85, 3]
-var coord_timestamp =        [86, 2]
-var coord_version =          [86, 3]
-var coord_legal_disclaimer = [86, 5]
-var coord_medical_form =     [86, 7]
-var coord_callme_phone =     [86, 9]
-var coord_yolo =             [87, 3]
-var coord_status =           [88, 4]
-var coord_generated_pdf =    [88, 6]
-//
-// - Rows where the family names are entered
-// 
-var coords_identity_rows = [14, 15, 16, 17, 18, 19];
-//
-// - Columns where information about family members can be found
-//
-var coord_first_name_column = 2
-var coord_last_name_column = 3
-var coord_dob_column = 4
-var coord_cob_column = 5
-var coord_sex_column = 6
-var coord_level_column = 7
-var coord_license_column = 8
-var coord_license_number_column = 9
-//
-// - Parameters defining the valid ranges to be retained during the
-//   generation of the invoice's PDF
-//
-var coords_pdf_row_column_ranges = {'start': [1, 0], 'end': [86, 9]}
-
 // Validation method use when creating license, skipasses and subscription
 // maps.
+// FIXME: Move this somewhere elsea
 function validateClassInstancesMap(map, map_name) {
   for (var key in map) {
     if (map[key].Name() != key) {
@@ -176,10 +194,11 @@ function validateClassInstancesMap(map, map_name) {
   }
 }
 
-//
-// - Definition of all possible license values, the license class and
-//   all possible instances.
-//
+///////////////////////////////////////////////////////////////////////////////
+// License management code
+///////////////////////////////////////////////////////////////////////////////
+
+// Definition of all possible license values
 function getNoLicenseString() {return 'Aucune'}
 function getNonCompJuniorLicenseString() { return 'CN Jeune (Loisir)'}
 function getNonCompAdultLicenseString() { return 'CN Adulte (Loisir)'}
@@ -188,16 +207,9 @@ function getExecutiveLicenseString() {return 'CN Dirigeant'}
 function getCompJuniorLicenseString() {return 'CN Jeune (Compétition)'}
 function getCompAdultLicenseString() {return 'CN Adulte (Compétition)'}
 
-// Get a license at coord and normalize it's value. It's important to normalize
-// the license string as it can be used as a key to a license_map.
-function getLicenseAt(coord) {
-  var license = getStringAt(coord)
-  if(isLicenseNotDefined(license)) {
-    license = getNoLicenseString()
-  }
-  return license
-}
-
+// A license class to create an object that has a name, a range in the trix at
+// which it can be marked as purchased, a validation method that takes a DoB
+// as input and a message to issue when the validation failed.
 class License {
   constructor(name, purchase_range, dob_validation_method, valid_dob_range_message) {
     // The name of the ski pass type
@@ -240,8 +252,30 @@ class License {
     return this.valid_dob_range_message
   }
 }
-  
+
+// Get a license at coord and normalize it's value. It's important to normalize
+// the license string as it can be used as a key to a license_map.
+function getLicenseAt(coord) {
+  var license = getStringAt(coord)
+  if(isLicenseNotDefined(license)) {
+    license = getNoLicenseString()
+  }
+  return license
+}
+
+// Create a map of all existing licenses
 function createLicensesMap(sheet) {
+  function getYear(license) {
+    if (! license in licenses_configuration_array_map) {
+      displayErrorPanel(license + " n'est pas dans licenses_configuration_array_map!")
+      return
+    } 
+    return licenses_configuration_array_map[license]
+  }
+  function createDate(license, day) {
+    var date = day + ", " + getYear(license)
+    return new Date(date)
+  }
   var to_return = {
     'Aucune': new License(
       getNoLicenseString(),
@@ -249,16 +283,15 @@ function createLicensesMap(sheet) {
       (dob) => {return true}),
     'CN Jeune (Loisir)': new License(
       getNonCompJuniorLicenseString(),
+      // The range should be attached to the license string itself and put in the license configuration map
       sheet.getRange(41, 5),
-      // Born after 2010 is born on 1/1/2010 or later.
-      (dob) => {return ageVerificationBornAfterDateIncluded(dob, new Date("January 1, 2010"))},
-      "être né en 2010 et après"),
+      (dob) => {return ageVerificationBornAfterDateIncluded(dob, createDate(getNonCompJuniorLicenseString(), "January 1"))},
+      "requiert d'être né en " + getYear(getNonCompJuniorLicenseString()) + " et après"),
     'CN Adulte (Loisir)': new License(
       getNonCompAdultLicenseString(),
       sheet.getRange(42, 5),
-      // Born on 2009 and before means 12/1/2009 or before.
-      (dob) => {return ageVerificationBornBeforeDateIncluded(dob, new Date("December 31, 2009"))},
-      "être né en 2009 et avant"),
+      (dob) => {return ageVerificationBornBeforeDateIncluded(dob, createDate(getNonCompAdultLicenseString(), "December 31"))},
+      "requiert d'être né en " + getYear(getNonCompAdultLicenseString()) + " et avant"),
     'CN Famille (Loisir)': new License(
       getNonCompFamilyLicenseString(),
       sheet.getRange(43, 5),
@@ -268,19 +301,17 @@ function createLicensesMap(sheet) {
       getExecutiveLicenseString(),
       sheet.getRange(44, 5),
       (dob) => {return isAdult(dob)},
-      "être adulte (18 ans ou plus)"),
+      "requiert d'être adulte (18 ans ou plus)"),
     'CN Jeune (Compétition)': new License(
       getCompJuniorLicenseString(),
       sheet.getRange(51, 5),
-      // Born on or after 2010
-      (dob) => {return ageVerificationBornAfterDateIncluded(dob, new Date("January 1, 2010"))},
-      "être né en 2010 et après"),
+      (dob) => {return ageVerificationBornAfterDateIncluded(dob, createDate(getCompJuniorLicenseString(), "January 1"))},
+      "requiert être né en " + getYear(getCompJuniorLicenseString()) + " et après"),
     'CN Adulte (Compétition)': new License(
       getCompAdultLicenseString(),
       sheet.getRange(52, 5),
-      // Born in 2009 or before
-      (dob) => {return ageVerificationBornBeforeDateIncluded(dob, new Date("December 31, 2009"))},
-      "être né 2009 et avant"),
+      (dob) => {return ageVerificationBornBeforeDateIncluded(dob, createDate(getCompAdultLicenseString(), "December 31"))},
+      "requiert d'être né en " + getYear(getCompAdultLicenseString()) + " et avant"),
   }
   validateClassInstancesMap(to_return, 'license_map')
   return to_return
@@ -1238,7 +1269,7 @@ function validateFamilyMembers() {
       return (first_name + " " + last_name +
               ": l'année de naissance " + getDoBYear(dob) +
               " ne correspond critère de validité de la " +
-              "license choisie: (" + license + "): " +
+              "license choisie. Une " + license + ' ' +
               license_map[license].ValidDoBRangeMessage() + '.')
     }
     if (isExecLicense(license) && city == '') {
