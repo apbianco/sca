@@ -1011,12 +1011,22 @@ function normalizeName(str, to_upper_case=false) {
   return to_return
 }
 
-// Return a plural based on the value of number
+// Return a plural based on the value of number:
+// "a" -> "as", "a b" -> "as bs", " a b" -> " as bs", " a b " -> " as bs "
 function Plural(number, message) {
-  if (number > 1) {
-    message += 's'
+  if (number <= 1) {
+    return message
   }
-  return message
+  var prefix = '', postfix = ''
+  if (message[0] == ' ') {
+    prefix = ' '
+    message = message.substring(1)
+  }
+  if (message[message.length-1] == ' ') {
+    postfix = ' '
+    message = message.substring(0, message.length-1)
+  }
+  return prefix + message.split(" ").join("s ") + "s" + postfix
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1339,11 +1349,13 @@ function validateLicenses() {
     }
     // What you attributed must match what you're purchasing...
     if (license_map[index].PurchasedLicenseAmount() != license_map[index].AttributedLicenseCount()) {
+        var alc = license_map[index].AttributedLicenseCount()
+        var pla = license_map[index].PurchasedLicenseAmount()
       return (
-        "Le nombre de licence(s) '" + index + "' attribuée(s) (au nombre de " +
-        license_map[index].AttributedLicenseCount() + ")\n" +
-        "ne correspond pas au nombre de licence(s) achetée(s) (au nombre de " +
-        license_map[index].PurchasedLicenseAmount() + ")")
+        "Le nombre de " + Plural(alc, "licence") + " '" + index + "' "+
+        Plural(alc, "attribuée") + " (au nombre de " + alc + ")\n" +
+        "ne correspond pas au nombre de " +
+        Plural(pla, "licence achetée") + " (au nombre de " + pla  + ")")
     }
   }
   return ''
@@ -2081,10 +2093,8 @@ function maybeEmailLicenseSCA(invoice) {
   }
   if (string_family_members) {
     string_family_members = (
-      "<p>" + license_count + Plural(license_count, " licence")
-      + Plural(license_count, " nécessaire") + " pour:</p><blockquote>\n" +
-      string_family_members +
-      "</blockquote>\n");
+      "<p> " + license_count + Plural(license_count, "licence nécessaire") +
+      " pour:</p><blockquote>\n" + string_family_members + "</blockquote>\n");
   } else {
     return;
   }
