@@ -42,7 +42,6 @@ var comp_subscription_map = {
   'U10': [2015, 2016],
   'U12+': [2014]
 }
-
 //
 // - Storage for the current season's database.
 //
@@ -222,7 +221,7 @@ function getExecutiveLicenseString() {return 'CN Dirigeant'}
 function getCompJuniorLicenseString() {return 'CN Jeune (Compétition)'}
 function getCompAdultLicenseString() {return 'CN Adulte (Compétition)'}
 
-// A license class to create an object that has a name, a range in the trix at
+// A License class to create an object that has a name, a range in the trix at
 // which it can be marked as purchased, a validation method that takes a DoB
 // as input and a message to issue when the validation failed.
 class License {
@@ -336,6 +335,9 @@ function createLicensesMap(sheet) {
 // Subscription management code
 ///////////////////////////////////////////////////////////////////////////////
 
+// A Subscription class to create an object that has a name, a range in the trix at
+// which it can be marked as purchased, a validation method that takes a DoB
+// as input and can keep track of occurences and purchases.
 class Subscription {
   constructor(name, purchase_range, dob_validation_method) {
     // The name of the subscription
@@ -376,7 +378,8 @@ class Subscription {
     return this.dob_validation_method(dob)
   }
 }
-// Categories used to from a range to establish the subscription
+
+// Competitor categories used to from a range to establish the subscription
 // ranges. Also fill an array with these values as it's needed
 // everywhere.
 function getU8() { return 'U8' }
@@ -385,9 +388,8 @@ function getU12Plus() { return 'U12+' }
 var comp_subscription_categories = [
   getU8(), getU10(), getU12Plus()
 ]
-// Definition of all possible license values
 
-
+// Definition of all possible subscription values for competitors
 function createCompSubscriptionMap(sheet) {
   function getFirstYear(label) {
     if (! label in comp_subscription_map) {
@@ -425,8 +427,10 @@ function createCompSubscriptionMap(sheet) {
   return to_return
 }
 
+// Non competitors categories (they're not categories but the work in a similar way.)
 var noncomp_subscription_categories = ['Rider', '1er enfant', '2ème enfant', '3ème enfant', '4ème enfant']
 
+// Definition of all possible subscription values for non competitors
 function createNonCompSubscriptionMap(sheet) {
   var to_return = {}
   var row = 45
@@ -442,6 +446,10 @@ function createNonCompSubscriptionMap(sheet) {
   return to_return
 }
 
+///////////////////////////////////////////////////////////////////////////////
+// Level extraction and verification code
+///////////////////////////////////////////////////////////////////////////////
+
 // This defines a level: the level is undetermined
 function getNoLevelString() {
   return 'Non déterminé'
@@ -451,11 +459,6 @@ function getNoLevelString() {
 // setting anything.
 function getNALevelString() {
   return 'Pas Concerné'
-}
-
-// This is almost useless - a syntatic sugar
-function getLevelAt(coord) {
-  return getStringAt(coord)
 }
 
 // A level is not adjusted when it starts with "⚠️ "
@@ -498,8 +501,9 @@ function isLevelNotRider(level) {
   return isLevelDefined(level) && ! isLevelRider(level)
 }
 
-//
+///////////////////////////////////////////////////////////////////////////////
 // Skipass section:
+///////////////////////////////////////////////////////////////////////////////
 //
 // - Definition of the ski pass class and all possible instances.
 //
@@ -660,6 +664,7 @@ function getSkiPassesPairs() {
 
 // Identifier we retain as ski passes valid for competitor. Ideally, we should be adding
 // the 3 domains
+// FIXME: it's not used anywhere - use it to define ranges, etc...
 var competitor_ski_passes = [
   'Collet Adulte',
   'Collet Étudiant',
@@ -1219,7 +1224,7 @@ function validateFamilyMembers() {
     // attached to a name
     var license = getLicenseAt([coords_identity_rows[index], coord_license_column]);
     var dob = getDoB([coords_identity_rows[index], coord_dob_column]);
-    var level = getLevelAt([coords_identity_rows[index], coord_level_column]);
+    var level = getStringAt([coords_identity_rows[index], coord_level_column]);
     var sex = getStringAt([coords_identity_rows[index], coord_sex_column]);
     var city = getStringAt([coords_identity_rows[index], coord_cob_column]);
     var license_number = getStringAt([coords_identity_rows[index], coord_license_number_column ])
@@ -1508,7 +1513,7 @@ function validateNonCompSubscriptions() {
   var rider_number = 0
   var non_rider_number = 0
   coords_identity_rows.forEach(function(row) {
-    var level = getLevelAt([row, coord_level_column])
+    var level = getStringAt([row, coord_level_column])
     if (isLevelRider(level)) {
       rider_number += 1
     }
