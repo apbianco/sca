@@ -363,8 +363,8 @@ class Subscription {
   // When that method run, we verify that the DoB matches the offer and if it does
   // the occurence count is incremented. In the end, this tracks how many purchased
   // subscription count (purchased_amount) should have been entered by the operator.
-  IncrementAttributedSubscriptionCountIfDoB(dob, category) {
-    if (this.ValidateDoB(dob, category)) {
+  IncrementAttributedSubscriptionCountIfDoB(dob) {
+    if (this.ValidateDoB(dob)) {
       this.occurence_count += 1
     }
   }
@@ -372,16 +372,21 @@ class Subscription {
     return this.occurence_count
   }
 
-  ValidateDoB(dob, category) {
-    return this.dob_validation_method(dob, category)
+  ValidateDoB(dob) {
+    return this.dob_validation_method(dob)
   }
 }
-//
 // Categories used to from a range to establish the subscription
-// ranges.
+// ranges. Also fill an array with these values as it's needed
+// everywhere.
+function getU8() { return 'U8' }
+function getU10() { return 'U10'}
+function getU12Plus() { return 'U12+' }
 var comp_subscription_categories = [
-  'U8', 'U10', 'U12+'
+  getU8(), getU10(), getU12Plus()
 ]
+// Definition of all possible license values
+
 
 function createCompSubscriptionMap(sheet) {
   function getFirstYear(label) {
@@ -397,23 +402,23 @@ function createCompSubscriptionMap(sheet) {
   var row = 53
   var to_return = {}
   for (var rank = 1; rank <= 4; rank +=1) {
-    var label = rank + comp_subscription_categories[0]
+    var label = rank + getU8()
     to_return[label] = new Subscription(
       label,
       sheet.getRange(row, 5),
-      (dob, category) => {return ageVerificationBornBetweenYearsIncluded(dob, getFirstYear(category), getLastYear(category))})
+      (dob) => {return ageVerificationBornBetweenYearsIncluded(dob, getFirstYear(getU8()), getLastYear(getU8()))})
     row += 1;
-    label = rank + comp_subscription_categories[1]
+    label = rank + getU10()
     to_return[label] = new Subscription(
       label,
       sheet.getRange(row, 5),
-      (dob, category) => {return ageVerificationBornBetweenYearsIncluded(dob, getFirstYear(category), getLastYear(category))})
+      (dob) => {return ageVerificationBornBetweenYearsIncluded(dob, getFirstYear(getU10()), getLastYear(getU10()))})
     row += 1
-    label = rank + comp_subscription_categories[2]
+    label = rank + getU12Plus()
     to_return[label] = new Subscription(
       label,
       sheet.getRange(row, 5),
-      (dob, category) => {return ageVerificationBornBeforeYearIncluded(dob, getFirstYear(category))})
+      (dob) => {return ageVerificationBornBeforeYearIncluded(dob, getFirstYear(getU12Plus()))})
     row += 1
   }
   validateClassInstancesMap(to_return, 'createCompSubscriptionMap')
@@ -1402,11 +1407,7 @@ function validateCompSubscriptions() {
     // how many subscription suitable for competitor we can expect to be
     // purchased.
     for (var subscription in comp_subscription_map) {
-      // Compensate for the leading number that ranks a subscriotion (1U8 or 2U10, etc...)
-      // to get to the category so that we can later retrieve the validity date ranges in
-      // the map.
-      var category = subscription.substring(1)
-      comp_subscription_map[subscription].IncrementAttributedSubscriptionCountIfDoB(dob, category)
+      comp_subscription_map[subscription].IncrementAttributedSubscriptionCountIfDoB(dob)
     }
   }
 
