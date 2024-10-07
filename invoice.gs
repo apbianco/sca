@@ -8,7 +8,7 @@
 // - Test: use Safari only while inscriptions.sca@gmail.com is
 //   the only account that is connected. Once an invoice has been generated,
 //   it's possible to debug its code in Safari.
-
+//
 // Dev or prod? "dev" sends all email to email_dev. Prod is the
 // real thing: family will receive invoices, and so will email_license,
 // unless the trigger in use is the TEST trigger.
@@ -25,12 +25,24 @@ var season = "2024/2025"
 // - A map of available licenses and validation dates. This map is used
 //   to create a map of properly configured license objects. Edit this
 //   map when the year of validity is changing.
-var licenses_configuration_array_map = {
+//
+var licenses_configuration_map = {
   'CN Jeune (Loisir)': 2010,
   'CN Jeune (Compétition)': 2010,
   'CN Adulte (Loisir)': 2009,
   'CN Adulte (Compétition)': 2009,
 }
+//
+// - A map of available subscription for competitors and their validations
+//   dates. This map is used to create a map of properly configured non competitor
+//   subscription objects. Edit this map when the year of validity is changing.
+//
+var comp_subscription_map = {
+  'U8': [2017, 2018],
+  'U10': [2015, 2016],
+  'U12+': [2014]
+}
+
 //
 // - Storage for the current season's database.
 //
@@ -104,6 +116,9 @@ var coord_license_number_column = 9
 //   generation of the invoice's PDF
 //
 var coords_pdf_row_column_ranges = {'start': [1, 0], 'end': [86, 9]}
+
+// Seasonal configuration ends there. From now on, this is not something you
+// should change unless you know what you're doing :)
 
 ///////////////////////////////////////////////////////////////////////////////
 // Advanced functionality and features management
@@ -266,11 +281,11 @@ function getLicenseAt(coord) {
 // Create a map of all existing licenses
 function createLicensesMap(sheet) {
   function getYear(license) {
-    if (! license in licenses_configuration_array_map) {
-      displayErrorPanel(license + " n'est pas dans licenses_configuration_array_map!")
+    if (! license in licenses_configuration_map) {
+      displayErrorPanel(license + " n'est pas dans licenses_configuration_map!")
       return
     } 
-    return licenses_configuration_array_map[license]
+    return licenses_configuration_map[license]
   }
   function createDate(license, day) {
     var date = day + ", " + getYear(license)
@@ -316,9 +331,11 @@ function createLicensesMap(sheet) {
   validateClassInstancesMap(to_return, 'license_map')
   return to_return
 }
-//
-// - Definition of the subscription class
-//
+
+///////////////////////////////////////////////////////////////////////////////
+// Subscription management code
+///////////////////////////////////////////////////////////////////////////////
+
 class Subscription {
   constructor(name, purchase_range, dob_validation_method) {
     // The name of the subscription
@@ -346,8 +363,8 @@ class Subscription {
   // When that method run, we verify that the DoB matches the offer and if it does
   // the occurence count is incremented. In the end, this tracks how many purchased
   // subscription count (purchased_amount) should have been entered by the operator.
-  IncrementAttributedSubscriptionCountIfDoB(dob) {
-    if (this.ValidateDoB(dob)) {
+  IncrementAttributedSubscriptionCountIfDoB(dob, category) {
+    if (this.ValidateDoB(dob, category)) {
       this.occurence_count += 1
     }
   }
@@ -355,8 +372,8 @@ class Subscription {
     return this.occurence_count
   }
 
-  ValidateDoB(dob) {
-    return this.dob_validation_method(dob)
+  ValidateDoB(dob, category) {
+    return this.dob_validation_method(dob, category)
   }
 }
 //
@@ -367,6 +384,16 @@ var comp_subscription_categories = [
 ]
 
 function createCompSubscriptionMap(sheet) {
+  function getFirstYear(label) {
+    if (! label in comp_subscription_map) {
+      displayErrorPanel(label + " n'est pas dans comp_subscription_map!")
+      return
+    }
+    return comp_subscription_map[label][0]
+  }
+  function getLastYear(label) {
+    return comp_subscription_map[label][1]
+  }
   var row = 53
   var to_return = {}
   for (var rank = 1; rank <= 4; rank +=1) {
@@ -374,19 +401,19 @@ function createCompSubscriptionMap(sheet) {
     to_return[label] = new Subscription(
       label,
       sheet.getRange(row, 5),
-      (dob) => {return ageVerificationBornBetweenYearsIncluded(dob, 2017, 2018)})
+      (dob, category) => {return ageVerificationBornBetweenYearsIncluded(dob, getFirstYear(category), getLastYear(category))})
     row += 1;
     label = rank + comp_subscription_categories[1]
     to_return[label] = new Subscription(
       label,
       sheet.getRange(row, 5),
-      (dob) => {return ageVerificationBornBetweenYearsIncluded(dob, 2015, 2016)})
+      (dob, category) => {return ageVerificationBornBetweenYearsIncluded(dob, getFirstYear(category), getLastYear(category))})
     row += 1
     label = rank + comp_subscription_categories[2]
     to_return[label] = new Subscription(
       label,
       sheet.getRange(row, 5),
-      (dob) => {return ageVerificationBornBeforeYearIncluded(dob, 2014)})
+      (dob, category) => {return ageVerificationBornBeforeYearIncluded(dob, getFirstYear(category))})
     row += 1
   }
   validateClassInstancesMap(to_return, 'createCompSubscriptionMap')
@@ -1375,7 +1402,11 @@ function validateCompSubscriptions() {
     // how many subscription suitable for competitor we can expect to be
     // purchased.
     for (var subscription in comp_subscription_map) {
-      comp_subscription_map[subscription].IncrementAttributedSubscriptionCountIfDoB(dob)
+      // Compensate for the leading number that ranks a subscriotion (1U8 or 2U10, etc...)
+      // to get to the category so that we can later retrieve the validity date ranges in
+      // the map.
+      var category = subscription.substring(1)
+      comp_subscription_map[subscription].IncrementAttributedSubscriptionCountIfDoB(dob, category)
     }
   }
 
