@@ -35,10 +35,16 @@ var licenses_configuration_map = {
 //
 // - A map of available ski passes and validation dates. This map is used
 //   to create a map of properly configured skip pass objects. Edit this
-//   map when the year of validity is changing.
+//   map when the year or age of validity is changing.
 //
 var skipass_configuration_map = {
-
+  'Senior': [70, 54],
+  'Vermeil': 75,
+  'Adulte': [2005, 70],
+  'Étudiant': [1994, 2005],
+  'Junior': [2006, 2013],
+  'Enfant': [2014, 2018],
+  'Bambin': 2019,
 }
 //
 // - A map of available subscription for competitors and their validations
@@ -577,6 +583,17 @@ class SkiPass {
 
 // FIXME: All date intervals need to be adjustable globals. Include the YoB for an adult.
 function createSkipassMap(sheet) {
+
+  function getFirstValue(label) {
+    if (! label in skipass_configuration_map) {
+      displayErrorPanel(label + " n'est pas dans comp_subscription_map!")
+      return
+    }
+    return skipass_configuration_map[label][0]
+  }
+  function getSecondValue(label) {
+    return skipass_configuration_map[label][1]
+  }
   var to_return = {
     'Collet Senior': new SkiPass(
       'Collet Senior',
