@@ -615,7 +615,7 @@ function createSkipassMap(sheet) {
       localizeSkiPassCollet(getSkiPassSuperSenior()),
       sheet.getRange(26, 5),
       (dob) => {return ageVerificationStrictlyOldOrOlder(dob, getFirstValue(getSkiPassSuperSenior()))},
-      "plus de "  + getSecondValue(getSkiPassSuperSenior()) + " ans"),
+      "plus de "  + getFirstValue(getSkiPassSuperSenior()) + " ans"),
     'Collet Adulte': new SkiPass(
       localizeSkiPassCollet(getSkiPassAdult()),
       sheet.getRange(27, 5),
@@ -653,7 +653,7 @@ function createSkipassMap(sheet) {
       localizeSkiPass3D(getSkiPassSuperSenior()),
       sheet.getRange(34, 5),
       (dob) => {return ageVerificationStrictlyOldOrOlder(dob, getFirstValue(getSkiPassSuperSenior()))},
-      "plus de "  + getSecondValue(getSkiPassSuperSenior()) + " ans"),
+      "plus de "  + getFirstValue(getSkiPassSuperSenior()) + " ans"),
     '3 Domaines Adulte': new SkiPass(
       localizeSkiPass3D(getSkiPassAdult()),
       sheet.getRange(35, 5),
