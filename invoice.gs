@@ -580,7 +580,6 @@ class SkiPass {
   IsAdult() { return this.adult }
 }
 
-// FIXME: All date intervals need to be adjustable globals. Include the YoB for an adult.
 function createSkipassMap(sheet) {
 
   function getFirstValue(label) {
@@ -645,40 +644,42 @@ function createSkipassMap(sheet) {
       "A partir du 1er Janvier " + getFirstValue(getSkiPassKid()) + " et après"),
 
     '3 Domaines Senior': new SkiPass(
-      '3 Domaines Senior',
+      localizeSkiPass3D(getSkiPassSenior()),
       sheet.getRange(33, 5),
-      (dob) => {return ageVerificationRangeIncluded(dob, 70, 74)},
-      "70 à 74 ans révolus"),
+      // Remember: no local variable capture possible in functor, use function calls only
+      (dob) => {return ageVerificationRangeIncluded(dob, getFirstValue(getSkiPassSenior()), getSecondValue(getSkiPassSenior()))},
+      getFirstValue(getSkiPassSenior()) + " à " + getSecondValue(getSkiPassSenior()) + " ans révolus"),
     '3 Domaines Vermeil': new SkiPass(
-      '3 Domaines Vermeil',
+      localizeSkiPass3D(getSkiPassSuperSenior()),
       sheet.getRange(34, 5),
-      (dob) => {return ageVerificationStrictlyOldOrOlder(dob, 75)},
-      'plus de 75 ans'),
+      (dob) => {return ageVerificationStrictlyOldOrOlder(dob, getFirstValue(getSkiPassSuperSenior()))},
+      "plus de "  + getSecondValue(getSkiPassSuperSenior()) + " ans"),
     '3 Domaines Adulte': new SkiPass(
-      '3 Domaines Adulte',
+      localizeSkiPass3D(getSkiPassAdult()),
       sheet.getRange(35, 5),
-      (dob) => {return ageVerificationBornBeforeDateIncluded(dob, new Date("December 31, 2005")) && ageVerificationStrictlyYounger(dob, 70)},
-      "Adulte non étudiant de moins de 70 ans"),
+      (dob) => {return ageVerificationBornBeforeDateIncluded(dob, getEarlyDate(getSkiPassAdult())) &&
+                       ageVerificationStrictlyYounger(dob, getSecondValue(getSkiPassAdult()))},
+      "Adulte non étudiant de moins de " + getSecondValue(getSkiPassAdult()) + " ans"),
     '3 Domaines Étudiant': new SkiPass(
-      '3 Domaines Étudiant',
+      localizeSkiPass3D(getSkiPassStudent()),
       sheet.getRange(36, 5),
-      (dob) => {return ageVerificationBornBetweenDatesIncluded(dob, new Date("January 1, 1994"), new Date("December 31, 2005"))},
-      '1er janvier 1994 et le 31 décembre 2005'),
+      (dob) => {return ageVerificationBornBetweenDatesIncluded(dob, getEarlyDate(getSkiPassStudent()), getLateDate(getSkiPassStudent()))},
+      "1er janvier " + getFirstValue(getSkiPassStudent()) + " et le 31 décembre " + getSecondValue(getSkiPassStudent())),
     '3 Domaines Junior': new SkiPass(
-      '3 Domaines Junior',
+      localizeSkiPass3D(getSkiPassJunior()),
       sheet.getRange(37, 5),
-      (dob) => {return ageVerificationBornBetweenDatesIncluded(dob, new Date("January 1, 2006"), new Date("December 31, 2013"))},
-      '1er janvier 2006 et le 31 décembre 2013'),
+      (dob) => {return ageVerificationBornBetweenDatesIncluded(dob, getEarlyDate(getSkiPassJunior()), getLateDate(getSkiPassJunior()))},
+      "1er janvier " + getFirstValue(getSkiPassJunior()) + " et le 31 décembre " + getSecondValue(getSkiPassJunior())),
     '3 Domaines Enfant': new SkiPass(
-      '3 Domaines Enfant',
+      localizeSkiPass3D(getSkiPassKid()),
       sheet.getRange(38, 5),
-      (dob) => {return ageVerificationBornBetweenDatesIncluded(dob, new Date("January 1, 2014"), new Date("December 31, 2018"))},
-      "1er janvier 2014 et le 31 décembre 2018"),
+      (dob) => {return ageVerificationBornBetweenDatesIncluded(dob, getEarlyDate(getSkiPassKid()), getLateDate(getSkiPassKid()))},
+      "1er janvier " + getFirstValue(getSkiPassKid()) + " et le 31 décembre " + getSecondValue(getSkiPassKid())),
     '3 Domaines Bambin': new SkiPass(
-      '3 Domaines Bambin',
+      localizeSkiPass3D(getSkiPassToddler()),
       sheet.getRange(39, 5),
-      (dob) => {return ageVerificationBornAfterDateIncluded(dob, new Date("January 1, 2019"))},
-      'A partir du 1er Janvier 2019 et après'),
+      (dob) => {return ageVerificationBornAfterDateIncluded(dob, getEarlyDate(getSkiPassToddler()))},
+      "A partir du 1er Janvier " + getFirstValue(getSkiPassKid()) + " et après"),
   }
   validateClassInstancesMap(to_return, 'skipass_map')
   return to_return
