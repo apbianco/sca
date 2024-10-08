@@ -33,6 +33,14 @@ var licenses_configuration_map = {
   'CN Adulte (Compétition)': 2009,
 }
 //
+// - A map of available ski passes and validation dates. This map is used
+//   to create a map of properly configured skip pass objects. Edit this
+//   map when the year of validity is changing.
+//
+var skipass_configuration_map = {
+
+}
+//
 // - A map of available subscription for competitors and their validations
 //   dates. This map is used to create a map of properly configured non competitor
 //   subscription objects. Edit this map when the year of validity is changing.
@@ -63,11 +71,9 @@ var parents_note_pdf = '1fVb5J3o8YikPcn4DDAplt9X-XtP9QdYS'
 var ffs_information_leaflet_pdf = '1zxP502NjvVo0AKFt_6FCxs1lQeJnNxmV'
 // The page in ffs_information_leaflet_pdf parents should sign
 var ffs_information_leaflet_page = 16
-
-///////////////////////////////////////////////////////////////////////////////
-// Spreadsheet parameters (row, columns, etc...). Adjust as necessary
-// when the master invoice is modified.
-///////////////////////////////////////////////////////////////////////////////
+//
+// - Spreadsheet parameters (row, columns, etc...). Adjust as necessary
+//   when the master invoice is modified.
 // 
 // - Locations of family details:
 //
@@ -116,8 +122,9 @@ var coord_license_number_column = 9
 //
 var coords_pdf_row_column_ranges = {'start': [1, 0], 'end': [86, 9]}
 
-// Seasonal configuration ends there. From now on, this is not something you
-// should change unless you know what you're doing :)
+///////////////////////////////////////////////////////////////////////////////
+// ⚠️ There's nothing else to configure past that point
+///////////////////////////////////////////////////////////////////////////////
 
 ///////////////////////////////////////////////////////////////////////////////
 // Advanced functionality and features management
@@ -335,6 +342,16 @@ function createLicensesMap(sheet) {
 // Subscription management code
 ///////////////////////////////////////////////////////////////////////////////
 
+// Categories used to from a range to establish the subscription
+// ranges. Also fill an array with these values as it's needed
+// everywhere.
+function getU8() { return 'U8' }
+function getU10() { return 'U10'}
+function getU12Plus() { return 'U12+' }
+var comp_subscription_categories = [
+  getU8(), getU10(), getU12Plus()
+]
+
 // A Subscription class to create an object that has a name, a range in the trix at
 // which it can be marked as purchased, a validation method that takes a DoB
 // as input and can keep track of occurences and purchases.
@@ -379,17 +396,7 @@ class Subscription {
   }
 }
 
-// Competitor categories used to from a range to establish the subscription
-// ranges. Also fill an array with these values as it's needed
-// everywhere.
-function getU8() { return 'U8' }
-function getU10() { return 'U10'}
-function getU12Plus() { return 'U12+' }
-var comp_subscription_categories = [
-  getU8(), getU10(), getU12Plus()
-]
-
-// Definition of all possible subscription values for competitors
+// Definition of all possible subscription values
 function createCompSubscriptionMap(sheet) {
   function getFirstYear(label) {
     if (! label in comp_subscription_map) {
@@ -427,10 +434,9 @@ function createCompSubscriptionMap(sheet) {
   return to_return
 }
 
-// Non competitors categories (they're not categories but the work in a similar way.)
+// FIXME: Define differently like U8, etc...
 var noncomp_subscription_categories = ['Rider', '1er enfant', '2ème enfant', '3ème enfant', '4ème enfant']
 
-// Definition of all possible subscription values for non competitors
 function createNonCompSubscriptionMap(sheet) {
   var to_return = {}
   var row = 45
@@ -445,10 +451,6 @@ function createNonCompSubscriptionMap(sheet) {
   validateClassInstancesMap(to_return, 'createNonCompSubscriptionMap')
   return to_return
 }
-
-///////////////////////////////////////////////////////////////////////////////
-// Level extraction and verification code
-///////////////////////////////////////////////////////////////////////////////
 
 // This defines a level: the level is undetermined
 function getNoLevelString() {
@@ -501,10 +503,22 @@ function isLevelNotRider(level) {
   return isLevelDefined(level) && ! isLevelRider(level)
 }
 
-///////////////////////////////////////////////////////////////////////////////
-// Skipass section:
-///////////////////////////////////////////////////////////////////////////////
 //
+// Skipass section:
+//
+
+// Definition of all possible skipass values
+function getSkiPassSenior() { return 'Senior' }
+function getSkiPassSuperSenior() { return 'Vermeil' }
+function getSkiPassAdult() { return 'Adulte' }
+function getSkiPassStudent() { return 'Étudiant' }
+function getSkiPassJunior() { return 'Junior' }
+function getSkiPassKid() { return 'Enfant' }
+function getSkiPassToddler() { return 'Bambin' }
+
+function localizeSkiPassCollet(pass) { return 'Collet ' + pass}
+function localizeSkiPass3D(pass) { return '3 Domaines ' + pass}
+
 // - Definition of the ski pass class and all possible instances.
 //
 class SkiPass {
@@ -646,31 +660,24 @@ var coord_rebate_family_of_5_amount = [24, 4]
 var coord_rebate_family_of_5_count = [24, 5]
 
 function isSkipassStudent(ski_pass) {
-  return (ski_pass == '3 Domaines Étudiant' || ski_pass == 'Collet Étudiant')
+  return (ski_pass == localizeSkiPass3D(getSkiPassStudent()) ||
+          ski_pass == localizeSkiPassCollet(getSkiPassStudent()))
 }
 
 function isSkipassAdult(ski_pass) {
-  return (ski_pass == '3 Domaines Adulte' || ski_pass == 'Collet Adulte')
+  return (ski_pass == localizeSkiPass3D(getSkiPassAdult()) ||
+          ski_pass == localizeSkiPassCollet(getSkiPassAdult()))
 }
 
 function getSkiPassesPairs() {
   var to_return = []
-  var entries = ['Senior', 'Vermeil', 'Adulte', 'Étudiant', 'Junior', 'Enfant', 'Bambin']
+  var entries = [getSkiPassSenior(), getSkiPassSuperSenior(), getSkiPassAdult(),
+                 getSkiPassStudent(), getSkiPassJunior(), getSkiPassKid(), getSkiPassToddler()]
   entries.forEach(function(entry) {
-    to_return.push(['Collet ' + entry, '3 Domaines ' + entry])
+    to_return.push([localizeSkiPassCollet(entry), localizeSkiPass3D(entry)])
   })
   return to_return
 }
-
-// Identifier we retain as ski passes valid for competitor. Ideally, we should be adding
-// the 3 domains
-// FIXME: it's not used anywhere - use it to define ranges, etc...
-var competitor_ski_passes = [
-  'Collet Adulte',
-  'Collet Étudiant',
-  'Collet Junior',
-  'Collet Enfant',
-]
 
 // Email configuration - these shouldn't change very often
 var allowed_user = 'inscriptions.sca@gmail.com'
@@ -678,10 +685,6 @@ var email_loisir = 'sca.loisir@gmail.com'
 var email_comp = 'skicluballevardin@gmail.com'
 var email_dev = 'apbianco@gmail.com'
 var email_license = 'licence.sca@gmail.com'
-
-//
-// There's nothing else to configure past that point
-//
 
 ///////////////////////////////////////////////////////////////////////////////
 // Utility methods controlling the execution environment
