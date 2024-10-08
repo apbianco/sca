@@ -77,6 +77,8 @@ var parents_note_pdf = '1fVb5J3o8YikPcn4DDAplt9X-XtP9QdYS'
 var ffs_information_leaflet_pdf = '1zxP502NjvVo0AKFt_6FCxs1lQeJnNxmV'
 // The page in ffs_information_leaflet_pdf parents should sign
 var ffs_information_leaflet_page = 16
+var autocertification_non_adult = '1Ir-1TlAB7SoZcamRoX2_i1uk9_l19YUJ'
+var autocertification_adult = '1nDNByrpln58YET8Gqy6vOXkSQb_aBTrf'
 //
 // - Spreadsheet parameters (row, columns, etc...). Adjust as necessary
 //   when the master invoice is modified.
@@ -2164,7 +2166,7 @@ function maybeEmailLicenseSCA(invoice) {
   }
   if (string_family_members) {
     string_family_members = (
-      "<p> " + license_count + Plural(license_count, "licence nécessaire") +
+      "<p> " + license_count + Plural(license_count, " licence nécessaire") +
       " pour:</p><blockquote>\n" + string_family_members + "</blockquote>\n");
   } else {
     return;
@@ -2266,6 +2268,17 @@ function generatePDFAndMaybeSendEmail(send_email, just_the_invoice) {
                          ' de la notice d\'informations FFS ' + season + '</u> fournie en attachement.' +
                          '</font></b>')
     attachments.push(DriveApp.getFileById(ffs_information_leaflet_pdf).getAs(MimeType.PDF))
+  } else if (medical_form_validation == "Sera évalué plus tard") {
+    medical_form_text = ('<p><b><font color="red">' +
+                         'Vous devez évaluer le <b>Questionnaire Santé Sportif MINEUR - ' + season + '</b> ou <b>' +
+                         'le Questionnaire Santé Sportif MAJEUR - ' + season + '</b> fournis en attachement et ' +
+                         'si une des réponses aux questions est OUI, vous devez transmettre au SCA ' +
+                         '(inscriptions.sca@gmail.com) dans les plus brefs délais <u>un certificat médical en cours ' +
+                         'de validité</u>.' +
+                         '</font></b>')
+    attachments.push(DriveApp.getFileById(autocertification_non_adult).getAs(MimeType.PDF))    
+    attachments.push(DriveApp.getFileById(autocertification_adult).getAs(MimeType.PDF))    
+
   }
   
   var subject = ("❄️ [Incription Ski Club Allevardin] " +
