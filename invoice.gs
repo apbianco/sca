@@ -2143,6 +2143,15 @@ function validateInvoice() {
 // Invoice emailing
 ///////////////////////////////////////////////////////////////////////////////
 
+// List possible actions: creating the invoice, emailing it, email it along
+// content or just trigger a license creation request email.
+var invoiceActions = {
+  JUST_GENERATE_INVOICE: 1 << 0,
+  EMAIL_INVOICE: 1 << 1,
+  LICENSE_REQUEST: 1 << 2,
+  EMAIL_FOLDER: 1 << 3,
+};
+
 function maybeEmailLicenseSCA(invoice) {
   var operator = getOperator()
   var family_name = getFamilyName()
@@ -2205,38 +2214,51 @@ function updateStatusBar(message, color, add=false) {
   SpreadsheetApp.flush()
 }
 
-function generatePDFAndMaybeSendEmail(send_email, just_the_invoice) {
+function generatePDFAndMaybeSendEmail(config) {
   updateStatusBar("⏳ Validation de la facture...", "orange")      
   var validation = validateInvoice();
   if (validation.error) {
     updateStatusBar("❌ La validation de la facture a échouée", "red")      
     return;
   }
-  updateStatusBar("⏳ Préparation de la facture...", "orange")
-  
   // Generate and prepare attaching the PDF to the email
+  updateStatusBar("⏳ Préparation de la facture...", "orange")
   var pdf_file = generatePDF();
   var pdf = DriveApp.getFileById(pdf_file.getId());
   var attachments = [pdf.getAs(MimeType.PDF)]
 
-  if (just_the_invoice) {
-    updateStatusBar("⏳ Génération " +
-                    (send_email? "et envoit " : " ") + "de la facture...", "orange")
-  } else {
-    updateStatusBar("⏳ Génération " +
-                    (send_email? "et envoit " : " ") + "du dossier...", "orange")
+  var just_generate_invoice = config & invoiceActions.JUST_GENERATE_INVOICE
+  var email_invoice = config & invoiceActions.EMAIL_INVOICE
+  var email_folder = config & invoiceActions.EMAIL_FOLDER
+  var license_request = config & invoiceActions.LICENSE_REQUEST
+  
+  if (email_invoice) {
+    updateStatusBar("⏳ Génération et envoit de la facture...", "orange")
+  }
+  else if (email_folder) {
+    updateStatusBar("⏳ Génération et envoit du dossier...", "orange")
+  }
+  else if (license_request) {
+    updateStatusBar("⏳ Envoit de la demande de license", "orange")    
+  }
+  else if (just_generate_invoice) {
+    updateStatusBar("⏳ Génération de la facture...", "orange")
+  }
+  else {
+    updateStatusBar("❌ Instruction non traitée", "red")      
+    return;
   }
   
   var civility = validation.civility
   var family_name = validation.family_name
   var mail_to = validation.mail_to
   var legal_disclaimer_validation = validation.legal_disclaimer
+  var legal_disclaimer_text = ''
   var medical_form_validation = validation.medical_form
-  
+  var medical_form_text = ''
   // Determine whether parental consent needs to be generated. If
   // that's the case, we generate additional attachment content.
-  var legal_disclaimer_text = ''
-  if (! just_the_invoice) {
+  if (email_folder) {
     if (legal_disclaimer_validation == 'À fournire signée') {
       attachments.push(
         DriveApp.getFileById(legal_disclaimer_pdf).getAs(MimeType.PDF))
@@ -2246,7 +2268,6 @@ function generatePDFAndMaybeSendEmail(send_email, just_the_invoice) {
         "légale fournie en attachment, couvrant le droit à l'image, le " +
         "règlement intérieur, les interventions médicales et la GDPD.</p>");
     }
-
     // Insert the note and rules for the parents anyways
     attachments.push(DriveApp.getFileById(rules_pdf).getAs(MimeType.PDF))
     attachments.push(DriveApp.getFileById(parents_note_pdf).getAs(MimeType.PDF));
@@ -2254,36 +2275,34 @@ function generatePDFAndMaybeSendEmail(send_email, just_the_invoice) {
       "<p>Vous trouverez également en attachement une note adressée aux " +
       "parents, ainsi que le règlement intérieur. Merci de lire ces deux " +
       "documents attentivement.</p>");
-  }
   
-  // Take a look at the medical form answer:
-  // 1- Yes: we need to tell that a medical certificate needs to be provided
-  // 2- No: a new attachment need to be added.
-  var medical_form_text = ''
-  if (medical_form_validation == 'Une réponse OUI') {
-    medical_form_text = ('<p><b><font color="red">' +
-                         'La ou les réponses positives que vous avez porté au questionaire médical vous ' +
-                         'obligent à transmettre au SCA (inscriptions.sca@gmail.com) dans les plus ' +
-                         'brefs délais <u>un certificat médical en cours de validité</u>.' +
-                         '</font></b>')
-  } else if (medical_form_validation == 'Toutes réponses NON') {
-    medical_form_text = ('<p><b><font color="red">' +
-                         'Les réponses négative que vous avez porté au questionaire médical vous ' +
-                         'dispense de fournir un certificat médical mais vous obligent à <u>signer la page ' + ffs_information_leaflet_page +
-                         ' de la notice d\'informations FFS ' + season + '</u> fournie en attachement.' +
-                         '</font></b>')
-    attachments.push(DriveApp.getFileById(ffs_information_leaflet_pdf).getAs(MimeType.PDF))
-  } else if (medical_form_validation == "Sera évalué plus tard") {
-    medical_form_text = ('<p><b><font color="red">' +
-                         'Vous devez évaluer le <b>Questionnaire Santé Sportif MINEUR - ' + season + '</b> ou <b>' +
-                         'le Questionnaire Santé Sportif MAJEUR - ' + season + '</b> fournis en attachement et ' +
-                         'si une des réponses aux questions est OUI, vous devez transmettre au SCA ' +
-                         '(inscriptions.sca@gmail.com) dans les plus brefs délais <u>un certificat médical en cours ' +
-                         'de validité</u>.' +
-                         '</font></b>')
-    attachments.push(DriveApp.getFileById(autocertification_non_adult).getAs(MimeType.PDF))    
-    attachments.push(DriveApp.getFileById(autocertification_adult).getAs(MimeType.PDF))    
-
+    // Take a look at the medical form answer:
+    // 1- Yes: we need to tell that a medical certificate needs to be provided
+    // 2- No: a new attachment need to be added.
+    if (medical_form_validation == 'Une réponse OUI') {
+      medical_form_text = ('<p><b><font color="red">' +
+                          'La ou les réponses positives que vous avez porté au questionaire médical vous ' +
+                          'obligent à transmettre au SCA (inscriptions.sca@gmail.com) dans les plus ' +
+                          'brefs délais <u>un certificat médical en cours de validité</u>.' +
+                          '</font></b>')
+    } else if (medical_form_validation == 'Toutes réponses NON') {
+      medical_form_text = ('<p><b><font color="red">' +
+                          'Les réponses négative que vous avez porté au questionaire médical vous ' +
+                          'dispense de fournir un certificat médical mais vous obligent à <u>signer la page ' + ffs_information_leaflet_page +
+                          ' de la notice d\'informations FFS ' + season + '</u> fournie en attachement.' +
+                          '</font></b>')
+      attachments.push(DriveApp.getFileById(ffs_information_leaflet_pdf).getAs(MimeType.PDF))
+    } else if (medical_form_validation == "Sera évalué plus tard") {
+      medical_form_text = ('<p><b><font color="red">' +
+                          'Vous devez évaluer le <b>Questionnaire Santé Sportif MINEUR - ' + season + '</b> ou <b>' +
+                          'le Questionnaire Santé Sportif MAJEUR - ' + season + '</b> fournis en attachement et ' +
+                          'si une des réponses aux questions est OUI, vous devez transmettre au SCA ' +
+                          '(inscriptions.sca@gmail.com) dans les plus brefs délais <u>un certificat médical en cours ' +
+                          'de validité</u>.' +
+                          '</font></b>')
+      attachments.push(DriveApp.getFileById(autocertification_non_adult).getAs(MimeType.PDF))
+      attachments.push(DriveApp.getFileById(autocertification_adult).getAs(MimeType.PDF))
+    }
   }
   
   var subject = ("❄️ [Incription Ski Club Allevardin] " +
@@ -2356,11 +2375,11 @@ function generatePDFAndMaybeSendEmail(send_email, just_the_invoice) {
   // the status bar is updated after the aggregation trix has been
   // updated.
   var final_status = ['', 'green']
-  if (send_email) {
+  if (email_invoice || email_folder) {
     var emailQuotaRemaining = MailApp.getRemainingDailyQuota();
     if (emailQuotaRemaining < quota_threshold) {
       displayWarningPanel("Quota email insuffisant. Envoi " +
-                          (just_the_invoice ? "de la facture" : "du dossier") +
+                          (just_generate_invoice ? "de la facture" : "du dossier") +
                           " retardé. Quota restant: " + emailQuotaRemaining +
                           ". Nécessaire: " + quota_threshold);
       final_status[0] = "⚠️ Quota email insuffisant. Envoi retardé"
@@ -2368,18 +2387,27 @@ function generatePDFAndMaybeSendEmail(send_email, just_the_invoice) {
       // Insert a reference to the file in a trix
       var link = '=HYPERLINK("' + SpreadsheetApp.getActive().getUrl() +
                              '"; "' + SpreadsheetApp.getActive().getName() + '")'
-      var context = (just_the_invoice ? 'Facture seule à renvoyer' : 'Dossier complet à renvoyer')
+      var context = (just_generate_invoice ? 'Facture seule à renvoyer' : 'Dossier complet à renvoyer')
       updateProblematicRegistration(link, context)
     } else {
       // Send the email  
       MailApp.sendEmail(email_options)
       maybeEmailLicenseSCA([attachments[0]]);
-      final_status[0] = "✅ " + (just_the_invoice ? 
-                                "Facture envoyée" : "dossier envoyé")
+      if (email_invoice) {
+        final_status[0] = "✅ Facture envoyée"
+      } else if (email_folder) {
+        final_status[0] = "✅ Dossier envoyé"
+      }
+
     }
+  } else if (license_request) {
+    maybeEmailLicenseSCA([attachments[0]]);
+    final_status[0] = "✅ Demande de license envoyée"
+  } else if (just_generate_invoice) {
+      final_status[0] = "✅ Facture générée"
   } else {
-      final_status[0] = "✅ " + (just_the_invoice ?
-                        "Facture générée" : "dossier généré")
+    updateStatusBar("❌ Traitement impossible", "red")      
+    return
   }
 
   // Now we can update the level aggregation trix with all the folks that
@@ -2402,22 +2430,24 @@ function GetAuthorization() {
   ScriptApp.getAuthorizationInfo(ScriptApp.AuthMode.FULL)
 }
 
-// This is what the [generate and send folder] button runs.
-function GeneratePDFAndSendEmailButton() {
-  generatePDFAndMaybeSendEmail(/* send_email= */ true,
-                               /* just_the_invoice= */ false)
+// This is what the [generate invoice] button runs.
+function JustGeneratePDFButton() {
+  generatePDFAndMaybeSendEmail(invoiceActions.JUST_GENERATE_INVOICE)
 }
 
-// This is what the [generate invoice] button runs.
-function GeneratePDFButton() {
-  generatePDFAndMaybeSendEmail(/* send_email= */ false,
-                               /* just_the_invoice= */ true)
+// This is what the [generate license creation request] button runs.
+function JustGenerateLicenseRequestButton() {
+  generatePDFAndMaybeSendEmail(invoiceActions.LICENSE_REQUEST)
 }
 
 // This is what the [generate and send only the invoice] button runs.
-function GenerateJustPDFAndSendEmailButton() {
-  generatePDFAndMaybeSendEmail(/* send_email= */ true,
-                               /* just_the_invoice= */ true)
+function JustGeneratePDFAndSendEmailButton() {
+  generatePDFAndMaybeSendEmail(invoiceActions.EMAIL_INVOICE)
+}
+
+// This is what the [generate and send folder] button runs.
+function GenerateFolderAndSendEmailButton() {
+  generatePDFAndMaybeSendEmail(invoiceActions.EMAIL_FOLDER)
 }
 
 // This is what the [signal problem] button runs
