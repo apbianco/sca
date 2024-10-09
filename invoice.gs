@@ -33,6 +33,16 @@ var licenses_configuration_map = {
   'CN Adulte (Compétition)': 2009,
 }
 //
+// - A map of available subscription for competitors and their validations
+//   dates. This map is used to create a map of properly configured non competitor
+//   subscription objects. Edit this map when the year of validity is changing.
+//
+var comp_subscription_map = {
+  'U8': [2017, 2018],
+  'U10': [2015, 2016],
+  'U12+': [2014]
+}
+//
 // - A map of available ski passes and validation dates. This map is used
 //   to create a map of properly configured skip pass objects. Edit this
 //   map when the year or age of validity is changing.
@@ -45,16 +55,6 @@ var skipass_configuration_map = {
   'Junior': [2006, 2013],
   'Enfant': [2014, 2018],
   'Bambin': [2019, -1],
-}
-//
-// - A map of available subscription for competitors and their validations
-//   dates. This map is used to create a map of properly configured non competitor
-//   subscription objects. Edit this map when the year of validity is changing.
-//
-var comp_subscription_map = {
-  'U8': [2017, 2018],
-  'U10': [2015, 2016],
-  'U12+': [2014]
 }
 //
 // - Storage for the current season's database.
@@ -312,7 +312,7 @@ function createLicensesMap(sheet) {
       (dob) => {return true}),
     'CN Jeune (Loisir)': new License(
       getNonCompJuniorLicenseString(),
-      // The range should be attached to the license string itself and put in the license configuration map
+      // FIXME: This range should be attached to licenses_configuration_map.
       sheet.getRange(41, 5),
       (dob) => {return ageVerificationBornAfterDateIncluded(dob, createDate(getNonCompJuniorLicenseString(), "January 1"))},
       "requiert d'être né en " + getYear(getNonCompJuniorLicenseString()) + " et après"),
@@ -422,6 +422,7 @@ function createCompSubscriptionMap(sheet) {
     var label = rank + getU8()
     to_return[label] = new Subscription(
       label,
+      // FIXME: Should be attached to comp_subscription_map
       sheet.getRange(row, 5),
       (dob) => {return ageVerificationBornBetweenYearsIncluded(dob, getFirstYear(getU8()), getLastYear(getU8()))})
     row += 1;
@@ -609,6 +610,7 @@ function createSkipassMap(sheet) {
   var to_return = {
     'Collet Senior': new SkiPass(
       localizeSkiPassCollet(getSkiPassSenior()),
+      // FIXME: should be attached to skipass_configuration_map.
       sheet.getRange(25, 5),
       // Remember: no local variable capture possible in functor, use function calls only
       (dob) => {return ageVerificationRangeIncluded(dob, getFirstValue(getSkiPassSenior()), getSecondValue(getSkiPassSenior()))},
@@ -687,6 +689,7 @@ function createSkipassMap(sheet) {
   return to_return
 }
 
+// FIXME: Move this to the seasonal definition section.
 var coord_rebate_family_of_4_amount = [23, 4]
 var coord_rebate_family_of_4_count = [23, 5]
 var coord_rebate_family_of_5_amount = [24, 4]
@@ -756,7 +759,7 @@ function yolo() {
       return true
     }
     return false
-  }
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 // Debugging methods
@@ -2270,8 +2273,8 @@ function generatePDFAndMaybeSendEmail(send_email, just_the_invoice) {
     attachments.push(DriveApp.getFileById(ffs_information_leaflet_pdf).getAs(MimeType.PDF))
   } else if (medical_form_validation == "Sera évalué plus tard") {
     medical_form_text = ('<p><b><font color="red">' +
-                         'Vous devez évaluer le <b>Questionnaire Santé Sportif MINEUR - ' + season + '</b> ou <b>' +
-                         'le Questionnaire Santé Sportif MAJEUR - ' + season + '</b> fournis en attachement et ' +
+                         'Vous devez évaluer le <b>Questionnaire Santé Sportif MINEUR - ' + season + '</b> ou <b>' +
+                         'le Questionnaire Santé Sportif MAJEUR - ' + season + '</b> fournis en attachement et ' +
                          'si une des réponses aux questions est OUI, vous devez transmettre au SCA ' +
                          '(inscriptions.sca@gmail.com) dans les plus brefs délais <u>un certificat médical en cours ' +
                          'de validité</u>.' +
