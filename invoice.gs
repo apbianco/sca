@@ -2281,7 +2281,6 @@ function generatePDFAndMaybeSendEmail(config) {
     // Take a look at the medical form answer:
     // 1- Yes: we need to tell that a medical certificate needs to be provided
     // 2- No: a new attachment need to be added.
-    attachments.push(DriveApp.getFileById(ffs_information_leaflet_pdf).getAs(MimeType.PDF))
     if (medical_form_validation == 'Une réponse OUI') {
       medical_form_text = ('<p><b><font color="red">' +
                           'La ou les réponses positives que vous avez porté au questionaire médical vous ' +
@@ -2291,6 +2290,7 @@ function generatePDFAndMaybeSendEmail(config) {
                           ' de la notice d\'informations FFS ' + season + '</u> fournie en attachement, si ' +                          
                           'vous ne l\'avez pas déjà fait lors de l\'inscription.' +
                           '</font></b>')
+      attachments.push(DriveApp.getFileById(ffs_information_leaflet_pdf).getAs(MimeType.PDF))
     } else if (medical_form_validation == 'Toutes réponses NON') {
       medical_form_text = ('<p><b><font color="red">' +
                           'Les réponses négative que vous avez porté au questionaire médical vous ' +
@@ -2299,6 +2299,7 @@ function generatePDFAndMaybeSendEmail(config) {
                           ' de la notice d\'informations FFS ' + season + '</u> fournie en attachement, si ' +                          
                           'vous ne l\'avez pas déjà fait lors de l\'inscription.' +
                           '</font></b>')
+      attachments.push(DriveApp.getFileById(ffs_information_leaflet_pdf).getAs(MimeType.PDF))
     } else if (medical_form_validation == "Sera évalué plus tard") {
       medical_form_text = ('<p><b><font color="red">' +
                           'Vous devez évaluer le <b>Questionnaire Santé Sportif MINEUR - ' + season + '</b> ou <b>' +
@@ -2308,6 +2309,7 @@ function generatePDFAndMaybeSendEmail(config) {
                           'de validité</u>. Il faut également <u>signer la page ' + ffs_information_leaflet_page +
                           ' de la notice d\'informations FFS ' + season + '</u> fournie en attachement.' +   
                           '</font></b>')
+      attachments.push(DriveApp.getFileById(ffs_information_leaflet_pdf).getAs(MimeType.PDF))
       attachments.push(DriveApp.getFileById(autocertification_non_adult).getAs(MimeType.PDF))
       attachments.push(DriveApp.getFileById(autocertification_adult).getAs(MimeType.PDF))
     }
