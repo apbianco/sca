@@ -1,5 +1,5 @@
-// Version: 2024-10-9 - Competitors registration.
-// Commit d7b3f25811b125846a9afe99bc441d0b29851470
+// Version: 2024-10-10 - Competitors registration.
+// Commit b93e8cc7d8908d3aa2a99d3ae4cc722a9a0b21e7
 //
 // This validates the invoice sheet (more could be done BTW) and
 // sends an email with the required attached pieces.
@@ -40,8 +40,9 @@ var licenses_configuration_map = {
 //   subscription objects. Edit this map when the year of validity is changing.
 //
 var comp_subscription_map = {
-  'U8': [2017, 2018],
-  'U10': [2015, 2016],
+// What | Dob/Y | Dob/Y |  Row  | Col
+  'U8':   [2017,  2018],
+  'U10':  [2015,  2016],
   'U12+': [2014]
 }
 //
@@ -50,13 +51,14 @@ var comp_subscription_map = {
 //   map when the year or age of validity is changing.
 //
 var skipass_configuration_map = {
-  'Senior': [70, 74],
-  'Vermeil': [75, -1],
-  'Adulte': [2005, 70],
-  'Étudiant': [1994, 2005],
-  'Junior': [2006, 2013],
-  'Enfant': [2014, 2018],
-  'Bambin': [2019, -1],
+// What     | Dob/Y | Dob/Y |  Row  | Col
+  'Senior':   [70,    74],
+  'Vermeil':  [75,   -1],
+  'Adulte':   [2005,  70],
+  'Étudiant': [1994,  2005],
+  'Junior':   [2006,  2013],
+  'Enfant':   [2014,  2018],
+  'Bambin':   [2019, -1],
 }
 //
 // - Storage for the current season's database.
