@@ -1,4 +1,5 @@
-// Version 2024-09-28 Comp
+// Version: 2024-10-10 - Competitors registration.
+// Commit d7b3f25811b125846a9afe99bc441d0b29851470
 //
 // Code implementing the trigger for the 2024/2025 seasons
 //
@@ -197,7 +198,7 @@ function resetSheet() {
 function onEdit(event){
   var ui = SpreadsheetApp.getUi();
   var r = event.source.getActiveRange();
-  var sheet = SpreadsheetApp.getActiveSheet();
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheets()[0]
   setRangeTextColor(sheet, coord_status_info, "⏳ ...", "orange");
 
   // Check whether the event happened entering a new family name.
