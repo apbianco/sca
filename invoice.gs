@@ -266,6 +266,25 @@ class License {
                                            this.purchase_range.getColumn()])
     }
   }
+  SetPurchasedLicenseAmount() {
+    // Update only if we have a number and if the data is updatable (no license for
+    // instance can be counted but can't be updated at a given cell)
+    if (this.purchase_range == null) {
+      return
+    }
+    // If the license is a familly license, always adjust the non zero count
+    // back to zero as there can only be one attributed.
+    var count = this.AttributedLicenseCount()
+    if (count > 0 && isLicenseFamily(this.Name())) {
+      count = 1
+    }
+    if (count > 0) {
+      setStringAt([this.purchase_range.getRow(), this.purchase_range.getColumn()],
+                  count)
+    } else {
+      setStringAt([this.purchase_range.getRow(), this.purchase_range.getColumn()], "")
+    }
+  }
   PurchasedLicenseAmount() { return this.purchased_amount }
 
   IncrementAttributedLicenseCount() {
@@ -491,8 +510,12 @@ function isLevelNotDefined(level) {
 }
 
 function getRiderLevelString() {
-  // FIXME: Fragile
+  // FIXME: Fragile - should go the other way around
   return noncomp_subscription_categories[0]
+}
+
+function getLevelCompString() {
+  return "Compétiteur"
 }
 
 function getFirstKid() {
@@ -500,12 +523,16 @@ function getFirstKid() {
   return noncomp_subscription_categories[1]
 }
 
-function isFirstKid(subscription) {
-  return isLevelDefined(subscription) && subscription == getFirstKid()
-}
-
 function isLevelDefined(level) {
   return ! isLevelNotDefined(level)
+}
+
+function isLevelComp(level) {
+  return level == getLevelCompString()
+}
+
+function isLevelNotComp(level) {
+  return isLevelDefined(level) && ! isLevelComp();
 }
 
 function isLevelRider(level) {
@@ -514,6 +541,10 @@ function isLevelRider(level) {
 
 function isLevelNotRider(level) {
   return isLevelDefined(level) && ! isLevelRider(level)
+}
+
+function isFirstKid(subscription) {
+  return isLevelDefined(subscription) && subscription == getFirstKid()
 }
 
 //
@@ -1138,11 +1169,121 @@ function displayWarningPanel(message) {
 }
 
 ///////////////////////////////////////////////////////////////////////////////
+// Auto-fill AKA Magic Wand.
+///////////////////////////////////////////////////////////////////////////////
+
+function magicWand() {
+  if (autoComputeLicenses()) {
+    if (autoFillLicensePurchases()) {
+      updateStatusBar("Remplissage automatique terminé...", "green")
+      return
+    }
+  }
+  updateStatusBar("❌ Le remplissage automatique a échoué", "red") 
+}
+
+function computeLicense(license_map, dob, level) {
+  var is_competitor = isLevelComp(level)
+  for (var license in license_map) {
+    if (license == getNoLicenseString()) {
+      continue
+    }
+    if (license_map[license].ValidateDoB(dob)) {
+      if (is_competitor) {
+        if (license == getCompJuniorLicenseString() ||
+            license == getCompAdultLicenseString()) {
+          return license
+        }
+      } else {
+        return license
+      }
+    }
+  }
+  return getNoLicenseString()
+}
+
+function autoComputeLicenses() {
+  updateStatusBar("Attribution automatique des licenses...", "grey")
+  var license_map = createLicensesMap(SpreadsheetApp.getActiveSheet())
+  var rows_of_computed_licenses = []
+  var number_of_adults = 0
+  var number_of_kids = 0
+  for (var index in coords_identity_rows) {
+    var row = coords_identity_rows[index]
+    // Only if the row is valid
+    var first_name = getStringAt([row, coord_first_name_column])
+    var last_name = getStringAt([row, coord_last_name_column])
+    if (first_name == "" || last_name == "") {
+      continue
+    }
+    var selected_license = getLicenseAt([row, coord_license_column])
+    if (selected_license != getNoLicenseString()) {
+      continue
+    }
+    var dob = getDoB([row, coord_dob_column])
+    // Verify we have a DoB other issue an error
+    if (dob == undefined) {
+        displayErrorPanel(
+          "Date de naissance non fournie ou date de naissance mal formatée (JJ/MM/AAAA)" +
+          " ou année de naissance fantaisiste pour " + first_name + " " + last_name)
+        return false     
+    }
+    var level = getStringAt([row, coord_level_column])
+    if (isLevelNotAdjusted(level)) {
+      displayErrorPanel("Niveau pour " + first_name + " " + last_name + " non adjusté")
+      return false
+    }
+    var license = computeLicense(license_map, dob, level)
+    if (license == getNoLicenseString()) {
+      displayErrorPanel("Pas d'attribution de licence possible pour " + first_name + " " + last_name)
+      return false;
+    }
+    // FIXME: Don't do that now - only do it when the computation is complete to avoid 
+    // leaving unfinished business
+    setStringAt([row, coord_license_column], license)
+    // We have successfully automatically computed the license. If that's an
+    // non comp adjult or kid license, adjust the number of adults/kids that got
+    // this license
+    if (license == getNonCompJuniorLicenseString() || license == getNonCompAdultLicenseString()) {
+      if (isAdult(dob)) {
+        number_of_adults += 1
+      } else {
+        number_of_kids += 1
+      }
+      rows_of_computed_licenses.push(row)
+    }
+  }
+  // Take a look at the licenses we have added so far. If we qualify, 
+  // suggest a familly license
+  if (number_of_adults >= 2 && number_of_kids >= 2) {
+    for (var index in rows_of_computed_licenses) {
+      setStringAt([rows_of_computed_licenses[index], coord_license_column], getNonCompFamilyLicenseString())
+    }
+  }
+  return true
+}
+
+function autoFillLicensePurchases() {
+  updateStatusBar("Achat automatique des licenses...", "grey", add=true)
+  var license_map = createLicensesMap(SpreadsheetApp.getActiveSheet())
+  // Collect the attributed licenses
+  for (var index in coords_identity_rows) {
+    var row = coords_identity_rows[index];
+    var selected_license = getLicenseAt([row, coord_license_column]);
+    license_map[selected_license].IncrementAttributedLicenseCount()
+  }
+  for (var license in license_map) {
+    license_map[license].SetPurchasedLicenseAmount()
+  }
+  return true
+}
+
+///////////////////////////////////////////////////////////////////////////////
 // Validation methods
 ///////////////////////////////////////////////////////////////////////////////
 
 function isLicenseDefined(license) {
-  // Fixme: extra paranoid: check it's a key of the license hash.
+  // FIXME: extra paranoid: check it's a key of the license hash.
   return license != '' && license != getNoLicenseString()
 }
 
@@ -1151,6 +1292,7 @@ function isLicenseNotDefined(license) {
 }
 
 function isLicenseNonComp(license) {
+  // FIXME: Why is it not !isLicenseComp() ?
   return (license == getNonCompJuniorLicenseString() ||
           license == getNonCompFamilyLicenseString())
 }
@@ -1336,9 +1478,9 @@ function validateFamilyMembers() {
         first_name + " " + last_name + " qui prend une license " + license         
       )
     }
-    if (isLevelDefined(level) && isLicenseComp(license)) {
-      return (first_name + " " + last_name + " est un compétiteur. Ne définissez pas " +
-              "de niveau pour un compétiteur")
+    if (isLevelNotComp(level) && isLicenseComp(license)) {
+      return (first_name + " " + last_name + " est un compétiteur. Utilisez le " +
+              "niveau 'Compétiteur'")
     }
     if (isLevelDefined(level) && isExecLicense(license)) {
       return (first_name + " " + last_name + " est un cadre/dirigeant. Ne définissez pas " +
@@ -2302,8 +2444,8 @@ function generatePDFAndMaybeSendEmail(config) {
       attachments.push(DriveApp.getFileById(ffs_information_leaflet_pdf).getAs(MimeType.PDF))
     } else if (medical_form_validation == "Sera évalué plus tard") {
       medical_form_text = ('<p><b><font color="red">' +
-                          'Vous devez évaluer le <b>Questionnaire Santé Sportif MINEUR - ' + season + '</b> ou <b>' +
-                          'le Questionnaire Santé Sportif MAJEUR - ' + season + '</b> fournis en attachement et ' +
+                          'Vous devez évaluer le <b>Questionnaire Santé Sportif MINEUR - ' + season + '</b> ou <b>' +
+                          'le Questionnaire Santé Sportif MAJEUR - ' + season + '</b> fournis en attachement et ' +
                           'si une des réponses aux questions est OUI, vous devez transmettre au SCA ' +
                           '(inscriptions.sca@gmail.com) dans les plus brefs délais <u>un certificat médical en cours ' +
                           'de validité</u>. Il faut également <u>signer la page ' + ffs_information_leaflet_page +
