@@ -1203,9 +1203,21 @@ function computeLicense(license_map, dob, level) {
 }
 
 function autoComputeLicenses() {
+  // Return true when a license is elligible to a familly license upgrade: it 
+  // must be a non comp kid/adult license.
+  function ElligibleToFamillyLicenseUpgrade(license) {
+    return (license == getNonCompJuniorLicenseString() ||
+            license == getNonCompAdultLicenseString())
+  }
   updateStatusBar("Attribution automatique des licenses...", "grey")
   var license_map = createLicensesMap(SpreadsheetApp.getActiveSheet())
-  var rows_of_computed_licenses = []
+  // We're going to store what will be computed in these two array: one
+  // to remember the row we changed and an other one to remember the
+  // value we want to write back.
+  var computed_licenses_rows = []
+  var computed_licenses = []
+  // We also will as we go count adults and kids to establish whether
+  // it's fit to automatically attribute a familly license
   var number_of_adults = 0
   var number_of_kids = 0
   for (var index in coords_identity_rows) {
@@ -1238,27 +1250,32 @@ function autoComputeLicenses() {
       displayErrorPanel("Pas d'attribution de licence possible pour " + first_name + " " + last_name)
       return false;
     }
-    // FIXME: Don't do that now - only do it when the computation is complete to avoid 
-    // leaving unfinished business
-    setStringAt([row, coord_license_column], license)
-    // We have successfully automatically computed the license. If that's an
-    // non comp adjult or kid license, adjust the number of adults/kids that got
-    // this license
-    if (license == getNonCompJuniorLicenseString() || license == getNonCompAdultLicenseString()) {
+    // We have successfully automatically computed the license. 
+    // - Remember the license we want to write back and where.
+    // - If that's a non comp adjult or kid license, adjust the number
+    //   of adults/kids that got this license. We will use this data later
+    //   to decide whether we want to assign a familly license
+    computed_licenses.push(license)
+    computed_licenses_rows.push(row)
+    if (ElligibleToFamillyLicenseUpgrade(license)) {
       if (isAdult(dob)) {
         number_of_adults += 1
       } else {
         number_of_kids += 1
       }
-      rows_of_computed_licenses.push(row)
     }
   }
-  // Take a look at the licenses we have added so far. If we qualify, 
-  // suggest a familly license
-  if (number_of_adults >= 2 && number_of_kids >= 2) {
-    for (var index in rows_of_computed_licenses) {
-      setStringAt([rows_of_computed_licenses[index], coord_license_column], getNonCompFamilyLicenseString())
+  // Take a look at the licenses we have added so far and determine whether we want
+  // to assign a familly license 
+  var attribute_familly_license = number_of_adults >= 2 && number_of_kids >= 2
+  // Go over the licenses we want to write back and write them back, inserting a
+  // familly license where we can.
+  for (var index in computed_licenses_rows) {
+    var license = computed_licenses[index]
+    if (attribute_familly_license && ElligibleToFamillyLicenseUpgrade(license)) {
+      license = getNonCompFamilyLicenseString()
     }
+    setStringAt([computed_licenses_rows[index], coord_license_column], license)
   }
   return true
 }
