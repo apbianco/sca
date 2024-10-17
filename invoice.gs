@@ -1179,16 +1179,6 @@ function displayWarningPanel(message) {
 // Auto-fill AKA Magic Wand.
 ///////////////////////////////////////////////////////////////////////////////
 
-function magicWand() {
-  if (autoComputeLicenses()) {
-    if (autoFillLicensePurchases()) {
-      updateStatusBar("Remplissage automatique terminé...", "green")
-      return
-    }
-  }
-  updateStatusBar("❌ Le remplissage automatique a échoué", "red") 
-}
-
 function computeLicense(license_map, dob, level) {
   var is_competitor = isLevelComp(level)
   for (var license in license_map) {
@@ -2635,4 +2625,15 @@ function SignalProblem() {
                          '"; "' + SpreadsheetApp.getActive().getName() + '")'
   updateProblematicRegistration(link, getStringAt(coord_status))
   updateStatusBar('⚠️ Facture signalée commme problématique', 'red')
+}
+
+// This is what the [magic wand] button runs
+function magicWand() {
+  if (autoComputeLicenses()) {
+    if (autoFillLicensePurchases()) {
+      updateStatusBar("Remplissage automatique terminé...", "green")
+      return
+    }
+  }
+  updateStatusBar("❌ Le remplissage automatique a échoué", "red") 
 }
