@@ -305,8 +305,15 @@ class License {
   }
 }
 
+// Get a license at coord and DONT normalize it's value. Only use this
+// method to fetch a license if you know what you're doing :)
+function getRawLicenseAt(coord) {
+  return getStringAt(coord)
+}
+
 // Get a license at coord and normalize it's value. It's important to normalize
-// the license string as it can be used as a key to a license_map.
+// the license string as it can be used as a key to a license_map. The normalized
+// value for a license is 'Aucune'.
 function getLicenseAt(coord) {
   var license = getStringAt(coord)
   if(isLicenseNotDefined(license)) {
@@ -532,7 +539,7 @@ function isLevelComp(level) {
 }
 
 function isLevelNotComp(level) {
-  return isLevelDefined(level) && ! isLevelComp();
+  return isLevelDefined(level) && ! isLevelComp(level);
 }
 
 function isLevelRider(level) {
@@ -1205,7 +1212,7 @@ function computeLicense(license_map, dob, level) {
 function autoComputeLicenses() {
   // Return true when a license is elligible to a familly license upgrade: it 
   // must be a non comp kid/adult license.
-  function ElligibleToFamillyLicenseUpgrade(license) {
+  function EligibleToFamillyLicenseUpgrade(license) {
     return (license == getNonCompJuniorLicenseString() ||
             license == getNonCompAdultLicenseString())
   }
@@ -1228,8 +1235,11 @@ function autoComputeLicenses() {
     if (first_name == "" || last_name == "") {
       continue
     }
-    var selected_license = getLicenseAt([row, coord_license_column])
-    if (selected_license != getNoLicenseString()) {
+    // Retrieve the UNNORMALIZED proposed license. If the value is
+    // empty, take it as a signal that we should try to auto-fill, if
+    // not, skip.
+    var selected_license = getRawLicenseAt([row, coord_license_column])
+    if (selected_license != '') {
       continue
     }
     var dob = getDoB([row, coord_dob_column])
@@ -1257,7 +1267,7 @@ function autoComputeLicenses() {
     //   to decide whether we want to assign a familly license
     computed_licenses.push(license)
     computed_licenses_rows.push(row)
-    if (ElligibleToFamillyLicenseUpgrade(license)) {
+    if (EligibleToFamillyLicenseUpgrade(license)) {
       if (isAdult(dob)) {
         number_of_adults += 1
       } else {
@@ -1272,7 +1282,7 @@ function autoComputeLicenses() {
   // familly license where we can.
   for (var index in computed_licenses_rows) {
     var license = computed_licenses[index]
-    if (attribute_familly_license && ElligibleToFamillyLicenseUpgrade(license)) {
+    if (attribute_familly_license && EligibleToFamillyLicenseUpgrade(license)) {
       license = getNonCompFamilyLicenseString()
     }
     setStringAt([computed_licenses_rows[index], coord_license_column], license)
