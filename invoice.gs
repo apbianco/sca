@@ -416,6 +416,15 @@ class Subscription {
                                          this.purchase_range.getColumn()])
   }
   PurchasedSubscriptionAmount() { return this.purchased_amount }
+  SetPurchasedSubscriptionAmount(amount) {
+    // Don't update anything with no information
+    if (amount <= 0) {
+      return
+    }
+    this.purchased_amount = amount
+    setStringAt([this.purchase_range.getRow(),
+                                         this.purchase_range.getColumn()], amount)
+  }
 
   // When that method run, we verify that the DoB matches the offer and if it does
   // the occurence count is incremented. In the end, this tracks how many purchased
@@ -1295,6 +1304,42 @@ function autoFillLicensePurchases() {
   return true
 }
 
+function autoFillNonCompSubscriptions() {
+  updateStatusBar("Achat automatique des adhésions loisir...", "grey", add=true)
+  var subscription_map = createNonCompSubscriptionMap(SpreadsheetApp.getActiveSheet())
+  var subscription_slots = [0, 0, 0, 0, 0]
+  var current_non_rider_slot = 1
+  // Collect the licenses and the levels. We assume someone wants 
+  // a subscription when they have a adult/kid non comp license and that
+  // their level has a value that isn't "not in scope" (non concernée)
+  // As usual, we start looping over the identity section. We don't do any verification
+  // of names/DoB because we assume that the auto-filler has previously flagged any
+  // problems
+  for (var index in coords_identity_rows) {
+    var row = coords_identity_rows[index];
+    var selected_license = getLicenseAt([row, coord_license_column])
+    var level = getStringAt([row, coord_level_column])
+    if (isLicenseNonComp(selected_license) && isLevelDefined(level)) {
+      // Riders are accumulated
+      if (isLevelRider(level)) {
+        subscription_slots[0] += 1
+      } else {
+        // Non riders are dispatched. We stop filling things past 4
+        // FIXME: Issue a warning?
+        if (current_non_rider_slot < 5) {
+          subscription_slots[current_non_rider_slot] = 1
+          current_non_rider_slot += 1
+        }
+      }
+    }
+  }
+  for (var index in noncomp_subscription_categories) {
+    var subcription = noncomp_subscription_categories[index]
+    subscription_map[subcription].SetPurchasedSubscriptionAmount(subscription_slots[index])
+  }
+  return true
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 // Validation methods
 ///////////////////////////////////////////////////////////////////////////////
@@ -1311,7 +1356,8 @@ function isLicenseNotDefined(license) {
 function isLicenseNonComp(license) {
   // FIXME: Why is it not !isLicenseComp() ?
   return (license == getNonCompJuniorLicenseString() ||
-          license == getNonCompFamilyLicenseString())
+          license == getNonCompFamilyLicenseString() ||
+          license == getNonCompAdultLicenseString())
 }
 
 function isLicenseComp(license) {
@@ -1387,7 +1433,7 @@ function TESTValidation() {
   function test(f) {
     var error = f()
     if (error) {
-      displayErrorPannel(error)
+      displayErrorPanel(error)
     }
   }
   test(validateFamilyMembers)
@@ -1400,7 +1446,7 @@ function TESTValidateInvoice() {
   function test(f) {
     var result = f()
     if (result == {}) {
-      displayErrorPannel("Error during test")
+      displayErrorPanel("Error during test")
     }
   }
   test(validateInvoice)
@@ -2629,10 +2675,21 @@ function SignalProblem() {
 
 // This is what the [magic wand] button runs
 function magicWand() {
+  updateStatusBar("")
+  if (!displayYesNoPanel("Le remplissage automatique va replacer certains choix que vous " +
+                         "avez déjà fait (attribution automatique des licenses, achats des " +
+                         "licenses, adhésion loisir, etc...) Vous pourrez toujours modifier " +
+                         "ces choix et une validation de la facture sera toujours effectuée \n\n" +
+                         "Cliquez OK pour continuer, cliquez Annuler pour ne pas utiliser la " +
+                         "fonctionalité remplissage automatique")) {
+    return
+  }
   if (autoComputeLicenses()) {
     if (autoFillLicensePurchases()) {
-      updateStatusBar("Remplissage automatique terminé...", "green")
-      return
+      if (autoFillNonCompSubscriptions()) {
+        updateStatusBar("Remplissage automatique terminé...", "green")
+        return
+      }
     }
   }
   updateStatusBar("❌ Le remplissage automatique a échoué", "red") 
