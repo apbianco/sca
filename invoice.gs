@@ -390,6 +390,29 @@ var comp_subscription_categories = [
   getU8(), getU10(), getU12Plus()
 ]
 
+// Competitor categories sorting function, used to sort arrays of categories.
+// This verifies that comp_subscription_categories.sort() == comp_subscription_categories
+function categoriesAscendingOrder(cat1, cat2) {
+  // No order change
+  if (cat1 == cat2) {
+    return 0
+  }
+  // U8 is always the smallest category
+  if (cat1 == getU8()) {
+    return -1
+  }
+  // U10 will only rank lower than U12+
+  if (cat1 == getU10()) {
+    if (cat2 == getU12Plus()) {
+      return -1
+    }
+    return 1
+  }
+  // cat1 is U12, it's always last unless it's 
+  // compared against U12 which has already been done
+  return 1
+}
+
 // A Subscription class to create an object that has a name, a range in the trix at
 // which it can be marked as purchased, a validation method that takes a DoB
 // as input and can keep track of occurences and purchases.
@@ -423,7 +446,7 @@ class Subscription {
     }
     this.purchased_amount = amount
     setStringAt([this.purchase_range.getRow(),
-                                         this.purchase_range.getColumn()], amount)
+                 this.purchase_range.getColumn()], amount)
   }
 
   // When that method run, we verify that the DoB matches the offer and if it does
@@ -1319,6 +1342,8 @@ function autoFillNonCompSubscriptions() {
     var row = coords_identity_rows[index];
     var selected_license = getLicenseAt([row, coord_license_column])
     var level = getStringAt([row, coord_level_column])
+    // Non competitor license and only if level indicates interest in a non competitor
+    // subscription.
     if (isLicenseNonComp(selected_license) && isLevelDefined(level)) {
       // Riders are accumulated
       if (isLevelRider(level)) {
@@ -1336,6 +1361,46 @@ function autoFillNonCompSubscriptions() {
   for (var index in noncomp_subscription_categories) {
     var subcription = noncomp_subscription_categories[index]
     subscription_map[subcription].SetPurchasedSubscriptionAmount(subscription_slots[index])
+  }
+  return true
+}
+
+function autoFillCompSubscriptions() {
+  updateStatusBar("Achat automatique des adhésions compétition...", "grey", add=true)
+  var subscription_map = createCompSubscriptionMap(SpreadsheetApp.getActiveSheet())
+  var comp_categories = []
+  for (var index in coords_identity_rows) {
+    var row = coords_identity_rows[index];
+    var selected_license = getLicenseAt([row, coord_license_column])
+    var level = getStringAt([row, coord_level_column])
+    // Competitor license and only if level indicates interest in a non competitor
+    // subscription.
+    if (isLicenseComp(selected_license) && isLevelComp(level)) {
+      var dob = getDoB([row, coord_dob_column])
+      // First - find the level this competitor is at.
+      // NOTE: assumption is made here that DoB has been minimally verified already
+      // when autoComputeLicenses was previously invoked.
+      for (var comp_category_index in comp_subscription_categories) {
+        // Remember: categories in the map are labelled with an ranking index.
+        // For identification, using a fixed ranking index of 1 is fine.
+        var comp_category = 1 + comp_subscription_categories[comp_category_index]
+        if (subscription_map[comp_category].ValidateDoB(dob)) {
+          comp_categories.push(comp_subscription_categories[comp_category_index])
+        }
+      }
+    }        
+  }
+  comp_categories = comp_categories.sort(categoriesAscendingOrder)
+  var rank = 1
+  for (var index in comp_categories) {
+    // Can't use index+1 as rank.
+    var category = rank + comp_categories[index]
+    subscription_map[category].SetPurchasedSubscriptionAmount(1)
+    rank += 1
+    // If we go past our capacity, just stop
+    if (rank > 4) {
+      break
+    }
   }
   return true
 }
@@ -2687,8 +2752,10 @@ function magicWand() {
   if (autoComputeLicenses()) {
     if (autoFillLicensePurchases()) {
       if (autoFillNonCompSubscriptions()) {
-        updateStatusBar("Remplissage automatique terminé...", "green")
-        return
+        if (autoFillCompSubscriptions()) {
+          updateStatusBar("Remplissage automatique terminé...", "green")
+          return
+        }
       }
     }
   }
