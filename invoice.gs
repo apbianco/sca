@@ -275,14 +275,15 @@ class License {
     // If the license is a familly license, always adjust the non zero count
     // back to zero as there can only be one attributed.
     var count = this.AttributedLicenseCount()
+    var coord = [this.purchase_range.getRow(), this.purchase_range.getColumn()]
     if (count > 0 && isLicenseFamily(this.Name())) {
       count = 1
     }
     if (count > 0) {
-      setStringAt([this.purchase_range.getRow(), this.purchase_range.getColumn()],
-                  count)
+      this.purchased_amount = count
+      setStringAt(coord, count)
     } else {
-      setStringAt([this.purchase_range.getRow(), this.purchase_range.getColumn()], "")
+      setStringAt(coord, "")
     }
   }
   PurchasedLicenseAmount() { return this.purchased_amount }
@@ -440,13 +441,14 @@ class Subscription {
   }
   PurchasedSubscriptionAmount() { return this.purchased_amount }
   SetPurchasedSubscriptionAmount(amount) {
-    // Don't update anything with no information
+    // Clear a cell with no information
+    var coord = [this.purchase_range.getRow(), this.purchase_range.getColumn()]
     if (amount <= 0) {
+      setStringAt(coord ,'')
       return
     }
     this.purchased_amount = amount
-    setStringAt([this.purchase_range.getRow(),
-                 this.purchase_range.getColumn()], amount)
+    setStringAt(coord, amount)
   }
 
   // When that method run, we verify that the DoB matches the offer and if it does
@@ -1398,11 +1400,17 @@ function autoFillCompSubscriptions() {
         // For identification, using a fixed ranking index of 1 is fine.
         var comp_category = 1 + comp_subscription_categories[comp_category_index]
         if (subscription_map[comp_category].ValidateDoB(dob)) {
+          // But what we store is the non prefixed category.
           comp_categories.push(comp_subscription_categories[comp_category_index])
         }
       }
     }        
   }
+  // Clear existing choices
+  for (var category in subscription_map) {
+    subscription_map[category].SetPurchasedSubscriptionAmount(0)
+  }
+  // And set the new values
   comp_categories = comp_categories.sort(categoriesAscendingOrder)
   var rank = 1
   for (var index in comp_categories) {
