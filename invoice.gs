@@ -260,7 +260,7 @@ class License {
 
   // When this method run, we capture the amount licenses of that given type
   // the operator entered.
-  UpdatePurchasedLicenseAmount() {
+  UpdatePurchasedLicenseAmountFromTrix() {
     if (this.purchase_range != null) {
       this.purchased_amount = getNumberAt([this.purchase_range.getRow(),
                                            this.purchase_range.getColumn()])
@@ -434,7 +434,7 @@ class Subscription {
 
   // When this method run, we capture the amount of subscription of that nature
   // the operator entered.
-  UpdatePurchasedSubscriptionAmount() {
+  UpdatePurchasedSubscriptionAmountFromTrix() {
     this.purchased_amount = getNumberAt([this.purchase_range.getRow(),
                                          this.purchase_range.getColumn()])
   }
@@ -625,7 +625,7 @@ class SkiPass {
 
   // When this method run, we capture the amount skippasses of that type
   // the operator entered.
-  UpdatePurchasedSkiPassAmount() {
+  UpdatePurchasedSkiPassAmountFromTrix() {
     this.purchased_amount = getNumberAt([this.purchase_range.getRow(),
                                          this.purchase_range.getColumn()])
   }
@@ -1427,6 +1427,7 @@ function autoFillSkiPassPurchases() {
     // No name verification as this methods runs after this has been
     // done
     var dob = getDoB([row, coord_dob_column])
+
     if (dob == undefined) {
       continue
     }
@@ -1696,7 +1697,7 @@ function validateLicenses() {
 
   // Collect the amount of purchased licenses for all licenses
   for (var index in license_map) {
-    license_map[index].UpdatePurchasedLicenseAmount()
+    license_map[index].UpdatePurchasedLicenseAmountFromTrix()
   }
   
   // Perform the verification
@@ -1953,7 +1954,6 @@ function validateSkiPasses() {
     if (dob == undefined) {
       continue
     }
-    var selected_license = getLicenseAt([row, coord_license_column]);
     // Increment the ski pass count that validates for a DoB. This will tell us
     // how many ski passes suitable for a non competitor we can expect to be
     // purchased.
@@ -1970,7 +1970,7 @@ function validateSkiPasses() {
   var total_paid_skipass = 0
   for (var skipass_name in ski_passes_map) {
     skipass = ski_passes_map[skipass_name]
-    skipass.UpdatePurchasedSkiPassAmount()
+    skipass.UpdatePurchasedSkiPassAmountFromTrix()
     var purchased_amount = skipass.PurchasedSkiPassAmount()
     if (purchased_amount < 0 || isNaN(purchased_amount)) {
       return (purchased_amount + ' forfait ' + skipass_name + 
