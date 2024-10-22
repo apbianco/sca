@@ -1,4 +1,4 @@
-// Version: 2024-10-10 - Competitors registration.
+// Version: 2024-10-23 - BAS
 // Commit b93e8cc7d8908d3aa2a99d3ae4cc722a9a0b21e7
 //
 // This validates the invoice sheet (more could be done BTW) and
