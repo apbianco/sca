@@ -1373,6 +1373,25 @@ function autoFillNonCompSubscriptions() {
       }
     }
   }
+  // A rider subscription counts as an occupied non-rider subscription slot:
+  // [1, 1, 0, 0, 0] becomes [1, 0, 1, 0, 0] and [2, 1, 1, 0, 0] becomes
+  // [1, 0, 0, 1, 1]. This adjustment can not happen as we built 
+  // subscrition_slots because a rider can happen at any time in the list of
+  // registered familly members.
+  // Save the number of rider, use it as an iteration counter
+  var number_of_riders = subscription_slots.shift()
+  var operation_count = number_of_riders
+  // Insert as many zeros at the beginning of the array as there are riders
+  while (operation_count != 0) {
+    // Insert a zero
+    subscription_slots.splice(0, 0, 0)
+    operation_count -= 1
+  }
+  // Insert the number of riders back
+  subscription_slots.splice(0, 0, number_of_riders)
+  // Truncate the array by as many 0s we initially inserted
+  subscription_slots.splice(-number_of_riders, number_of_riders)
+
   for (var index in noncomp_subscription_categories) {
     var subcription = noncomp_subscription_categories[index]
     subscription_map[subcription].SetPurchasedSubscriptionAmount(subscription_slots[index])
