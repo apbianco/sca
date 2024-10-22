@@ -600,6 +600,9 @@ function getSkiPassKid() { return 'Enfant' }
 function getSkiPassToddler() { return 'Bambin' }
 function localizeSkiPassCollet(pass) { return 'Collet ' + pass}
 function localizeSkiPass3D(pass) { return '3 Domaines ' + pass}
+function isSkipPassLocalizedCollet(pass) {
+  return pass.substring(0, 7) == 'Collet '
+}
 
 // - Definition of the ski pass class and all possible instances.
 //
@@ -643,6 +646,16 @@ class SkiPass {
   }
   AttributedSkiPassCount() {
     return this.occurence_count
+  }
+  SetPurchasedSkiPassAmount() {
+    this.purchased_amount = this.occurence_count
+    var coord = [this.purchase_range.getRow(),
+                 this.purchase_range.getColumn()]
+    if (this.purchased_amount > 0) {
+      setStringAt(coord, this.purchased_amount)
+    } else {
+      setStringAt(coord, '')
+    }
   }
 
   ValidateDoB(dob) {
@@ -1401,6 +1414,31 @@ function autoFillCompSubscriptions() {
     if (rank > 4) {
       break
     }
+  }
+  return true
+}
+
+function autoFillSkiPassPurchases() {
+  updateStatusBar("Achat automatique des forfaits...", "grey", add=true)
+  var ski_pass_map = createSkipassMap(SpreadsheetApp.getActiveSheet())
+  // Collect the attributed licenses
+  for (var index in coords_identity_rows) {
+    var row = coords_identity_rows[index]
+    // No name verification as this methods runs after this has been
+    // done
+    var dob = getDoB([row, coord_dob_column])
+    if (dob == undefined) {
+      continue
+    }
+    for (var ski_pass in ski_pass_map) {
+      if (!isSkipPassLocalizedCollet(ski_pass)) {
+        continue
+      }
+      ski_pass_map[ski_pass].IncrementAttributedSkiPassCountIfDoB(dob)
+    }
+  }
+  for (var ski_pass in ski_pass_map) {
+      ski_pass_map[ski_pass].SetPurchasedSkiPassAmount()
   }
   return true
 }
@@ -2572,8 +2610,8 @@ function generatePDFAndMaybeSendEmail(config) {
       attachments.push(DriveApp.getFileById(ffs_information_leaflet_pdf).getAs(MimeType.PDF))
     } else if (medical_form_validation == "Sera évalué plus tard") {
       medical_form_text = ('<p><b><font color="red">' +
-                          'Vous devez évaluer le <b>Questionnaire Santé Sportif MINEUR - ' + season + '</b> ou <b>' +
-                          'le Questionnaire Santé Sportif MAJEUR - ' + season + '</b> fournis en attachement et ' +
+                          'Vous devez évaluer le <b>Questionnaire Santé Sportif MINEUR - ' + season + '</b> ou <b>' +
+                          'le Questionnaire Santé Sportif MAJEUR - ' + season + '</b> fournis en attachement et ' +
                           'si une des réponses aux questions est OUI, vous devez transmettre au SCA ' +
                           '(inscriptions.sca@gmail.com) dans les plus brefs délais <u>un certificat médical en cours ' +
                           'de validité</u>. Il faut également <u>signer la page ' + ffs_information_leaflet_page +
@@ -2753,8 +2791,10 @@ function magicWand() {
     if (autoFillLicensePurchases()) {
       if (autoFillNonCompSubscriptions()) {
         if (autoFillCompSubscriptions()) {
-          updateStatusBar("Remplissage automatique terminé...", "green")
-          return
+          if (autoFillSkiPassPurchases()) {
+            updateStatusBar("Remplissage automatique terminé...", "green")
+            return
+          }
         }
       }
     }
