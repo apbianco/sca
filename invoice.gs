@@ -1646,8 +1646,11 @@ function validateFamilyMembers() {
       )
     }
     if (isLevelNotComp(level) && isLicenseComp(license)) {
-      return (first_name + " " + last_name + " est un compétiteur. Utilisez le " +
-              "niveau 'Compétiteur'")
+      return (
+        "Vous devez utiliser le niveau 'Compétiteur' pour " + 
+        first_name + " " + last_name + " qui prend une license " + license +
+        " ou choisir une autre license."         
+      )      
     }
     if (isLevelDefined(level) && isExecLicense(license)) {
       return (first_name + " " + last_name + " est un cadre/dirigeant. Ne définissez pas " +
@@ -1770,7 +1773,7 @@ function validateCompSubscriptions() {
 
   // Collect the amount of subscriptions that have be declared for purchase.
   for (var subscription in comp_subscription_map) {
-    comp_subscription_map[subscription].UpdatePurchasedSubscriptionAmount()
+    comp_subscription_map[subscription].UpdatePurchasedSubscriptionAmountFromTrix()
   }
 
   // Verification:
@@ -1857,11 +1860,12 @@ function validateNonCompSubscriptions() {
 
   // Update the number of noncomp subscription registered
   for (var subscription in subscription_map) {
-    subscription_map[subscription].UpdatePurchasedSubscriptionAmount()
+    subscription_map[subscription].UpdatePurchasedSubscriptionAmountFromTrix()
   }
 
   // Compute the number of people with a level, making the distinction between riders/non riders.
-  // These are the people that need a subscription.
+  // These are the people that need a subscription. Note that a level indicating a competitor
+  // is not taken into account.
   var rider_number = 0
   var non_rider_number = 0
   coords_identity_rows.forEach(function(row) {
@@ -1869,7 +1873,7 @@ function validateNonCompSubscriptions() {
     if (isLevelRider(level)) {
       rider_number += 1
     }
-    if (isLevelNotRider(level)) {
+    if (isLevelNotComp(level) && isLevelNotRider(level)) {
       non_rider_number += 1
     }
   })
