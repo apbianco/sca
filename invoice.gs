@@ -1229,7 +1229,7 @@ function displayWarningPanel(message) {
 function computeLicense(license_map, dob, level) {
   var is_competitor = isLevelComp(level)
   for (var license in license_map) {
-    if (license == getNoLicenseString()) {
+    if (isLicenseNoLicense(license)) {
       continue
     }
     if (license_map[license].ValidateDoB(dob)) {
@@ -1272,11 +1272,11 @@ function autoComputeLicenses() {
     if (first_name == "" || last_name == "") {
       continue
     }
-    // Retrieve the UNNORMALIZED proposed license. If the value is
-    // empty, take it as a signal that we should try to auto-fill, if
-    // not, skip.
+    // Retrieve the UNNORMALIZED proposed license. We don't second-guess
+    // the user only if the license has been knowingly set to Exec license
+    // or no license.
     var selected_license = getRawLicenseAt([row, coord_license_column])
-    if (selected_license != '') {
+    if (isLicenseExec(selected_license) || isLicenseNoLicense(selected_license)) {
       continue
     }
     var dob = getDoB([row, coord_dob_column])
@@ -1293,7 +1293,7 @@ function autoComputeLicenses() {
       return false
     }
     var license = computeLicense(license_map, dob, level)
-    if (license == getNoLicenseString()) {
+    if (isLicenseNoLicense(license)) {
       displayErrorPanel("Pas d'attribution de licence possible pour " + first_name + " " + last_name)
       return false;
     }
@@ -1480,6 +1480,10 @@ function isLicenseDefined(license) {
   return license != '' && license != getNoLicenseString()
 }
 
+function isLicenseNoLicense(license) {
+  return license == getNoLicenseString()
+}
+
 function isLicenseNotDefined(license) {
   return !isLicenseDefined(license)
 }
@@ -1504,7 +1508,7 @@ function isLicenseCompJunior(license) {
   return license == getCompJuniorLicenseString()
 }
 
-function isExecLicense(license) {
+function isLicenseExec(license) {
   return license == getExecutiveLicenseString()
 }
 
@@ -1679,7 +1683,7 @@ function validateFamilyMembers() {
         " ou choisir une autre license."         
       )      
     }
-    if (isLevelDefined(level) && isExecLicense(license)) {
+    if (isLevelDefined(level) && isLicenseExec(license)) {
       return (first_name + " " + last_name + " est un cadre/dirigeant. Ne définissez pas " +
               "de niveau pour un cadre/dirigeant")      
     }
@@ -1701,11 +1705,11 @@ function validateFamilyMembers() {
               "license choisie. Une " + license + ' ' +
               license_map[license].ValidDoBRangeMessage() + '.')
     }
-    if (isExecLicense(license) && city == '') {
+    if (isLicenseExec(license) && city == '') {
       return (first_name + " " + last_name + ": la licence attribuée (" +
               license + ") requiert de renseigner une ville et un pays de naissance");
     }
-    if (isLicenseDefined(license) && !isExecLicense(license) && city != '') {
+    if (isLicenseDefined(license) && !isLicenseExec(license) && city != '') {
       return (first_name + " " + last_name + ": la licence attribuée (" +
               license + ") ne requiert pas de renseigner une ville et un pays de naissance. " +
               "Supprimez cette donnée")
