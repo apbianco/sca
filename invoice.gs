@@ -63,26 +63,25 @@ var skipass_configuration_map = {
 //
 // - Storage for the current season's database.
 //
-var db_folder = '1GmOdaWlEwH1V9xGx3pTp1L3Z4zXQdjjn'
+var db_folder =                            '1GmOdaWlEwH1V9xGx3pTp1L3Z4zXQdjjn'
 //
 //
 // Level aggregation trix to update when a new entry is added
 //
-var license_trix = '1tR3HvdpXWwjziRziBkeVxr4CIp10rHWyfTosv20dG_I'
+var license_trix =                         '1tR3HvdpXWwjziRziBkeVxr4CIp10rHWyfTosv20dG_I'
 //
 // - ID of attachements to be sent with the invoice - some may change
 //   from one season to an other when they are refreshed.
 //
 // PDF content to insert in a registration bundle.
 //
-var legal_disclaimer_pdf = '18jFQWTmLnmBa9HGmPkFS58xr0GjNqERu'
-var rules_pdf = '1U-eeiEFelWN4aHMwjHJ9IQRH3h2mZJoW'
-var parents_note_pdf = '1fVb5J3o8YikPcn4DDAplt9X-XtP9QdYS'
-var ffs_information_leaflet_pdf = '1zxP502NjvVo0AKFt_6FCxs1lQeJnNxmV'
-// The page in ffs_information_leaflet_pdf parents should sign
-var ffs_information_leaflet_page = 16
-var autocertification_non_adult = '1Ir-1TlAB7SoZcamRoX2_i1uk9_l19YUJ'
-var autocertification_adult = '1nDNByrpln58YET8Gqy6vOXkSQb_aBTrf'
+var legal_disclaimer_pdf =                 '18jFQWTmLnmBa9HGmPkFS58xr0GjNqERu'
+var rules_pdf =                            '1U-eeiEFelWN4aHMwjHJ9IQRH3h2mZJoW'
+var parents_note_pdf =                     '1fVb5J3o8YikPcn4DDAplt9X-XtP9QdYS'
+var ffs_information_leaflet_pdf =          '1zxP502NjvVo0AKFt_6FCxs1lQeJnNxmV'
+var ffs_information_leaflet_page_to_sign = 16
+var autocertification_non_adult =          '1Ir-1TlAB7SoZcamRoX2_i1uk9_l19YUJ'
+var autocertification_adult =              '1nDNByrpln58YET8Gqy6vOXkSQb_aBTrf'
 //
 // - Spreadsheet parameters (row, columns, etc...). Adjust as necessary
 //   when the master invoice is modified.
@@ -2627,7 +2626,7 @@ function generatePDFAndMaybeSendEmail(config) {
                           'La ou les réponses positives que vous avez porté au questionaire médical vous ' +
                           'obligent à transmettre au SCA (inscriptions.sca@gmail.com) dans les plus ' +
                           'brefs délais <u>un certificat médical en cours de validité</u>. Il faut également ' +
-                          '<u>signer la page ' + ffs_information_leaflet_page +
+                          '<u>signer la page ' + ffs_information_leaflet_page_to_sign +
                           ' de la notice d\'informations FFS ' + season + '</u> fournie en attachement, si ' +                          
                           'vous ne l\'avez pas déjà fait lors de l\'inscription.' +
                           '</font></b>')
@@ -2636,7 +2635,7 @@ function generatePDFAndMaybeSendEmail(config) {
       medical_form_text = ('<p><b><font color="red">' +
                           'Les réponses négative que vous avez porté au questionaire médical vous ' +
                           'dispense de fournir un certificat médical mais vous obligent à <u>signer la page ' + 
-                          ffs_information_leaflet_page +
+                          ffs_information_leaflet_page_to_sign +
                           ' de la notice d\'informations FFS ' + season + '</u> fournie en attachement, si ' +                          
                           'vous ne l\'avez pas déjà fait lors de l\'inscription.' +
                           '</font></b>')
@@ -2647,7 +2646,7 @@ function generatePDFAndMaybeSendEmail(config) {
                           'le Questionnaire Santé Sportif MAJEUR - ' + season + '</b> fournis en attachement et ' +
                           'si une des réponses aux questions est OUI, vous devez transmettre au SCA ' +
                           '(inscriptions.sca@gmail.com) dans les plus brefs délais <u>un certificat médical en cours ' +
-                          'de validité</u>. Il faut également <u>signer la page ' + ffs_information_leaflet_page +
+                          'de validité</u>. Il faut également <u>signer la page ' + ffs_information_leaflet_page_to_sign +
                           ' de la notice d\'informations FFS ' + season + '</u> fournie en attachement.' +   
                           '</font></b>')
       attachments.push(DriveApp.getFileById(ffs_information_leaflet_pdf).getAs(MimeType.PDF))
