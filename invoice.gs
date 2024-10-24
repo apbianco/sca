@@ -129,6 +129,13 @@ var coord_level_column = 7
 var coord_license_column = 8
 var coord_license_number_column = 9
 //
+// - Location where the cells computing the family pass
+//   rebates are defined.
+var coord_rebate_family_of_4_amount = [23, 4]
+var coord_rebate_family_of_4_count =  [23, 5]
+var coord_rebate_family_of_5_amount = [24, 4]
+var coord_rebate_family_of_5_count =  [24, 5]
+//
 // - Parameters defining the valid ranges to be retained during the
 //   generation of the invoice's PDF
 //
@@ -378,33 +385,32 @@ function createLicensesMap(sheet) {
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-// Subscription management code
+// Competitor categories management
 ///////////////////////////////////////////////////////////////////////////////
 
-// Categories used to from a range to establish the subscription
-// ranges. Also fill an array with these values as it's needed
-// everywhere.
-function getU8() { return 'U8' }
-function getU10() { return 'U10'}
-function getU12Plus() { return 'U12+' }
+// Competitors: categories definition (used to establish the subscription
+// range). Also define an array with these values as it's needed everywhere.
+// Also define a categories sorting function, used to sort arrays of categories,
+// verifying that comp_subscription_categories.sort() == comp_subscription_categories
+function getU8String() { return 'U8' }
+function getU10String() { return 'U10'}
+function getU12PlusString() { return 'U12+' }
 var comp_subscription_categories = [
-  getU8(), getU10(), getU12Plus()
+  getU8String(), getU10String(), getU12PlusString()
 ]
 
-// Competitor categories sorting function, used to sort arrays of categories.
-// This verifies that comp_subscription_categories.sort() == comp_subscription_categories
 function categoriesAscendingOrder(cat1, cat2) {
   // No order change
   if (cat1 == cat2) {
     return 0
   }
   // U8 is always the smallest category
-  if (cat1 == getU8()) {
+  if (cat1 == getU8String()) {
     return -1
   }
   // U10 will only rank lower than U12+
-  if (cat1 == getU10()) {
-    if (cat2 == getU12Plus()) {
+  if (cat1 == getU10String()) {
+    if (cat2 == getU12PlusString()) {
       return -1
     }
     return 1
@@ -413,6 +419,68 @@ function categoriesAscendingOrder(cat1, cat2) {
   // compared against U12 which has already been done
   return 1
 }
+
+///////////////////////////////////////////////////////////////////////////////
+// Non competitor levels and subscription values management
+///////////////////////////////////////////////////////////////////////////////
+
+// Note: Undertermined level is not absence of level. Absence of level is
+// getNALevelString or ''
+function getNoLevelString() { return 'Non déterminé' } // DOES define an undetermined
+function getNALevelString() { return 'Pas Concerné' }  // DOEST NOT define a level
+function getLevelCompString() {return "Compétiteur" }
+function getRiderLevelString() { return 'Rider' }
+function getFirstKidString() { return '1er enfant' }
+function getSecondKidString() { return '2ème enfant' }
+function getThirdKidString() { return '3ème enfant' }
+function getFourthKidString() { return '4ème enfant' }
+
+var noncomp_subscription_categories = [
+  getRiderLevelString(), getFirstKidString(), getSecondKidString(),
+  getThirdKidString(), getFourthKidString()
+]
+
+// A level is not adjusted when it starts with "⚠️ "
+function isLevelNotAdjusted(level) {
+  return level.substring(0, 3) == "⚠️ ";
+}
+
+// NOTE: A level is not defined when it has not been entered or
+// when it has been set to getNALevelString()
+// NOTABLY:
+//  - A level of getNoLevelString() value *DEFINES* a level.
+//  - A level not yet adjusted *DEFINES* a level.
+function isLevelNotDefined(level) {
+  return level == '' || level == getNALevelString()
+}
+
+function isLevelDefined(level) {
+  return ! isLevelNotDefined(level)
+}
+
+function isLevelComp(level) {
+  return level == getLevelCompString()
+}
+
+function isLevelNotComp(level) {
+  return isLevelDefined(level) && ! isLevelComp(level);
+}
+
+function isLevelRider(level) {
+  return level == getRiderLevelString()
+}
+
+function isLevelNotRider(level) {
+  return isLevelDefined(level) && ! isLevelRider(level)
+}
+
+function isFirstKid(subscription) {
+  return isLevelDefined(subscription) && subscription == getFirstKidString()
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// Subscription management code
+///////////////////////////////////////////////////////////////////////////////
 
 // A Subscription class to create an object that has a name, a range in the trix at
 // which it can be marked as purchased, a validation method that takes a DoB
@@ -483,32 +551,29 @@ function createCompSubscriptionMap(sheet) {
   var row = 53
   var to_return = {}
   for (var rank = 1; rank <= 4; rank +=1) {
-    var label = rank + getU8()
+    var label = rank + getU8String()
     to_return[label] = new Subscription(
       label,
       // FIXME: Should be attached to comp_subscription_map
       sheet.getRange(row, 5),
-      (dob) => {return ageVerificationBornBetweenYearsIncluded(dob, getFirstYear(getU8()), getLastYear(getU8()))})
+      (dob) => {return ageVerificationBornBetweenYearsIncluded(dob, getFirstYear(getU8String()), getLastYear(getU8String()))})
     row += 1;
-    label = rank + getU10()
+    label = rank + getU10String()
     to_return[label] = new Subscription(
       label,
       sheet.getRange(row, 5),
-      (dob) => {return ageVerificationBornBetweenYearsIncluded(dob, getFirstYear(getU10()), getLastYear(getU10()))})
+      (dob) => {return ageVerificationBornBetweenYearsIncluded(dob, getFirstYear(getU10String()), getLastYear(getU10String()))})
     row += 1
-    label = rank + getU12Plus()
+    label = rank + getU12PlusString()
     to_return[label] = new Subscription(
       label,
       sheet.getRange(row, 5),
-      (dob) => {return ageVerificationBornBeforeYearIncluded(dob, getFirstYear(getU12Plus()))})
+      (dob) => {return ageVerificationBornBeforeYearIncluded(dob, getFirstYear(getU12PlusString()))})
     row += 1
   }
   validateClassInstancesMap(to_return, 'createCompSubscriptionMap')
   return to_return
 }
-
-// FIXME: Define differently like U8, etc...
-var noncomp_subscription_categories = ['Rider', '1er enfant', '2ème enfant', '3ème enfant', '4ème enfant']
 
 function createNonCompSubscriptionMap(sheet) {
   var to_return = {}
@@ -525,72 +590,9 @@ function createNonCompSubscriptionMap(sheet) {
   return to_return
 }
 
-// This defines a level: the level is undetermined
-function getNoLevelString() {
-  return 'Non déterminé'
-}
-
-// This DOES NOT define a level. It's equivalent to not
-// setting anything.
-function getNALevelString() {
-  return 'Pas Concerné'
-}
-
-// A level is not adjusted when it starts with "⚠️ "
-function isLevelNotAdjusted(level) {
-  return level.substring(0, 3) == "⚠️ ";
-}
-
-// NOTE: A level is not defined when it has not been entered or
-// when it has been set to getNALevelString()
-// NOTABLY:
-//  - A level of getNoLevelString() value *DEFINES* a level.
-//  - A level not yet adjusted *DEFINES* a level.
-function isLevelNotDefined(level) {
-  return level == '' || level == getNALevelString()
-}
-
-function getRiderLevelString() {
-  // FIXME: Fragile - should go the other way around
-  return noncomp_subscription_categories[0]
-}
-
-function getLevelCompString() {
-  return "Compétiteur"
-}
-
-function getFirstKid() {
-  // FIXME: fragile?
-  return noncomp_subscription_categories[1]
-}
-
-function isLevelDefined(level) {
-  return ! isLevelNotDefined(level)
-}
-
-function isLevelComp(level) {
-  return level == getLevelCompString()
-}
-
-function isLevelNotComp(level) {
-  return isLevelDefined(level) && ! isLevelComp(level);
-}
-
-function isLevelRider(level) {
-  return level == getRiderLevelString()
-}
-
-function isLevelNotRider(level) {
-  return isLevelDefined(level) && ! isLevelRider(level)
-}
-
-function isFirstKid(subscription) {
-  return isLevelDefined(subscription) && subscription == getFirstKid()
-}
-
-//
-// Skipass section:
-//
+///////////////////////////////////////////////////////////////////////////////
+// Skipass management code
+///////////////////////////////////////////////////////////////////////////////
 
 // Definition of all possible skipass values
 function getSkiPassSenior() { return 'Senior' }
@@ -778,12 +780,6 @@ function createSkipassMap(sheet) {
   return to_return
 }
 
-// FIXME: Move this to the seasonal definition section.
-var coord_rebate_family_of_4_amount = [23, 4]
-var coord_rebate_family_of_4_count = [23, 5]
-var coord_rebate_family_of_5_amount = [24, 4]
-var coord_rebate_family_of_5_count = [24, 5]
-
 function isSkipassStudent(ski_pass) {
   return (ski_pass == localizeSkiPass3D(getSkiPassStudent()) ||
           ski_pass == localizeSkiPassCollet(getSkiPassStudent()))
@@ -804,7 +800,10 @@ function getSkiPassesPairs() {
   return to_return
 }
 
-// Email configuration - these shouldn't change very often
+///////////////////////////////////////////////////////////////////////////////
+// Email address configuration points.
+///////////////////////////////////////////////////////////////////////////////
+
 var allowed_user = 'inscriptions.sca@gmail.com'
 var email_loisir = 'sca.loisir@gmail.com'
 var email_comp = 'skicluballevardin@gmail.com'
@@ -1472,7 +1471,7 @@ function autoFillSkiPassPurchases() {
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-// Validation methods
+// Validation methods for license types
 ///////////////////////////////////////////////////////////////////////////////
 
 function isLicenseDefined(license) {
@@ -1918,7 +1917,7 @@ function validateNonCompSubscriptions() {
   }
 
   // If we have a rider, the first subscription can not exist, we jump directly to the second kid
-  var first_kid = subscription_map[getFirstKid()].PurchasedSubscriptionAmount()
+  var first_kid = subscription_map[getFirstKidString()].PurchasedSubscriptionAmount()
   if (first_kid != 0 && rider_number > 0) {
     return ("L'adhésion rider compte comme une première Adhésion / Stage / Transport - 1er enfant. " +
             "Veuillez saisir les adhésion à partir du deuxièmme enfant.")
