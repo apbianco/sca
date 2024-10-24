@@ -71,9 +71,8 @@ var db_folder =                            '1GmOdaWlEwH1V9xGx3pTp1L3Z4zXQdjjn'
 var license_trix =                         '1tR3HvdpXWwjziRziBkeVxr4CIp10rHWyfTosv20dG_I'
 //
 // - ID of attachements to be sent with the invoice - some may change
-//   from one season to an other when they are refreshed.
-//
-// PDF content to insert in a registration bundle.
+//   from one season to an other when they are refreshed. These documents
+//   are also part of the registration bundle sent to parents.
 //
 var legal_disclaimer_pdf =                 '18jFQWTmLnmBa9HGmPkFS58xr0GjNqERu'
 var rules_pdf =                            '1U-eeiEFelWN4aHMwjHJ9IQRH3h2mZJoW'
