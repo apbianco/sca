@@ -29,9 +29,9 @@ var season = "2024/2025"
 //   map when the year of validity is changing.
 //
 var licenses_configuration_map = {
-  'CN Jeune (Loisir)': 2010,
-  'CN Jeune (Compétition)': 2010,
-  'CN Adulte (Loisir)': 2009,
+  'CN Jeune (Loisir)':       2010,
+  'CN Jeune (Compétition)':  2010,
+  'CN Adulte (Loisir)':      2009,
   'CN Adulte (Compétition)': 2009,
 }
 //
@@ -120,13 +120,13 @@ var coords_identity_rows = [14, 15, 16, 17, 18, 19];
 //
 // - Columns where information about family members can be found
 //
-var coord_first_name_column = 2
-var coord_last_name_column = 3
-var coord_dob_column = 4
-var coord_cob_column = 5
-var coord_sex_column = 6
-var coord_level_column = 7
-var coord_license_column = 8
+var coord_first_name_column =     2
+var coord_last_name_column =      3
+var coord_dob_column =            4
+var coord_cob_column =            5
+var coord_sex_column =            6
+var coord_level_column =          7
+var coord_license_column =        8
 var coord_license_number_column = 9
 //
 // - Location where the cells computing the family pass
