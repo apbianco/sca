@@ -247,6 +247,47 @@ function getExecutiveLicenseString() {return 'CN Dirigeant'}
 function getCompJuniorLicenseString() {return 'CN Jeune (Compétition)'}
 function getCompAdultLicenseString() {return 'CN Adulte (Compétition)'}
 
+function isLicenseDefined(license) {
+  // FIXME: extra paranoid: check it's a key of the license hash.
+  return license != '' && license != getNoLicenseString()
+}
+
+function isLicenseNoLicense(license) {
+  return license == getNoLicenseString()
+}
+
+function isLicenseNotDefined(license) {
+  return !isLicenseDefined(license)
+}
+
+function isLicenseNonComp(license) {
+  // FIXME: Why is it not !isLicenseComp() ?
+  return (license == getNonCompJuniorLicenseString() ||
+          license == getNonCompFamilyLicenseString() ||
+          license == getNonCompAdultLicenseString())
+}
+
+function isLicenseComp(license) {
+  return (license == getCompAdultLicenseString() ||
+          license == getCompJuniorLicenseString())
+}
+
+function isLicenseCompAdult(license) {
+  return license == getCompAdultLicenseString()
+}
+
+function isLicenseCompJunior(license) {
+  return license == getCompJuniorLicenseString()
+}
+
+function isLicenseExec(license) {
+  return license == getExecutiveLicenseString()
+}
+
+function isLicenseFamily(license) {
+  return license == getNonCompFamilyLicenseString()
+}
+
 // A License class to create an object that has a name, a range in the trix at
 // which it can be marked as purchased, a validation method that takes a DoB
 // as input and a message to issue when the validation failed.
@@ -675,7 +716,6 @@ class SkiPass {
 }
 
 function createSkipassMap(sheet) {
-
   function getFirstValue(label) {
     if (! label in skipass_configuration_map) {
       displayErrorPanel(label + " n'est pas dans comp_subscription_map!")
@@ -1471,53 +1511,12 @@ function autoFillSkiPassPurchases() {
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-// Validation methods for license types
+// Drop down value validation
 ///////////////////////////////////////////////////////////////////////////////
 
-function isLicenseDefined(license) {
-  // FIXME: extra paranoid: check it's a key of the license hash.
-  return license != '' && license != getNoLicenseString()
-}
-
-function isLicenseNoLicense(license) {
-  return license == getNoLicenseString()
-}
-
-function isLicenseNotDefined(license) {
-  return !isLicenseDefined(license)
-}
-
-function isLicenseNonComp(license) {
-  // FIXME: Why is it not !isLicenseComp() ?
-  return (license == getNonCompJuniorLicenseString() ||
-          license == getNonCompFamilyLicenseString() ||
-          license == getNonCompAdultLicenseString())
-}
-
-function isLicenseComp(license) {
-  return (license == getCompAdultLicenseString() ||
-          license == getCompJuniorLicenseString())
-}
-
-function isLicenseCompAdult(license) {
-  return license == getCompAdultLicenseString()
-}
-
-function isLicenseCompJunior(license) {
-  return license == getCompJuniorLicenseString()
-}
-
-function isLicenseExec(license) {
-  return license == getExecutiveLicenseString()
-}
-
-function isLicenseFamily(license) {
-  return license == getNonCompFamilyLicenseString()
-}
-
-// Validate a cell at (x, y) whose value is set via a drop-down
+// Validate a cell at coord whose value is set via a drop-down
 // menu. We rely on the fact that a cell not yet set a proper value
-// always has the same value.  When the value is valid, it is
+// can only take a couple values.  When the value is valid, it is
 // returned. Otherwise, '' is returned.
 function validateAndReturnDropDownValue(coord, message) {
   var value = getStringAt(coord)
