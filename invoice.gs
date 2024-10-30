@@ -74,13 +74,13 @@ var license_trix =                         '1tR3HvdpXWwjziRziBkeVxr4CIp10rHWyfTo
 //   from one season to an other when they are refreshed. These documents
 //   are also part of the registration bundle sent to parents.
 //
-var legal_disclaimer_pdf =                 '18jFQWTmLnmBa9HGmPkFS58xr0GjNqERu'
-var rules_pdf =                            '1U-eeiEFelWN4aHMwjHJ9IQRH3h2mZJoW'
-var parents_note_pdf =                     '1fVb5J3o8YikPcn4DDAplt9X-XtP9QdYS'
-var ffs_information_leaflet_pdf =          '1zxP502NjvVo0AKFt_6FCxs1lQeJnNxmV'
-var ffs_information_leaflet_page_to_sign = 16
-var autocertification_non_adult =          '1Ir-1TlAB7SoZcamRoX2_i1uk9_l19YUJ'
-var autocertification_adult =              '1nDNByrpln58YET8Gqy6vOXkSQb_aBTrf'
+var legal_disclaimer_pdf =                  '18jFQWTmLnmBa9HGmPkFS58xr0GjNqERu'
+var rules_pdf =                             '1U-eeiEFelWN4aHMwjHJ9IQRH3h2mZJoW'
+var parents_note_pdf =                      '1fVb5J3o8YikPcn4DDAplt9X-XtP9QdYS'
+var ffs_information_leaflet_pdf =           '1zxP502NjvVo0AKFt_6FCxs1lQeJnNxmV'
+var ffs_information_leaflet_pages_to_sign = 'les pages 16 et 17'
+var autocertification_non_adult =           '1Ir-1TlAB7SoZcamRoX2_i1uk9_l19YUJ'
+var autocertification_adult =               '1nDNByrpln58YET8Gqy6vOXkSQb_aBTrf'
 //
 // - Spreadsheet parameters (row, columns, etc...). Adjust as necessary
 //   when the master invoice is modified.
@@ -2607,7 +2607,7 @@ function generatePDFAndMaybeSendEmail(config) {
       legal_disclaimer_text = (
         "<p>Il vous faut compléter, signer et nous retourner la mention " +
         "légale fournie en attachment, couvrant le droit à l'image, le " +
-        "règlement intérieur, les interventions médicales et la GDPD.</p>");
+        "règlement intérieur, les interventions médicales et la RGPD.</p>");
     }
     // Insert the note and rules for the parents anyways
     attachments.push(DriveApp.getFileById(rules_pdf).getAs(MimeType.PDF))
@@ -2625,7 +2625,7 @@ function generatePDFAndMaybeSendEmail(config) {
                           'La ou les réponses positives que vous avez porté au questionaire médical vous ' +
                           'obligent à transmettre au SCA (inscriptions.sca@gmail.com) dans les plus ' +
                           'brefs délais <u>un certificat médical en cours de validité</u>. Il faut également ' +
-                          '<u>signer la page ' + ffs_information_leaflet_page_to_sign +
+                          '<u>signer ' + ffs_information_leaflet_pages_to_sign +
                           ' de la notice d\'informations FFS ' + season + '</u> fournie en attachement, si ' +                          
                           'vous ne l\'avez pas déjà fait lors de l\'inscription.' +
                           '</font></b>')
@@ -2633,8 +2633,8 @@ function generatePDFAndMaybeSendEmail(config) {
     } else if (medical_form_validation == 'Toutes réponses NON') {
       medical_form_text = ('<p><b><font color="red">' +
                           'Les réponses négative que vous avez porté au questionaire médical vous ' +
-                          'dispense de fournir un certificat médical mais vous obligent à <u>signer la page ' + 
-                          ffs_information_leaflet_page_to_sign +
+                          'dispense de fournir un certificat médical mais vous obligent à <u>signer ' + 
+                          ffs_information_leaflet_pages_to_sign +
                           ' de la notice d\'informations FFS ' + season + '</u> fournie en attachement, si ' +                          
                           'vous ne l\'avez pas déjà fait lors de l\'inscription.' +
                           '</font></b>')
@@ -2645,7 +2645,7 @@ function generatePDFAndMaybeSendEmail(config) {
                           'le Questionnaire Santé Sportif MAJEUR - ' + season + '</b> fournis en attachement et ' +
                           'si une des réponses aux questions est OUI, vous devez transmettre au SCA ' +
                           '(inscriptions.sca@gmail.com) dans les plus brefs délais <u>un certificat médical en cours ' +
-                          'de validité</u>. Il faut également <u>signer la page ' + ffs_information_leaflet_page_to_sign +
+                          'de validité</u>. Il faut également <u>signer ' + ffs_information_leaflet_pages_to_sign +
                           ' de la notice d\'informations FFS ' + season + '</u> fournie en attachement.' +   
                           '</font></b>')
       attachments.push(DriveApp.getFileById(ffs_information_leaflet_pdf).getAs(MimeType.PDF))
