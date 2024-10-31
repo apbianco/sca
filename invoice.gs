@@ -87,30 +87,33 @@ var autocertification_adult =               '1nDNByrpln58YET8Gqy6vOXkSQb_aBTrf'
 // 
 // - Locations of family details:
 //
-var coord_family_civility = [6,  3]
-var coord_family_name =     [6,  4]
-var coord_family_street =   [8,  3]
-var coord_family_zip =      [8,  4]
-var coord_family_city =     [8,  5]
-var coord_family_email =    [9,  3]
-var coord_cc =              [9,  5]
-var coord_family_phone1 =   [10, 3]
-var coord_family_phone2 =   [10, 5]
+var coord_family_civility =         [6,  3]
+var coord_family_name =             [6,  4]
+var coord_family_street =           [8,  3]
+var coord_family_zip =              [8,  4]
+var coord_family_city =             [8,  5]
+var coord_family_email =            [9,  3]
+var coord_cc =                      [9,  5]
+var coord_family_phone1 =           [10, 3]
+var coord_family_phone2 =           [10, 5]
 //
 // - Locations of various status line and collected input, located
 //   a the bottom of the invoice.
 // 
-var coord_rebate =           [76, 4]
-var coord_charge =           [77, 4]
-var coord_personal_message = [85, 3]
-var coord_timestamp =        [86, 2]
-var coord_version =          [86, 3]
-var coord_legal_disclaimer = [86, 5]
-var coord_medical_form =     [86, 7]
-var coord_callme_phone =     [86, 9]
-var coord_yolo =             [87, 3]
-var coord_status =           [88, 4]
-var coord_generated_pdf =    [88, 6]
+var coord_total =                   [65, 7]
+var coord_rebate =                  [76, 4]
+var coord_charge =                  [77, 4]
+var coord_owed =                    [78, 7]
+var coord_payment_validation_form = [79, 7]
+var coord_personal_message =        [85, 3]
+var coord_timestamp =               [86, 2]
+var coord_version =                 [86, 3]
+var coord_legal_disclaimer =        [86, 5]
+var coord_ffs_medical_form =        [86, 7]
+var coord_callme_phone =            [86, 9]
+var coord_yolo =                    [87, 3]
+var coord_status =                  [88, 4]
+var coord_generated_pdf =           [88, 6]
 //
 // - Rows where the family names are entered
 // 
@@ -2298,13 +2301,13 @@ function augmentEscapeHatch(source) {
 // Invoice validation data returned by validateInvoice() after a successful
 // invoice validation.
 class InvoiceValidationData {
-  constructor(error, civility, family_name, mail_to, legal_disclaimer, medical_form) {
+  constructor(error, civility, family_name, mail_to, legal_disclaimer, ffs_medical_form) {
     this.error = error
     this.civility = civility
     this.family_name = family_name
     this.mail_to = mail_to
     this.legal_disclaimer = legal_disclaimer
-    this.medical_form = medical_form
+    this.ffs_medical_form = ffs_medical_form
   }
 }
 
@@ -2442,7 +2445,7 @@ function validateInvoice() {
     }
  
     // Validate the legal disclaimer.
-    updateStatusBar("Validation autorisation/questionaire...", "grey", add=true)
+    updateStatusBar("Validation règlement/autorisation/questionaire...", "grey", add=true)
     var legal_disclaimer_validation = validateAndReturnDropDownValue(
       coord_legal_disclaimer,
       "Vous n'avez pas renseigné la nécessitée ou non de devoir " +
@@ -2458,12 +2461,54 @@ function validateInvoice() {
       return validatationDataError()
     }
 
-    // Validate the medical form
-    var medical_form_validation = validateAndReturnDropDownValue(
-      coord_medical_form,
-      "Vous n'avez pas renseigné votre réponse (OUI/NON) au questionaire médicale.")
-    if (medical_form_validation == '') {
+    // Validate the ffs/medical form
+    var ffs_medical_form_validation = validateAndReturnDropDownValue(
+      coord_ffs_medical_form,
+      "Vous n'avez pas renseigné de réponse à la question Notice FFS / Questionaire Médical.")
+    if (ffs_medical_form_validation == '') {
       return validatationDataError()
+    }
+
+    // Validate the invoice payment
+    var invoice_payment_validation = validateAndReturnDropDownValue(
+      coord_payment_validation_form,
+      "Vous n'avez pas validé le règlement de la facture.")
+    if (invoice_payment_validation == '') {
+      return validatationDataError()
+    }
+    // Verify that what's set matches the tally
+    var owed = getNumberAt(coord_owed)
+    if (owed < 0) {
+      displayErrorPanel('Le montnant dû (' + owed + '€) ne peux pas être négatif')
+      return validatationDataError()      
+    }
+    var total = getNumberAt(coord_total)
+    switch(getStringAt(coord_payment_validation_form)) {
+      case 'Acquitté':
+        if (owed != 0) {
+          displayErrorPanel('Payment marqué acquitté avec ' + owed + '€ restant à payer')
+          return validatationDataError()
+        }
+        break
+      case 'Non acquitté':
+        if (owed == 0) {
+          displayErrorPanel('Total dû de 0€, ce paiement devrait être marqué acquitté.')
+          return validatationDataError()          
+        }
+        break
+      case 'Accompte versé':
+        if (owed == 0) {
+          displayErrorPanel('Total dû de 0€, ce paiement devrait être marqué acquitté.')
+          return validatationDataError()             
+        }
+        var down_payment = total - owed
+        if (down_payment <= 0) {
+          displayErrorPanel('Accompte de ' + down_payment + '€ versé pour un paiement dû de ' + owed + '€')
+          return validatationDataError()          
+        }
+        break
+      case 'Autre':
+        break
     }
   }
 
@@ -2477,7 +2522,7 @@ function validateInvoice() {
 
 
   return new InvoiceValidationData(false, civility, family_name, checkEmail(mail_to),
-                                   legal_disclaimer_validation, medical_form_validation)    
+                                   legal_disclaimer_validation, ffs_medical_form_validation)    
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -2488,12 +2533,37 @@ function validateInvoice() {
 // content or just trigger a license creation request email.
 var invoiceActions = {
   JUST_GENERATE_INVOICE: 1 << 0,
-  EMAIL_INVOICE: 1 << 1,
-  LICENSE_REQUEST: 1 << 2,
-  EMAIL_FOLDER: 1 << 3,
+  LICENSE_REQUEST: 1 << 1,
+  EMAIL_FOLDER: 1 << 2,
 };
 
-function maybeEmailLicenseSCA(invoice) {
+// Verify that a license can be asked - this just requires some payment
+// verification
+function askingLicenseOK() {
+    switch(getStringAt(coord_payment_validation_form)) {
+      case 'Acquitté':
+        return true
+        break
+      case 'Non acquitté':
+        return false
+        break
+      case 'Accompte versé':
+        return true
+        break
+      case 'Autre':
+        return true
+        break      
+    }
+}
+
+// When just_test is true, just see if a license request should be sent, but
+// don't send any email.
+// FIXME: Split in two really.
+function maybeEmailLicenseSCA(invoice, just_test) {
+  if (just_test == false && ! askingLicenseOK()) {
+    updateStatusBar("⚠️ Pas de demande de license (voir paiement)", "orange", add=true)      
+    return false
+  }
   var operator = getOperator()
   var family_name = getFamilyName()
   var family_dict = getListOfFamilyPurchasingALicense() 
@@ -2519,13 +2589,17 @@ function maybeEmailLicenseSCA(invoice) {
       "----------------------------------------------------</tt><br>\n");
       license_count += 1;
   }
-  if (string_family_members) {
-    string_family_members = (
-      "<p> " + license_count + Plural(license_count, " licence nécessaire") +
-      " pour:</p><blockquote>\n" + string_family_members + "</blockquote>\n");
-  } else {
-    return;
+  // If we haven't gathered any family members, there's no license request to
+  // send and we return
+  if (string_family_members == "") {
+    return false
   }
+  if (just_test) {
+    return true
+  }
+  string_family_members = (
+    "<p> " + license_count + Plural(license_count, " licence nécessaire") +
+    " pour:</p><blockquote>\n" + string_family_members + "</blockquote>\n");
   
   var email_options = {
     name: family_name + ": nouvelle inscription",
@@ -2539,6 +2613,7 @@ function maybeEmailLicenseSCA(invoice) {
     attachments: invoice,
   } 
   MailApp.sendEmail(email_options)
+  return true
 }
 
 function updateStatusBar(message, color, add=false) {
@@ -2569,46 +2644,32 @@ function generatePDFAndMaybeSendEmail(config) {
   var attachments = [pdf.getAs(MimeType.PDF)]
 
   var just_generate_invoice = config & invoiceActions.JUST_GENERATE_INVOICE
-  var email_invoice = config & invoiceActions.EMAIL_INVOICE
   var email_folder = config & invoiceActions.EMAIL_FOLDER
   var license_request = config & invoiceActions.LICENSE_REQUEST
   
-  if (email_invoice) {
-    updateStatusBar("⏳ Génération et envoit de la facture...", "orange")
-  }
-  else if (email_folder) {
+  if (email_folder) {
     updateStatusBar("⏳ Génération et envoit du dossier...", "orange")
   }
   else if (license_request) {
     updateStatusBar("⏳ Envoit de la demande de license", "orange")    
   }
   else if (just_generate_invoice) {
-    updateStatusBar("⏳ Génération de la facture...", "orange")
+    updateStatusBar("⏳ Génération de la facture sans envoi...", "orange")
   }
   else {
     updateStatusBar("❌ Instruction non traitée", "red")      
     return;
   }
-  
+
   var civility = validation.civility
   var family_name = validation.family_name
   var mail_to = validation.mail_to
   var legal_disclaimer_validation = validation.legal_disclaimer
   var legal_disclaimer_text = ''
-  var medical_form_validation = validation.medical_form
-  var medical_form_text = ''
-  // Determine whether parental consent needs to be generated. If
-  // that's the case, we generate additional attachment content.
-  if (email_folder) {
-    if (legal_disclaimer_validation == 'À fournire signée') {
-      attachments.push(
-        DriveApp.getFileById(legal_disclaimer_pdf).getAs(MimeType.PDF))
-    
-      legal_disclaimer_text = (
-        "<p>Il vous faut compléter, signer et nous retourner la mention " +
-        "légale fournie en attachment, couvrant le droit à l'image, le " +
-        "règlement intérieur, les interventions médicales et la RGPD.</p>");
-    }
+  var ffs_medical_form_validation = validation.ffs_medical_form
+  var ffs_medical_form_text = ''
+  
+  function insertNotesAndRules() {
     // Insert the note and rules for the parents anyways
     attachments.push(DriveApp.getFileById(rules_pdf).getAs(MimeType.PDF))
     attachments.push(DriveApp.getFileById(parents_note_pdf).getAs(MimeType.PDF));
@@ -2616,47 +2677,77 @@ function generatePDFAndMaybeSendEmail(config) {
       "<p>Vous trouverez également en attachement une note adressée aux " +
       "parents, ainsi que le règlement intérieur. Merci de lire ces deux " +
       "documents attentivement.</p>");
-  
-    // Take a look at the medical form answer:
-    // 1- Yes: we need to tell that a medical certificate needs to be provided
-    // 2- No: a new attachment need to be added.
-    if (medical_form_validation == 'Une réponse OUI') {
-      medical_form_text = ('<p><b><font color="red">' +
-                          'La ou les réponses positives que vous avez porté au questionaire médical vous ' +
-                          'obligent à transmettre au SCA (inscriptions.sca@gmail.com) dans les plus ' +
-                          'brefs délais <u>un certificat médical en cours de validité</u>. Il faut également ' +
-                          '<u>signer ' + ffs_information_leaflet_pages_to_sign +
-                          ' de la notice d\'informations FFS ' + season + '</u> fournie en attachement, si ' +                          
-                          'vous ne l\'avez pas déjà fait lors de l\'inscription.' +
-                          '</font></b>')
-      attachments.push(DriveApp.getFileById(ffs_information_leaflet_pdf).getAs(MimeType.PDF))
-    } else if (medical_form_validation == 'Toutes réponses NON') {
-      medical_form_text = ('<p><b><font color="red">' +
-                          'Les réponses négative que vous avez porté au questionaire médical vous ' +
-                          'dispense de fournir un certificat médical mais vous obligent à <u>signer ' + 
-                          ffs_information_leaflet_pages_to_sign +
-                          ' de la notice d\'informations FFS ' + season + '</u> fournie en attachement, si ' +                          
-                          'vous ne l\'avez pas déjà fait lors de l\'inscription.' +
-                          '</font></b>')
-      attachments.push(DriveApp.getFileById(ffs_information_leaflet_pdf).getAs(MimeType.PDF))
-    } else if (medical_form_validation == "Sera évalué plus tard") {
-      medical_form_text = ('<p><b><font color="red">' +
-                          'Vous devez évaluer le <b>Questionnaire Santé Sportif MINEUR - ' + season + '</b> ou <b>' +
-                          'le Questionnaire Santé Sportif MAJEUR - ' + season + '</b> fournis en attachement et ' +
-                          'si une des réponses aux questions est OUI, vous devez transmettre au SCA ' +
-                          '(inscriptions.sca@gmail.com) dans les plus brefs délais <u>un certificat médical en cours ' +
-                          'de validité</u>. Il faut également <u>signer ' + ffs_information_leaflet_pages_to_sign +
-                          ' de la notice d\'informations FFS ' + season + '</u> fournie en attachement.' +   
-                          '</font></b>')
-      attachments.push(DriveApp.getFileById(ffs_information_leaflet_pdf).getAs(MimeType.PDF))
-      attachments.push(DriveApp.getFileById(autocertification_non_adult).getAs(MimeType.PDF))
-      attachments.push(DriveApp.getFileById(autocertification_adult).getAs(MimeType.PDF))
+  }
+
+  // Determine whether parental consent needs to be generated. If
+  // that's the case, we generate additional attachment content.
+  if (email_folder) {
+    switch (legal_disclaimer_validation) {
+      case 'À fournire signée':
+        attachments.push(
+          DriveApp.getFileById(legal_disclaimer_pdf).getAs(MimeType.PDF))
+        legal_disclaimer_text = (
+          "<p>Il vous faut compléter, signer et nous retourner la mention " +
+          "légale fournie en attachment, couvrant le droit à l'image, le " +
+          "règlement intérieur, les interventions médicales et la RGPD.</p>")
+        insertNotesAndRules()
+        break
+      case 'Fournie et signée':
+        insertNotesAndRules()
+        break
+      case 'Non nécessaire':
+        break
+    }
+
+    switch (ffs_medical_form_validation) {
+      case 'Signée, pas de certificat médical à fournir':
+        ffs_medical_form_text = ('<p><b><font color="red">' +
+                                 'Les réponses négative que vous avez porté au questionaire médical vous ' +
+                                 'dispense de fournir un certificat médical.</font></b>' +
+                                 '<p>Vous retrouverez aussi en attachement la notice FFS que vous avec déjà ' +
+                                 'remplie afin de la conserver.')
+        attachments.push(DriveApp.getFileById(ffs_information_leaflet_pdf).getAs(MimeType.PDF))
+        break
+
+      case 'Signée, certificat médical à fournir':
+        ffs_medical_form_text = ('<p><b><font color="red">' +
+                                 'La ou les réponses positives que vous avez porté au questionaire médical vous ' +
+                                 'obligent à transmettre au SCA (inscriptions.sca@gmail.com) dans les plus ' +
+                                 'brefs délais <u>un certificat médical en cours de validité</u></font></b>.' +
+                                 '<p>Vous retrouverez aussi en attachement la notice FFS que vous avec déjà ' +
+                                 'remplie afin de la conserver.')                                 
+        attachments.push(DriveApp.getFileById(ffs_information_leaflet_pdf).getAs(MimeType.PDF))
+        break
+
+      case 'À fournir signée, questionaire médical à évaluer':
+        ffs_medical_form_text = ('<p><b><font color="red">' +
+                                 'Vous devez évaluer le <b>Questionnaire Santé Sportif MINEUR - ' + season + '</b> ou <b>' +
+                                 'le Questionnaire Santé Sportif MAJEUR - ' + season + '</b> fournis en attachement et ' +
+                                 'si une des réponses aux questions est OUI, vous devez transmettre au SCA ' +
+                                 '(inscriptions.sca@gmail.com) dans les plus brefs délais <u>un certificat médical en cours ' +
+                                 'de validité</u>. Il faut également <u>signer ' + ffs_information_leaflet_pages_to_sign +
+                                 ' de la notice d\'informations FFS ' + season + '</u> fournie en attachement.' +   
+                                 '</font></b>')
+        attachments.push(DriveApp.getFileById(ffs_information_leaflet_pdf).getAs(MimeType.PDF))
+        attachments.push(DriveApp.getFileById(autocertification_non_adult).getAs(MimeType.PDF))
+        attachments.push(DriveApp.getFileById(autocertification_adult).getAs(MimeType.PDF))
+        break
+
+      case 'À fournir signée':
+        ffs_medical_form_text = ('<p><b><font color="red">' +
+                                 'Il faut <u>signer ' + ffs_information_leaflet_pages_to_sign +
+                                 ' de la notice d\'informations FFS ' + season + '</u> fournie en attachement.' +   
+                                 '</font></b>')
+        attachments.push(DriveApp.getFileById(ffs_information_leaflet_pdf).getAs(MimeType.PDF))
+      
+      case 'Non nécessaire':
+        break
     }
   }
   
   var subject = ("❄️ [Incription Ski Club Allevardin] " +
                  civility + ' ' + family_name +
-		         ": Facture pour la saison " + season)
+		             ": Facture pour la saison " + season)
 
   // Collect the personal message and add it to the mail
   var personal_message_text = getStringAt(coord_personal_message)
@@ -2691,7 +2782,7 @@ function generatePDFAndMaybeSendEmail(config) {
       "qu\'elle corresponde à vos besoins.</p>" +
     
       legal_disclaimer_text +
-      medical_form_text +
+      ffs_medical_form_text +
 
       "<p>Des questions concernant cette facture? Contacter Marlène: " +
       "marlene.czajka@gmail.com (06-60-69-75-39) / Aurélien: " +
@@ -2716,21 +2807,22 @@ function generatePDFAndMaybeSendEmail(config) {
     }
   }
 
-  // For a more precise quota computation, we would need to be able
-  // to tell here that we're going to send an email to the license
-  // email address.
-  var quota_threshold = 2 + (cc_to == "" ? 0 : 1);
+  var email_quota_threshold = 1 + (cc_to == "" || cc_to == undefined ? 0 : 1)
+  if (maybeEmailLicenseSCA([attachments[0]], just_test=true)) {
+    email_quota_threshold += 1
+  }
   // The final status to display is captured in this variable and
   // the status bar is updated after the aggregation trix has been
   // updated.
   var final_status = ['', 'green']
-  if (email_invoice || email_folder) {
+  var status_bar_update_adds = false
+  if (email_folder) {
     var emailQuotaRemaining = MailApp.getRemainingDailyQuota();
-    if (emailQuotaRemaining < quota_threshold) {
+    if (emailQuotaRemaining < email_quota_threshold) {
       displayWarningPanel("Quota email insuffisant. Envoi " +
                           (just_generate_invoice ? "de la facture" : "du dossier") +
                           " retardé. Quota restant: " + emailQuotaRemaining +
-                          ". Nécessaire: " + quota_threshold);
+                          ". Nécessaire: " + email_quota_threshold);
       final_status[0] = "⚠️ Quota email insuffisant. Envoi retardé"
       final_status[1] = "orange";
       // Insert a reference to the file in a trix
@@ -2741,16 +2833,15 @@ function generatePDFAndMaybeSendEmail(config) {
     } else {
       // Send the email  
       MailApp.sendEmail(email_options)
-      maybeEmailLicenseSCA([attachments[0]]);
-      if (email_invoice) {
-        final_status[0] = "✅ Facture envoyée"
-      } else if (email_folder) {
-        final_status[0] = "✅ Dossier envoyé"
+      // When the license wasn't sent, warn and add to the status bar so that
+      // it is visible
+      if (! maybeEmailLicenseSCA([attachments[0]], just_test=false)) {
+        status_bar_update_adds = true
       }
-
+      final_status[0] = "✅ Dossier envoyé"
     }
   } else if (license_request) {
-    maybeEmailLicenseSCA([attachments[0]]);
+    maybeEmailLicenseSCA([attachments[0]], just_test=false);
     final_status[0] = "✅ Demande de license envoyée"
   } else if (just_generate_invoice) {
       final_status[0] = "✅ Facture générée"
@@ -2761,10 +2852,10 @@ function generatePDFAndMaybeSendEmail(config) {
 
   // Now we can update the level aggregation trix with all the folks that
   // where declared as not competitors
-  updateStatusBar("⏳ Enregistrement des niveaux...", "orange")
+  updateStatusBar("⏳ Enregistrement des niveaux...", "orange", add=status_bar_update_adds)
   updateAggregationTrix()
   // And deliver the final status.
-  updateStatusBar(final_status[0], final_status[1])
+  updateStatusBar(final_status[0], final_status[1], add=status_bar_update_adds)
 
   displayPDFLink(pdf_file)
   SpreadsheetApp.flush()  
@@ -2787,11 +2878,6 @@ function JustGeneratePDFButton() {
 // This is what the [generate license creation request] button runs.
 function JustGenerateLicenseRequestButton() {
   generatePDFAndMaybeSendEmail(invoiceActions.LICENSE_REQUEST)
-}
-
-// This is what the [generate and send only the invoice] button runs.
-function JustGeneratePDFAndSendEmailButton() {
-  generatePDFAndMaybeSendEmail(invoiceActions.EMAIL_INVOICE)
 }
 
 // This is what the [generate and send folder] button runs.
@@ -2823,7 +2909,7 @@ function magicWand() {
       if (autoFillNonCompSubscriptions()) {
         if (autoFillCompSubscriptions()) {
           if (autoFillSkiPassPurchases()) {
-            updateStatusBar("Remplissage automatique terminé...", "green")
+            updateStatusBar("✅ Remplissage automatique terminé...", "green")
             return
           }
         }
