@@ -1,4 +1,4 @@
-// Version: 2024-10-23 - BAS
+// Version: 2024-10-31 - BAS
 // Commit b93e8cc7d8908d3aa2a99d3ae4cc722a9a0b21e7
 //
 // This validates the invoice sheet (more could be done BTW) and
@@ -2548,7 +2548,7 @@ function askingLicenseOK() {
         return false
         break
       case 'Accompte versé':
-        return true
+        return false
         break
       case 'Autre':
         return true
@@ -2559,9 +2559,9 @@ function askingLicenseOK() {
 // When just_test is true, just see if a license request should be sent, but
 // don't send any email.
 // FIXME: Split in two really.
-function maybeEmailLicenseSCA(invoice, just_test) {
-  if (just_test == false && ! askingLicenseOK()) {
-    updateStatusBar("⚠️ Pas de demande de license (voir paiement)", "orange", add=true)      
+function maybeEmailLicenseSCA(invoice, just_test, ignore_payment) {
+  if (! ignore_payment && just_test == false && ! askingLicenseOK()) {
+    updateStatusBar("⚠️ PAS de demande de license (voir paiement)", "orange", add=true)      
     return false
   }
   var operator = getOperator()
@@ -2815,7 +2815,6 @@ function generatePDFAndMaybeSendEmail(config) {
   // the status bar is updated after the aggregation trix has been
   // updated.
   var final_status = ['', 'green']
-  var status_bar_update_adds = false
   if (email_folder) {
     var emailQuotaRemaining = MailApp.getRemainingDailyQuota();
     if (emailQuotaRemaining < email_quota_threshold) {
@@ -2833,15 +2832,18 @@ function generatePDFAndMaybeSendEmail(config) {
     } else {
       // Send the email  
       MailApp.sendEmail(email_options)
+      final_status[0] = "✅ Dossier envoyé"
       // When the license wasn't sent, warn and add to the status bar so that
       // it is visible
       if (! maybeEmailLicenseSCA([attachments[0]], just_test=false)) {
-        status_bar_update_adds = true
+        final_status[0] += ".\n⚠️ PAS de demande de license (voir paiement)"
+        final_status[1] = "orange";
+      } else {
+        final_status[0] += ", demande de license faite"
       }
-      final_status[0] = "✅ Dossier envoyé"
     }
   } else if (license_request) {
-    maybeEmailLicenseSCA([attachments[0]], just_test=false);
+    maybeEmailLicenseSCA([attachments[0]], just_test=false, ignore_payment=true);
     final_status[0] = "✅ Demande de license envoyée"
   } else if (just_generate_invoice) {
       final_status[0] = "✅ Facture générée"
@@ -2852,10 +2854,10 @@ function generatePDFAndMaybeSendEmail(config) {
 
   // Now we can update the level aggregation trix with all the folks that
   // where declared as not competitors
-  updateStatusBar("⏳ Enregistrement des niveaux...", "orange", add=status_bar_update_adds)
+  updateStatusBar("⏳ Enregistrement des niveaux...", "orange")
   updateAggregationTrix()
   // And deliver the final status.
-  updateStatusBar(final_status[0], final_status[1], add=status_bar_update_adds)
+  updateStatusBar(final_status[0], final_status[1])
 
   displayPDFLink(pdf_file)
   SpreadsheetApp.flush()  
