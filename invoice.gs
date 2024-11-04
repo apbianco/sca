@@ -2911,7 +2911,8 @@ function magicWand() {
       if (autoFillNonCompSubscriptions()) {
         if (autoFillCompSubscriptions()) {
           if (autoFillSkiPassPurchases()) {
-            updateStatusBar("✅ Remplissage automatique terminé...", "green")
+            updateStatusBar("✅ Remplissage automatique terminé...\n" +
+                            "⚠️ Réduction famille? Validez la facture ", "green")
             return
           }
         }
