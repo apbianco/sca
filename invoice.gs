@@ -2574,7 +2574,9 @@ function maybeEmailLicenseSCA(invoice, just_test, ignore_payment) {
       continue
     }
     license_number = family_dict[index].license_number
-    if (license_number == '') {
+    if (license_number != '' && !license_number.match("^[0-9]+$")) {
+      license_number = '<font color="red"><b>' + license_number + '</b></font>'
+    } else if (license_number == '') {
       license_number = '<font color="red"><b>À créer</b></font>'
     }
     string_family_members += (
