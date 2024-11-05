@@ -1486,6 +1486,8 @@ function autoFillCompSubscriptions() {
 }
 
 function autoFillSkiPassPurchases() {
+  // Clear ski pass rebates as they aren't computed by the magic wand for now.
+  clearSkiPassesRebates()
   updateStatusBar("Achat automatique des forfaits...", "grey", add=true)
   var ski_pass_map = createSkipassMap(SpreadsheetApp.getActiveSheet())
   // Collect the attributed licenses
@@ -1970,15 +1972,18 @@ function validateNonCompSubscriptions() {
   return ''
 }
 
-function validateSkiPasses() {
-  updateStatusBar("Validation des forfaits loisir...", "grey", add=true)
-  // Always clear the rebate section before eventually recomputing it at the end
+function clearSkiPassesRebates() {
   clearRange(coord_rebate_family_of_4_count)
   clearRange(coord_rebate_family_of_4_amount)
   clearRange(coord_rebate_family_of_5_count)
   clearRange(coord_rebate_family_of_5_amount)
   SpreadsheetApp.flush();
+}
 
+function validateSkiPasses() {
+  updateStatusBar("Validation des forfaits loisir...", "grey", add=true)
+  // Always clear the rebate section before eventually recomputing it at the end
+  clearSkiPassesRebates()
   var ski_passes_map = createSkipassMap(SpreadsheetApp.getActiveSheet())
 
   for (var index in coords_identity_rows) {
