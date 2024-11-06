@@ -1,5 +1,5 @@
 // Version: 2024-11-06 - BAS
-// Commit b93e8cc7d8908d3aa2a99d3ae4cc722a9a0b21e7
+// https://github.com/apbianco/sca/commit/84e9bbdb3b0f98bb4d5d92ccbed3eabba975e9e3
 //
 // This validates the invoice sheet (more could be done BTW) and
 // sends an email with the required attached pieces.
