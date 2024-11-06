@@ -133,9 +133,12 @@ var coord_license_number_column = 9
 // - Location where the cells computing the family pass
 //   rebates are defined.
 var coord_rebate_family_of_4_amount = [23, 4]
-var coord_rebate_family_of_4_count =  [23, 5]
+var coord_rebate_family_of_4_count  = [23, 5]
 var coord_rebate_family_of_5_amount = [24, 4]
-var coord_rebate_family_of_5_count =  [24, 5]
+var coord_rebate_family_of_5_count  = [24, 5]
+// - Location where the total amount of ski passes is
+//   stored
+var coord_total_ski_pass            = [40, 6]
 //
 // - Parameters defining the valid ranges to be retained during the
 //   generation of the invoice's PDF
@@ -1980,6 +1983,10 @@ function clearSkiPassesRebates() {
   SpreadsheetApp.flush();
 }
 
+function getTotalSkiPasses() {
+  return getNumberAt(coord_total_ski_pass)
+}
+
 function validateSkiPasses() {
   updateStatusBar("Validation des forfaits loisir...", "grey", add=true)
   // Always clear the rebate section before eventually recomputing it at the end
@@ -2918,8 +2925,11 @@ function magicWand() {
       if (autoFillNonCompSubscriptions()) {
         if (autoFillCompSubscriptions()) {
           if (autoFillSkiPassPurchases()) {
-            updateStatusBar("✅ Remplissage automatique terminé...\n" +
-                            "⚠️ Réduction famille? Validez la facture ", "green")
+            var status_bar_text = "✅ Remplissage automatique terminé..."
+            if (getTotalSkiPasses() >= 4) {
+              status_bar_text += "\n⚠️ Réduction famille? Validez la facture"
+            }
+            updateStatusBar(status_bar_text, "green")
             return
           }
         }
