@@ -2323,6 +2323,19 @@ class InvoiceValidationData {
   }
 }
 
+function validateEmailAddress(email_address, mandatory=true) {
+  if (!mandatory && email_address == '') {
+    return true
+  }
+  if (mandatory && (email_address == '@' || email_address == '')) {
+    return false
+  }
+  if (! email_address.match('@')) {
+    return false
+  }
+  return true
+}
+
 // Validate the invoice and return a dictionary of values
 // to use during invoice generation.
 function validateInvoice() {
@@ -2394,13 +2407,21 @@ function validateInvoice() {
   }
 
   // Validation: proper email adress.
-  var mail_to = getStringAt(coord_family_email)
-  if (mail_to == '' || mail_to == '@') {
+  if (!validateEmailAddress(getStringAt(coord_family_email))) {
     displayErrorPanel(
       "Vous n'avez pas saisi d'adresse email principale ou " +
       "vous avez oublié \n" +
       "de valider l'adresse email par [return] ou [enter]...")
     return validatationDataError()
+  }
+
+  var mail_cc = getStringAt(coord_cc)
+  if (mail_cc != '' ) {
+    if (!validateEmailAddress(mail_cc, mandatory=false)) {
+     displayErrorPanel(
+      "Addresse email secondaire incorrecte")
+    return validatationDataError()     
+    }
   }
   
   var validation_error = ''
