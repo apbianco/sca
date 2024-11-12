@@ -2407,7 +2407,8 @@ function validateInvoice() {
   }
 
   // Validation: proper email adress.
-  if (!validateEmailAddress(getStringAt(coord_family_email))) {
+  var mail_to = getStringAt(coord_family_email)
+  if (!validateEmailAddress(mail_to)) {
     displayErrorPanel(
       "Vous n'avez pas saisi d'adresse email principale ou " +
       "vous avez oublié \n" +
