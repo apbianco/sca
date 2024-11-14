@@ -33,6 +33,7 @@ var licenses_configuration_map = {
   'CN Jeune (Compétition)':  2010,
   'CN Adulte (Loisir)':      2009,
   'CN Adulte (Compétition)': 2009,
+  'CN Dirigeant':            2009,
 }
 //
 // - A map of available subscription for competitors and their validations
@@ -412,8 +413,8 @@ function createLicensesMap(sheet) {
     'CN Dirigeant': new License(
       getExecutiveLicenseString(),
       sheet.getRange(44, 5),
-      (dob) => {return isAdult(dob)},
-      "requiert d'être adulte (18 ans ou plus)"),
+      (dob) => {return ageVerificationBornBeforeDateIncluded(dob, createDate(getExecutiveLicenseString(), "December 31"))},
+      "requiert d'être né en " + getYear(getNonCompAdultLicenseString()) + " et avant"),
     'CN Jeune (Compétition)': new License(
       getCompJuniorLicenseString(),
       sheet.getRange(51, 5),
