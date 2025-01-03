@@ -105,7 +105,7 @@ def TimeToHS(timestamp):
 ###############################################################################
 
 class ResultEntry:
-    def __init__(self, bib, name, sex, category, yob, city, group, tot):
+    def __init__(self, bib, name, sex, category, yob, city, group, m1, m2, tot):
         assert name and bib and sex and category
         assert yob and city and group and tot
         self.bib = int(bib)
@@ -115,20 +115,23 @@ class ResultEntry:
         self.yob = yob
         self.city = city
         self.group = group
+        self.m1 = m1
+        self.m2 = m2
         self.tot = tot
 
     def Print(self, rank, print_header=True):
         if rank <= 1 and print_header:
             print("Rang Dos Nom                          Sexe "
-                  "Cat    Annee Ville                Grp       Tot\n")
+                  "Cat    Annee Ville                Grp   M1      M2          Tot\n")
         if TimeNA(self.tot):
             tot = self.tot
         else:
             tot = HSToTime(self.tot)
+
         print("{0:<4d} {1:<3d} {2:<28} {3:<4} {4:<6} "
-              "{5:<5} {6:<20} {7:<4}  {8:>7}".format(
-            rank, self.bib, self.name, self.sex, self.category,
-            self.yob, self.city, self.group, tot))
+              "{5:<5} {6:<20} {7:<4}  {8:<7} {9:<7} {10:>7}".format(
+                  rank, self.bib, self.name, self.sex, self.category,
+                  self.yob, self.city, self.group, self.m1, self.m2, tot))
 
 
 class ResultSet:
@@ -169,28 +172,33 @@ def ReadInput(file, only_dnf=False):
                         lap = ' M2'
                     data.append(ResultEntry(row['Bib'], row['Name'], row['Sex'],
                                             row['Category'], row['Yob'], row['City'],
-                                            row['Group'], row['Tot']+lap))
+                                            row['Group'], row['M1'], row['M2'], row['Tot']+lap))
                 else:
                     continue
             else:
                 if TimeNA(row['Tot']):
-                    print("⚠️  {0}, bib={1}. Total time: {2}, skipped".format(
-                        row['Name'], row['Bib'], row['Tot']))
+                    print("** {0}: bib={1} M1: {2} M2: {3}: Tot: {4}, skipped".format(
+                        row['Name'], row['Bib'], row['M1'], row['M2'], row['Tot']))
                     continue
                 data.append(ResultEntry(row['Bib'], row['Name'], row['Sex'],
                                         row['Category'], row['Yob'], row['City'],
-                                        row['Group'], TimeToHS(row['Tot'])))
+                                        row['Group'], row['M1'], row['M2'], TimeToHS(row['Tot'])))
+    print()
     return data
 
 ###############################################################################
 # Printing
 ######################################################################
 
+def SkipPage():
+    print("\x0c")
+
 def PrintResultEntry(entries):
     index = 1
     for elt in entries:
         elt.Print(index)
         index += 1
+    print()
 
 def PrintIndexedCutoff(data, cutoff):
     index = 1
@@ -204,7 +212,7 @@ def PrintIndexedCutoff(data, cutoff):
         index += 1
 
 def PrintHeader(msg):
-    padding = 89
+    padding = 106
     print('-'*padding)
     print(msg.center(padding))
     print('-'*padding)
@@ -283,16 +291,19 @@ def ByCategories(data):
     for category in ['SENIOR', 'M1', 'M2', 'M3', 'M4', 'M5', 'V1', 'V2', 'V3', 'SNOW']:
         if not category in categories:
             continue
+        something_printed = False
         selection = SortByTot(SelectByCatAndSex(data, category, 'M'))
-        if not selection:
-            continue
-        PrintHeader('{0} HOMMES'.format(category))
-        PrintIndexedCutoff(selection, cutoff)
+        if selection:
+            PrintHeader('{0} HOMMES'.format(category))
+            PrintIndexedCutoff(selection, cutoff)
+            something_printed = True
         selection = SortByTot(SelectByCatAndSex(data, category, 'F'))
-        if not selection:
-            continue
-        PrintHeader('{0} FEMMES'.format(category))
-        PrintIndexedCutoff(selection, cutoff)
+        if selection:
+            PrintHeader('{0} FEMMES'.format(category))
+            PrintIndexedCutoff(selection, cutoff)
+            something_printed = True
+        if something_printed:
+            SkipPage()
 
 assert TimeNA('')
 assert TimeNA('Dsq')
@@ -310,13 +321,19 @@ assert HSToTime(TimeToHS('1:05.03')) == '1:05.03'
 data = ReadInput('/Users/apetitbianco/Downloads/EDITION.txt')
 PrintHeader('Qualifies rentrant dans les classements')
 PrintResultEntry(SortByBib(data))
+SkipPage()
 
 dnf = ReadInput('/Users/apetitbianco/Downloads/EDITION.txt', only_dnf=True)
 PrintHeader('DNF')
 PrintResultEntry(SortByBib(dnf))
+SkipPage()
 
+ScratchM(data)
+SkipPage()
+ScratchF(data)
+SkipPage()
+
+ByCategories(data)
+# sys.exit(0)
 # ByCities(data)
 # ByPM(data)
-# ScratchM(data)
-# ScratchF(data)
-# ByCategories(data)
