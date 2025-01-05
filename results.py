@@ -64,9 +64,14 @@ def SelectBySex(data, sex):
     return [elt for elt in data if elt.sex == sex]
 
 
-def SelectByCatAndSex(data, cat, sex):
+def SelectByCatAndSexAndGroup(data, cat, sex, group):
     assert sex in ('M', 'F')
-    return [elt for elt in data if elt.sex == sex and elt.category == cat]
+    if group:
+        return [elt for elt in data if (elt.sex == sex and
+                                        elt.category == cat and
+                                        elt.group == group)]
+    else:
+        return [elt for elt in data if elt.sex == sex and elt.category == cat]
 
 ###############################################################################
 # Time stamps management
@@ -148,10 +153,10 @@ class ResultSet:
             elt.Print(index, print_header)
             index += 1
         print("                                                        "
-              "                     -------------")
+              "                                      ------------")
         print("                                                        "
               "                     "
-              "TOT:  {0:<7}".format(HSToTime(self.tot)))
+              "                 TOT: {0:<7}".format(HSToTime(self.tot)))
         print()
 
 
@@ -161,7 +166,10 @@ def ReadInput(file, only_dnf=False):
               'Yob', 'City', 'Group', 'M1', 'M2', 'Tot']
     with open(file, 'r') as handle:
         csv_reader = csv.DictReader(handle, delimiter='\t', fieldnames=fields)
+        line = 0
         for row in csv_reader:
+            line += 1
+            assert len(fields) + 1 == len(row), "Invalid input line {0}".format(line)
             if only_dnf:
                 if TimeNA(row['Tot']):
                     # Find which lap the disqualification happened
@@ -177,8 +185,8 @@ def ReadInput(file, only_dnf=False):
                     continue
             else:
                 if TimeNA(row['Tot']):
-                    print("** {0}: bib={1} M1: {2} M2: {3}: Tot: {4}, skipped".format(
-                        row['Name'], row['Bib'], row['M1'], row['M2'], row['Tot']))
+                    # print("** {0}: bib={1} M1: {2} M2: {3}: Tot: {4}, skipped".format(
+                    # row['Name'], row['Bib'], row['M1'], row['M2'], row['Tot']))
                     continue
                 data.append(ResultEntry(row['Bib'], row['Name'], row['Sex'],
                                         row['Category'], row['Yob'], row['City'],
@@ -198,7 +206,7 @@ def PrintResultEntry(entries):
     for elt in entries:
         elt.Print(index)
         index += 1
-    print()
+    SkipPage()
 
 def PrintIndexedCutoff(data, cutoff):
     index = 1
@@ -224,7 +232,7 @@ def PrintHeader(msg):
 def Scratch(data, header, what, cutoff):
     PrintHeader(header)
     PrintIndexedCutoff(SortByTot(SelectBySex(data, what)), cutoff)
-
+    SkipPage()
 
 def ScratchF(data):
     Scratch(data, 'SCRATCH FEMMES', 'F', 3)
@@ -233,13 +241,12 @@ def ScratchF(data):
 def ScratchM(data):
     Scratch(data, 'SCRATCH HOMMES', 'M', 3)
 
-
 ###############################################################################
 # By cities and teams (FIXME)
 ###############################################################################
 
-def ByCities(data):
-    PrintHeader('PAR VILLES')
+def ByCitiesAllGroups(data):
+    PrintHeader('PAR VILLES (TOUS GROUPES)')
     cities = ListCities(data)
     cities_threshold = 3
     result_set = []
@@ -257,10 +264,11 @@ def ByCities(data):
     for elt in sorted_final:
         elt.Print(print_header)
         print_header = False
+    SkipPage()
 
 
-def ByPM(data):
-    PrintHeader('PAR POLICES MUNICIPALES')
+def ByCitiesPM(data):
+    PrintHeader('PAR VILLES (POLICES MUNICIPALES)')
     group = 'PM'
     cities = ListCities(data)
     pm_threshold = 3
@@ -280,30 +288,55 @@ def ByPM(data):
     for elt in sorted_final:
         elt.Print(print_header)
         print_header = False
+    SkipPage()
 
 ###############################################################################
 # By categories
 ###############################################################################
 
-def ByCategories(data):
+def ByCategories(data, pm_only=False):
     categories = ListCategories(data)
+    if pm_only:
+        label_pm = 'POLICE MUNICIPALE '
+        group = 'PM'
+    else:
+        label_pm = ''
+        group = ''
     cutoff = 3
+    # Remove SNOW if SNOW is all and not PM only.
     for category in ['SENIOR', 'M1', 'M2', 'M3', 'M4', 'M5', 'V1', 'V2', 'V3', 'SNOW']:
         if not category in categories:
             continue
         something_printed = False
-        selection = SortByTot(SelectByCatAndSex(data, category, 'M'))
+        selection = SortByTot(SelectByCatAndSexAndGroup(data, category, 'M', group))
         if selection:
-            PrintHeader('{0} HOMMES'.format(category))
+            PrintHeader('{0}{1} HOMMES'.format(label_pm, category))
             PrintIndexedCutoff(selection, cutoff)
             something_printed = True
-        selection = SortByTot(SelectByCatAndSex(data, category, 'F'))
+        selection = SortByTot(SelectByCatAndSexAndGroup(data, category, 'F', group))
         if selection:
-            PrintHeader('{0} FEMMES'.format(category))
+            PrintHeader('{0}{1} FEMMES'.format(label_pm, category))
             PrintIndexedCutoff(selection, cutoff)
             something_printed = True
         if something_printed:
             SkipPage()
+
+###############################################################################
+# Snowboard
+###############################################################################
+
+def Snowboard(data, header, sex, cutoff):
+    selection = SortByTot(SelectByCatAndSexAndGroup(data, 'SNOW', sex, group=None))
+    if selection:
+        PrintHeader(header)
+        PrintIndexedCutoff(selection, cutoff)
+
+
+def SnowboardMF(data):
+    Snowboard(data, 'SNOWBOARD HOMMES', 'M', 3)
+    Snowboard(data, 'SNOWBOARD FEMMES', 'F', 3)
+    SkipPage()
+
 
 assert TimeNA('')
 assert TimeNA('Dsq')
@@ -321,19 +354,14 @@ assert HSToTime(TimeToHS('1:05.03')) == '1:05.03'
 data = ReadInput('/Users/apetitbianco/Downloads/EDITION.txt')
 PrintHeader('Qualifies rentrant dans les classements')
 PrintResultEntry(SortByBib(data))
-SkipPage()
 
 dnf = ReadInput('/Users/apetitbianco/Downloads/EDITION.txt', only_dnf=True)
-PrintHeader('DNF')
+PrintHeader('DNF (Did Not Finish)')
 PrintResultEntry(SortByBib(dnf))
-SkipPage()
 
 ScratchM(data)
-SkipPage()
 ScratchF(data)
-SkipPage()
-
-ByCategories(data)
-# sys.exit(0)
-# ByCities(data)
-# ByPM(data)
+ByCategories(data, pm_only=True)
+ByCitiesPM(data)
+SnowboardMF(data)
+sys.exit(0)
