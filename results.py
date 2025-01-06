@@ -3,6 +3,8 @@
 import csv
 import sys
 
+page_width = 106
+
 ###############################################################################
 # Key extraction
 ###############################################################################
@@ -62,6 +64,11 @@ def SelectByCityAndGroup(data, city, group):
 def SelectBySex(data, sex):
     assert sex in ('M', 'F')
     return [elt for elt in data if elt.sex == sex]
+
+
+def SelectBySexAndGroup(data, sex, group):
+    assert sex in ('M', 'F')
+    return [elt for elt in data if elt.sex == sex and elt.group == group]
 
 
 def SelectByCatAndSexAndGroup(data, cat, sex, group):
@@ -217,13 +224,16 @@ def PrintIndexedCutoff(data, cutoff):
         elt.Print(index)
         if index == cutoff and elt != data[-1]:
             print()
+            print('- Non primes -'.rjust(page_width))
+            print()
         index += 1
 
 def PrintHeader(msg):
-    padding = 106
+    padding = page_width
     print('-'*padding)
-    print(msg.center(padding))
-    print('-'*padding)
+    if msg:
+        print(msg.center(padding))
+        print('-'*padding)
         
 ###############################################################################
 # Scratch M/F
@@ -272,6 +282,7 @@ def ByCitiesPM(data):
     group = 'PM'
     cities = ListCities(data)
     pm_threshold = 3
+    cities_threshold = 5
     result_set = []
     for city in cities:
         # Select a city/group and sort all results
@@ -288,6 +299,10 @@ def ByCitiesPM(data):
     for elt in sorted_final:
         elt.Print(print_header)
         print_header = False
+        cities_threshold -= 1
+        if cities_threshold == 0 and elt != sorted_final[-1]:
+            print('- Non primes -'.rjust(page_width))
+            print()
     SkipPage()
 
 ###############################################################################
@@ -297,13 +312,12 @@ def ByCitiesPM(data):
 def ByCategories(data, pm_only=False):
     categories = ListCategories(data)
     if pm_only:
-        label_pm = 'POLICE MUNICIPALE '
+        label_pm = 'POLICES MUNICIPALES '
         group = 'PM'
     else:
         label_pm = ''
         group = ''
     cutoff = 3
-    # Remove SNOW if SNOW is all and not PM only.
     for category in ['SENIOR', 'M1', 'M2', 'M3', 'M4', 'M5', 'V1', 'V2', 'V3', 'SNOW']:
         if not category in categories:
             continue
@@ -322,7 +336,7 @@ def ByCategories(data, pm_only=False):
             SkipPage()
 
 ###############################################################################
-# Snowboard
+# Snowboard (all groups). Currently unused
 ###############################################################################
 
 def Snowboard(data, header, sex, cutoff):
@@ -336,6 +350,21 @@ def SnowboardMF(data):
     Snowboard(data, 'SNOWBOARD HOMMES', 'M', 3)
     Snowboard(data, 'SNOWBOARD FEMMES', 'F', 3)
     SkipPage()
+
+###############################################################################
+# Open (all categories
+###############################################################################
+
+def ByOpen(data, header, sex, cutoff):
+    selection = SortByTot(SelectBySexAndGroup(data, sex, 'OPEN'))
+    if selection:
+        PrintHeader(header)
+        PrintIndexedCutoff(selection, cutoff)
+
+
+def ByOpenMF(data):
+    ByOpen(data, 'OPEN HOMMES (TOUTES CATEGORIES)', 'M', 3)
+    ByOpen(data, 'OPEN FEMMES (TOUTES CATEGORIES)', 'F', 3)
 
 
 assert TimeNA('')
@@ -352,16 +381,18 @@ assert HSToTime(TimeToHS('1:05.23')) == '1:05.23'
 assert HSToTime(TimeToHS('1:05.03')) == '1:05.03'
 
 data = ReadInput('/Users/apetitbianco/Downloads/EDITION.txt')
-PrintHeader('Qualifies rentrant dans les classements')
+PrintHeader('Qualifies eligibles a un classement')
 PrintResultEntry(SortByBib(data))
 
 dnf = ReadInput('/Users/apetitbianco/Downloads/EDITION.txt', only_dnf=True)
-PrintHeader('DNF (Did Not Finish)')
+PrintHeader('Non eligibles a un classement (DNS - non terminant)')
 PrintResultEntry(SortByBib(dnf))
+
+PrintHeader('DEBUT DES CLASSEMENT POUR LA REMISE DES PRIX')
 
 ScratchM(data)
 ScratchF(data)
 ByCategories(data, pm_only=True)
 ByCitiesPM(data)
-SnowboardMF(data)
+ByOpenMF(data)
 sys.exit(0)
