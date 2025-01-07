@@ -439,7 +439,7 @@ def main(argv, argc):
     PrintHeader('Qualifies eligibles a un classement')
     PrintResultEntry(SortByBib(data))
 
-    PrintHeader('Non eligibles a un classement (DNS - non terminant)')
+    PrintHeader('Non eligibles a un classement (DNF)')
     PrintResultEntry(SortByBib(ReadInput(argv[1], only_dnf=True)))
 
     PrintHeader('DEBUT DES CLASSEMENTS POUR LA REMISE DES PRIX')
