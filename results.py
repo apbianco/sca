@@ -1,4 +1,13 @@
+# Compute results and ranking for the PM's 25th Championship.
 #
+# This assumes that a file of the appropriate format can be read.
+#
+# TODO:
+# - Be flexible and accomodate raw result with other columns?
+#
+# Usage:
+#
+# $ python3 results.py
 
 import csv
 import sys
@@ -224,7 +233,7 @@ def PrintIndexedCutoff(data, cutoff):
         elt.Print(index)
         if index == cutoff and elt != data[-1]:
             print()
-            print('- Non primes -'.rjust(page_width))
+            print('- Suivants non primes -'.rjust(page_width))
             print()
         index += 1
 
@@ -301,7 +310,7 @@ def ByCitiesPM(data):
         print_header = False
         cities_threshold -= 1
         if cities_threshold == 0 and elt != sorted_final[-1]:
-            print('- Non primes -'.rjust(page_width))
+            print('- Suivant non primes -'.rjust(page_width))
             print()
     SkipPage()
 
@@ -388,7 +397,7 @@ dnf = ReadInput('/Users/apetitbianco/Downloads/EDITION.txt', only_dnf=True)
 PrintHeader('Non eligibles a un classement (DNS - non terminant)')
 PrintResultEntry(SortByBib(dnf))
 
-PrintHeader('DEBUT DES CLASSEMENT POUR LA REMISE DES PRIX')
+PrintHeader('DEBUT DES CLASSEMENTS POUR LA REMISE DES PRIX')
 
 ScratchM(data)
 ScratchF(data)
