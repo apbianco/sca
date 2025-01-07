@@ -205,8 +205,8 @@ def ReadInput(file, only_dnf=False):
                     # row['Name'], row['Bib'], row['M1'], row['M2'], row['Tot']))
                     continue
                 data.append(ResultEntry(row['Bib'], row['Name'], row['Sex'],
-                                        row['Category'], row['Yob'], row['City'],
-                                        row['Group'], row['M1'], row['M2'], TimeToHS(row['Tot'])))
+                                        row['Category'], row['Yob'], row['City'], row['Group'],
+                                        row['M1'], row['M2'], TimeToHS(row['Tot'])))
     print()
     return data
 
@@ -233,7 +233,7 @@ def PrintIndexedCutoff(data, cutoff):
         elt.Print(index)
         if index == cutoff and elt != data[-1]:
             print()
-            print('- Suivants non primes -'.rjust(page_width))
+            print('- Suivant(s) non prime(s) -'.rjust(page_width))
             print()
         index += 1
 
@@ -251,14 +251,12 @@ def PrintHeader(msg):
 def Scratch(data, header, what, cutoff):
     PrintHeader(header)
     PrintIndexedCutoff(SortByTot(SelectBySex(data, what)), cutoff)
-    SkipPage()
-
-def ScratchF(data):
-    Scratch(data, 'SCRATCH FEMMES', 'F', 3)
 
 
-def ScratchM(data):
+def ScratchMF(data):
     Scratch(data, 'SCRATCH HOMMES', 'M', 3)
+    Scratch(data, 'SCRATCH FEMMES', 'F', 3)
+    SkipPage()
 
 ###############################################################################
 # By cities and teams (FIXME)
@@ -310,7 +308,7 @@ def ByCitiesPM(data):
         print_header = False
         cities_threshold -= 1
         if cities_threshold == 0 and elt != sorted_final[-1]:
-            print('- Suivant non primes -'.rjust(page_width))
+            print('- Suivant(s) non prime(s) -'.rjust(page_width))
             print()
     SkipPage()
 
@@ -318,31 +316,29 @@ def ByCitiesPM(data):
 # By categories
 ###############################################################################
 
-def ByCategories(data, pm_only=False):
+def ByCategory(data, header, category, sex, group, cutoff):
+    selection = SortByTot(SelectByCatAndSexAndGroup(data, category, sex, group))
+    if selection:
+        PrintHeader(header)
+        PrintIndexedCutoff(selection, cutoff)
+        return True
+
+
+def ByCategoriesPMOnlyMF(data):
     categories = ListCategories(data)
-    if pm_only:
-        label_pm = 'POLICES MUNICIPALES '
-        group = 'PM'
-    else:
-        label_pm = ''
-        group = ''
-    cutoff = 3
     for category in ['SENIOR', 'M1', 'M2', 'M3', 'M4', 'M5', 'V1', 'V2', 'V3', 'SNOW']:
+        something_printed = False
         if not category in categories:
             continue
-        something_printed = False
-        selection = SortByTot(SelectByCatAndSexAndGroup(data, category, 'M', group))
-        if selection:
-            PrintHeader('{0}{1} HOMMES'.format(label_pm, category))
-            PrintIndexedCutoff(selection, cutoff)
+        header = 'POLICES MUNICIPALES {0} HOMMES'.format(category)
+        if ByCategory(data, header, category, 'M', 'PM', 3):
             something_printed = True
-        selection = SortByTot(SelectByCatAndSexAndGroup(data, category, 'F', group))
-        if selection:
-            PrintHeader('{0}{1} FEMMES'.format(label_pm, category))
-            PrintIndexedCutoff(selection, cutoff)
+        header = 'POLICES MUNICIPALES {0} FEMMES'.format(category)
+        if ByCategory(data, header, category, 'F', 'PM', 3):
             something_printed = True
         if something_printed:
             SkipPage()
+    
 
 ###############################################################################
 # Snowboard (all groups). Currently unused
@@ -361,7 +357,7 @@ def SnowboardMF(data):
     SkipPage()
 
 ###############################################################################
-# Open (all categories
+# Open (all categories)
 ###############################################################################
 
 def ByOpen(data, header, sex, cutoff):
@@ -374,34 +370,88 @@ def ByOpen(data, header, sex, cutoff):
 def ByOpenMF(data):
     ByOpen(data, 'OPEN HOMMES (TOUTES CATEGORIES)', 'M', 3)
     ByOpen(data, 'OPEN FEMMES (TOUTES CATEGORIES)', 'F', 3)
+    SkipPage()
 
+###############################################################################
+# PNG (all categories)
+###############################################################################
 
-assert TimeNA('')
-assert TimeNA('Dsq')
-assert not TimeNA('12.22')
-assert not TimeNA('1:12.22')
-assert TimeToHS('13.30') == 1330
-assert TimeToHS('1:23.65') == 8365
-assert TimeToHS('2:13.30') == 13330
-assert HSToTime(TimeToHS('13.30')) == '13.30'
-assert HSToTime(TimeToHS('1:23.65')) == '1:23.65'
-assert HSToTime(TimeToHS('2:13.30')) == '2:13.30'
-assert HSToTime(TimeToHS('1:05.23')) == '1:05.23'
-assert HSToTime(TimeToHS('1:05.03')) == '1:05.03'
+def ByPNG(data):
+    selection = SortByTot(SelectByGroup(data, 'PNG'))
+    if selection:
+        PrintHeader('POLICE NATIONALE - GENDARMERIE (TOUTES CATEGORIES H/F)')
+        PrintIndexedCutoff(selection, 3)
+        SkipPage()
 
-data = ReadInput('/Users/apetitbianco/Downloads/EDITION.txt')
-PrintHeader('Qualifies eligibles a un classement')
-PrintResultEntry(SortByBib(data))
+###############################################################################
+# GC (all categories)
+###############################################################################
 
-dnf = ReadInput('/Users/apetitbianco/Downloads/EDITION.txt', only_dnf=True)
-PrintHeader('Non eligibles a un classement (DNS - non terminant)')
-PrintResultEntry(SortByBib(dnf))
+def ByGC(data):
+    selection = SortByTot(SelectByGroup(data, 'GC'))
+    if selection:
+        PrintHeader('GARDES CHAMPETRES (TOUTES CATEGORIES H/F)')
+        PrintIndexedCutoff(selection, 1)
+        SkipPage()
 
-PrintHeader('DEBUT DES CLASSEMENTS POUR LA REMISE DES PRIX')
+def Test():
+    assert TimeNA('')
+    assert TimeNA('Dsq')
+    assert not TimeNA('12.22')
+    assert not TimeNA('1:12.22')
+    assert TimeToHS('13.30') == 1330
+    assert TimeToHS('1:23.65') == 8365
+    assert TimeToHS('2:13.30') == 13330
+    assert HSToTime(TimeToHS('13.30')) == '13.30'
+    assert HSToTime(TimeToHS('1:23.65')) == '1:23.65'
+    assert HSToTime(TimeToHS('2:13.30')) == '2:13.30'
+    assert HSToTime(TimeToHS('1:05.23')) == '1:05.23'
+    assert HSToTime(TimeToHS('1:05.03')) == '1:05.03'
+    assert HSToTime(TimeToHS('10:05.03')) == '10:05.03'
+    
 
-ScratchM(data)
-ScratchF(data)
-ByCategories(data, pm_only=True)
-ByCitiesPM(data)
-ByOpenMF(data)
-sys.exit(0)
+def TestData(data):
+    assert 'CHAMBERY' in ListCities(data)
+    assert 'M1' in ListCategories(data)
+    assert len(SelectByCity(data, 'CHAMBERY'))
+    assert not len(SelectByCity(data, 'XYZ'))
+    assert len(SelectByGroup(data, 'PM'))
+    assert not len(SelectByGroup(data, 'ZYX'))
+    assert len(SelectByCityAndGroup(data, 'CHAMBERY', 'PM'))
+    assert not len(SelectByCityAndGroup(data, 'XYZ', 'PM'))
+    assert len(SelectBySex(data, 'M'))
+    assert len(SelectBySex(data, 'F'))
+    assert len(SelectBySexAndGroup(data, 'M', 'PM'))
+    assert len(SelectBySexAndGroup(data, 'F', 'PM'))
+    assert not len(SelectBySexAndGroup(data, 'M', 'XYZ'))
+    assert not len(SelectBySexAndGroup(data, 'F', 'XYZ'))
+    assert not len(SelectBySexAndGroup(data, 'F', 'SENIOR'))
+    assert len(SelectByCatAndSexAndGroup(data, 'SENIOR', 'M', 'PM'))
+    assert not len(SelectByCatAndSexAndGroup(data, 'SENIOR', 'M', 'XYZ'))
+    assert len(SelectByCatAndSexAndGroup(data, 'SENIOR', 'F', None))
+    assert SortByBib(data)[0].bib < SortByBib(data)[1].bib
+    assert SortByTot(data)[0].tot < SortByTot(data)[-1].tot
+               
+def main(argv, argc):
+    assert argc == 2
+    data = ReadInput(argv[1])
+    
+    PrintHeader('Qualifies eligibles a un classement')
+    PrintResultEntry(SortByBib(data))
+
+    PrintHeader('Non eligibles a un classement (DNS - non terminant)')
+    PrintResultEntry(SortByBib(ReadInput(argv[1], only_dnf=True)))
+
+    PrintHeader('DEBUT DES CLASSEMENTS POUR LA REMISE DES PRIX')
+    ScratchMF(data)
+    ByCategoriesPMOnlyMF(data)
+    ByCitiesPM(data)
+    ByOpenMF(data)
+    ByPNG(data)
+    ByGC(data)
+    return 0
+
+if __name__ == '__main__':
+    Test()
+    TestData(ReadInput(sys.argv[1]))
+    main(sys.argv, len(sys.argv))
