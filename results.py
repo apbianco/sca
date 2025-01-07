@@ -233,7 +233,7 @@ def PrintIndexedCutoff(data, cutoff):
         elt.Print(index)
         if index == cutoff and elt != data[-1]:
             print()
-            print('- Suivant(s) non prime(s) -'.rjust(page_width))
+            print('-- Suivant(s) non prime(s) --'.rjust(page_width))
             print()
         index += 1
 
@@ -308,7 +308,7 @@ def ByCitiesPM(data):
         print_header = False
         cities_threshold -= 1
         if cities_threshold == 0 and elt != sorted_final[-1]:
-            print('- Suivant(s) non prime(s) -'.rjust(page_width))
+            print('-- Suivant(s) non prime(s) --'.rjust(page_width))
             print()
     SkipPage()
 
