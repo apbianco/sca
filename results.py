@@ -7,7 +7,7 @@
 #
 # Usage:
 #
-# $ python3 results.py
+# $ python3 results.py input
 
 import csv
 import sys
