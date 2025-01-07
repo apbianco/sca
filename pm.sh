@@ -1,4 +1,6 @@
 #!/bin/bash
+#
+# Driver script for results.py. Convert the text output to a PDF
 
 RESULTS=/Users/apetitbianco/Documents/GitHub/sca/results.py
 INPUT=/USers/apetitbianco/Downloads/EDITION.txt
@@ -6,10 +8,11 @@ INPUT=/USers/apetitbianco/Downloads/EDITION.txt
 tmp_txt=$(mktemp)
 tmp_pdf=/tmp/EDITION.pdf
 echo "// Text output in $tmp_txt"
-echo "// PDF output in $tmp_pdf"
+echo "// PDF output should be in $tmp_pdf"
 tmp_ps=$(mktemp)
 python3 $RESULTS $INPUT > $tmp_txt && \
     enscript --header='Classement au %D{%d/%m/%y} %C||Page $% of $=' \
 	     --margin=10:10:10:10 -1 -f Courrier8.5 -e --word-wrap --media=A4 \
-	     $tmp_txt -o $tmp_ps && \
-    ps2pdf $tmp_ps $tmp_pdf
+	     $tmp_txt -o $tmp_ps >/dev/null 2>&1
+[ $? -eq 0 ] && ps2pdf $tmp_ps $tmp_pdf || echo "** No output generated!"
+
