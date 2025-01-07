@@ -15,4 +15,3 @@ python3 $RESULTS $INPUT > $tmp_txt && \
 	     --margin=10:10:10:10 -1 -f Courrier8.5 -e --word-wrap --media=A4 \
 	     $tmp_txt -o $tmp_ps >/dev/null 2>&1
 [ $? -eq 0 ] && ps2pdf $tmp_ps $tmp_pdf || echo "** No output generated!"
-
