@@ -14,4 +14,10 @@ python3 $RESULTS $INPUT > $tmp_txt && \
     enscript --header='Classement au %D{%d/%m/%y} %C||Page $% of $=' \
 	     --margin=10:10:10:10 -1 -f Courrier8.5 -e --word-wrap --media=A4 \
 	     $tmp_txt -o $tmp_ps >/dev/null 2>&1
-[ $? -eq 0 ] && ps2pdf $tmp_ps $tmp_pdf || echo "** No output generated!"
+if [ $? -eq 0 ];
+then
+    ps2pdf $tmp_ps $tmp_pdf
+    open -a Preview $tmp_pdf
+else
+    echo "** No output generated!"
+fi    
