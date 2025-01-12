@@ -255,6 +255,7 @@ def Scratch(data, header, what, cutoff):
 
 def ScratchMF(data):
     Scratch(data, 'SCRATCH HOMMES', 'M', 3)
+    SkipPage()
     Scratch(data, 'SCRATCH FEMMES', 'F', 3)
     SkipPage()
 
