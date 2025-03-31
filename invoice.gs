@@ -18,7 +18,7 @@ dev_or_prod = "prod"
 
 ///////////////////////////////////////////////////////////////////////////////
 // Seasonal parameters - change for each season or change when the trix
-// is changing (adding new crows/columns, etc...)
+// is changing (adding new rows/columns, etc...)
 ///////////////////////////////////////////////////////////////////////////////
 //
 // - Name of the season
@@ -88,33 +88,33 @@ var autocertification_adult =               '1nDNByrpln58YET8Gqy6vOXkSQb_aBTrf'
 // 
 // - Locations of family details:
 //
-var coord_family_civility =         [6,  3]
-var coord_family_name =             [6,  4]
-var coord_family_street =           [8,  3]
-var coord_family_zip =              [8,  4]
-var coord_family_city =             [8,  5]
-var coord_family_email =            [9,  3]
-var coord_cc =                      [9,  5]
-var coord_family_phone1 =           [10, 3]
-var coord_family_phone2 =           [10, 5]
+var coord_family_civility =           [6,  3]
+var coord_family_name =               [6,  4]
+var coord_family_street =             [8,  3]
+var coord_family_zip =                [8,  4]
+var coord_family_city =               [8,  5]
+var coord_family_email =              [9,  3]
+var coord_cc =                        [9,  5]
+var coord_family_phone1 =             [10, 3]
+var coord_family_phone2 =             [10, 5]
 //
 // - Locations of various status line and collected input, located
 //   a the bottom of the invoice.
 // 
-var coord_total =                   [65, 7]
-var coord_rebate =                  [76, 4]
-var coord_charge =                  [77, 4]
-var coord_owed =                    [78, 7]
-var coord_payment_validation_form = [79, 7]
-var coord_personal_message =        [85, 3]
-var coord_timestamp =               [86, 2]
-var coord_version =                 [86, 3]
-var coord_legal_disclaimer =        [86, 5]
-var coord_ffs_medical_form =        [86, 7]
-var coord_callme_phone =            [86, 9]
-var coord_yolo =                    [87, 3]
-var coord_status =                  [88, 4]
-var coord_generated_pdf =           [88, 6]
+var coord_total =                     [65, 7]
+var coord_rebate =                    [76, 4]
+var coord_charge =                    [77, 4]
+var coord_owed =                      [78, 7]
+var coord_payment_validation _form =  [79, 7]
+var coord_personal_message =          [85, 3]
+var coord_timestamp =                 [86, 2]
+var coord_version =                   [86, 3]
+var coord_legal_disclaimer =          [86, 5]
+var coord_ffs_medical_form =          [86, 7]
+var coord_callme_phone =              [86, 9]
+var coord_yolo =                      [87, 3]
+var coord_status =                    [88, 4]
+var coord_generated_pdf =             [88, 6]
 //
 // - Rows where the family names are entered
 // 
@@ -122,14 +122,14 @@ var coords_identity_rows = [14, 15, 16, 17, 18, 19];
 //
 // - Columns where information about family members can be found
 //
-var coord_first_name_column =     2
-var coord_last_name_column =      3
-var coord_dob_column =            4
-var coord_cob_column =            5
-var coord_sex_column =            6
-var coord_level_column =          7
-var coord_license_column =        8
-var coord_license_number_column = 9
+var coord_first_name_column =         2
+var coord_last_name_column =          3
+var coord_dob_column =                4
+var coord_cob_column =                5
+var coord_sex_column =                6
+var coord_level_column =              7
+var coord_license_column =            8
+var coord_license_number_column =     9
 //
 // - Location where the cells computing the family pass
 //   rebates are defined.
@@ -144,7 +144,10 @@ var coord_total_ski_pass            = [40, 6]
 // - Parameters defining the valid ranges to be retained during the
 //   generation of the invoice's PDF
 //
-var coords_pdf_row_column_ranges = {'start': [1, 0], 'end': [86, 9]}
+var coords_pdf_row_column_ranges = {
+    'start':                          [1, 0],
+    'end':                            [86, 9]
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 // ⚠️ There's nothing else to configure past that point
