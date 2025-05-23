@@ -46,6 +46,8 @@ var comp_subscription_map = {
   'U10':  [2015,  2016],
   'U12+': [2014]
 }
+// Number of kids per competitor families
+var comp_kids_per_family = 4
 //
 // - A map of available ski passes and validation dates. This map is used
 //   to create a map of properly configured skip pass objects. Edit this
@@ -119,6 +121,9 @@ var coord_generated_pdf =             [88, 6]
 // - Rows where the family names are entered
 // 
 var coords_identity_rows = [14, 15, 16, 17, 18, 19];
+//
+// - Row where competitor subscription starts
+var coord_comp_start_row =      53
 //
 // - Columns where information about family members can be found
 //
@@ -597,9 +602,9 @@ function createCompSubscriptionMap(sheet) {
   function getLastYear(label) {
     return comp_subscription_map[label][1]
   }
-  var row = 53
+  var row = coord_comp_start_row
   var to_return = {}
-  for (var rank = 1; rank <= 4; rank +=1) {
+  for (var rank = 1; rank <= comp_kids_per_family; rank +=1) {
     var label = rank + getU8String()
     to_return[label] = new Subscription(
       label,
@@ -1825,7 +1830,7 @@ function validateCompSubscriptions() {
     var category = comp_subscription_categories[index]
     var total_existing = 0
     var total_purchased = 0
-    for (var rank = 1; rank <= 4; rank += 1) {
+    for (var rank = 1; rank <= comp_kids_per_family; rank += 1) {
       var indexed_category = rank + category
       // The number of existing competitor in an age range has already been accumulated.
       // just capture it. The number of purchased competitor needs to be accumulated as it's
@@ -1866,7 +1871,7 @@ function validateCompSubscriptions() {
   }
   // 4- Only one category can be filled per rank. That loops needs
   //    to start for each rank so the loop above can not be used.
-  for (var rank = 1; rank <= 4; rank += 1) {
+  for (var rank = 1; rank <= comp_kids_per_family; rank += 1) {
     var total_purchased_for_rank = 0
     for (index in comp_subscription_categories) {
       var category = comp_subscription_categories[index] 
