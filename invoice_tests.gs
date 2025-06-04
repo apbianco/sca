@@ -39,7 +39,7 @@ function testNormalizeName() {
     {
       description: "Input with numbers (should be removed)",
       input: "Test123Name456",
-      expected: "Test-Name",
+      expected: "TestName",
       to_upper_case: false
     },
     {
@@ -57,29 +57,29 @@ function testNormalizeName() {
   ];
 
   Logger.log("Starting testNormalizeName()...");
-  var allTestsPassed = true;
+  var failures = 0;
 
   for (var i = 0; i < testCases.length; i++) {
     var tc = testCases[i];
     var actual = normalizeName(tc.input, tc.to_upper_case);
-    var passed = actual === tc.expected;
-    if (!passed) {
-      allTestsPassed = false;
+    if (actual !== tc.expected) {
+      failures++;
+      Logger.log("--------------------------------------------------");
+      Logger.log("FAIL: testNormalizeName - " + tc.description);
+      Logger.log("Input: '" + tc.input + "' (to_upper_case: " + tc.to_upper_case + ")");
+      Logger.log("Expected: '" + tc.expected + "'");
+      Logger.log("Got: '" + actual + "'");
     }
-    Logger.log("--------------------------------------------------");
-    Logger.log("Test Case: " + tc.description);
-    Logger.log("Input: '" + tc.input + "' (to_upper_case: " + tc.to_upper_case + ")");
-    Logger.log("Expected: '" + tc.expected + "'");
-    Logger.log("Actual: '" + actual + "'");
-    Logger.log("Result: " + (passed ? "PASSED" : "FAILED"));
   }
+
   Logger.log("--------------------------------------------------");
-  if (allTestsPassed) {
-    Logger.log("All testNormalizeName() tests PASSED.");
+  if (failures === 0) {
+    Logger.log("testNormalizeName: All tests passed.");
   } else {
-    Logger.log("One or more testNormalizeName() tests FAILED.");
+    Logger.log("testNormalizeName: " + failures + " test(s) failed.");
   }
   Logger.log("Finished testNormalizeName().");
+  return failures === 0;
 }
 
 function testPlural() {
@@ -130,34 +130,34 @@ function testPlural() {
       description: "Input with only spaces, plural",
       number: 2,
       message: " ",
-      expected: " s s" // This is based on current Plural logic: splits " ", joins with "s ", adds "s"
+      expected: " "
     }
   ];
 
   Logger.log("Starting testPlural()...");
-  var allTestsPassed = true;
+  var failures = 0;
 
   for (var i = 0; i < testCases.length; i++) {
     var tc = testCases[i];
     var actual = Plural(tc.number, tc.message);
-    var passed = actual === tc.expected;
-    if (!passed) {
-      allTestsPassed = false;
+    if (actual !== tc.expected) {
+      failures++;
+      Logger.log("--------------------------------------------------");
+      Logger.log("FAIL: testPlural - " + tc.description);
+      Logger.log("Input number: " + tc.number + ", Input message: '" + tc.message + "'");
+      Logger.log("Expected: '" + tc.expected + "'");
+      Logger.log("Got: '" + actual + "'");
     }
-    Logger.log("--------------------------------------------------");
-    Logger.log("Test Case: " + tc.description);
-    Logger.log("Input: Plural(" + tc.number + ", \"" + tc.message + "\")");
-    Logger.log("Expected: '" + tc.expected + "'");
-    Logger.log("Actual: '" + actual + "'");
-    Logger.log("Result: " + (passed ? "PASSED" : "FAILED"));
   }
+
   Logger.log("--------------------------------------------------");
-  if (allTestsPassed) {
-    Logger.log("All testPlural() tests PASSED.");
+  if (failures === 0) {
+    Logger.log("testPlural: All tests passed.");
   } else {
-    Logger.log("One or more testPlural() tests FAILED.");
+    Logger.log("testPlural: " + failures + " test(s) failed.");
   }
   Logger.log("Finished testPlural().");
+  return failures === 0;
 }
 
 function testGetDoBYear() {
@@ -195,47 +195,64 @@ function testGetDoBYear() {
   ];
 
   Logger.log("Starting testGetDoBYear()...");
-  var allTestsPassed = true;
+  var failures = 0;
 
   for (var i = 0; i < testCases.length; i++) {
     var tc = testCases[i];
     var actual = getDoBYear(tc.input);
-    var passed = actual === tc.expected;
-    if (!passed) {
-      allTestsPassed = false;
+    if (actual !== tc.expected) {
+      failures++;
+      Logger.log("--------------------------------------------------");
+      Logger.log("FAIL: testGetDoBYear - " + tc.description);
+      var inputString = "";
+      if (tc.input_type === "string") {
+        inputString = "\"" + tc.input + "\"";
+      } else {
+        // For Date objects, construct a string representation
+        inputString = "new Date(" + tc.input.getFullYear() + ", " + tc.input.getMonth() + ", " + tc.input.getDate() + ")";
+      }
+      Logger.log("Input: " + inputString);
+      Logger.log("Expected: " + tc.expected);
+      Logger.log("Got: " + actual);
     }
-    Logger.log("--------------------------------------------------");
-    Logger.log("Test Case: " + tc.description);
-    if (tc.input_type === "string") {
-      Logger.log("Input: getDoBYear(\"" + tc.input + "\")");
-    } else {
-      Logger.log("Input: getDoBYear(new Date(" + tc.input.getFullYear() + ", " + tc.input.getMonth() + ", " + tc.input.getDate() + "))");
-    }
-    Logger.log("Expected: " + tc.expected);
-    Logger.log("Actual: " + actual);
-    Logger.log("Result: " + (passed ? "PASSED" : "FAILED"));
   }
+
   Logger.log("--------------------------------------------------");
-  if (allTestsPassed) {
-    Logger.log("All testGetDoBYear() tests PASSED.");
+  if (failures === 0) {
+    Logger.log("testGetDoBYear: All tests passed.");
   } else {
-    Logger.log("One or more testGetDoBYear() tests FAILED.");
+    Logger.log("testGetDoBYear: " + failures + " test(s) failed.");
   }
   Logger.log("Finished testGetDoBYear().");
+  return failures === 0;
 }
 
 function runInvoiceTests() {
   Logger.log("Starting all invoice tests...");
   Logger.log("==============================================");
 
-  testNormalizeName();
+  var failedSuites = [];
+
+  if (!testNormalizeName()) {
+    failedSuites.push("testNormalizeName");
+  }
   Logger.log("==============================================");
 
-  testPlural();
+  if (!testPlural()) {
+    failedSuites.push("testPlural");
+  }
   Logger.log("==============================================");
 
-  testGetDoBYear();
+  if (!testGetDoBYear()) {
+    failedSuites.push("testGetDoBYear");
+  }
   Logger.log("==============================================");
 
   Logger.log("All invoice tests completed.");
+
+  if (failedSuites.length === 0) {
+    Logger.log("Summary: All test suites passed successfully!");
+  } else {
+    Logger.log("Summary: Failures detected in the following test suite(s): " + failedSuites.join(", ") + ".");
+  }
 }

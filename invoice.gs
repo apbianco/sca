@@ -1234,6 +1234,9 @@ function Plural(number, message) {
   if (number <= 1) {
     return message
   }
+  if (!/\S/.test(message)) {
+    return message
+  }  
   var prefix = '', postfix = ''
   if (message[0] == ' ') {
     prefix = ' '
