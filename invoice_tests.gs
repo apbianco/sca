@@ -434,7 +434,182 @@ function testFormatPhoneNumberString() {
   return failures === 0;
 }
 
-function runInvoiceTests() {
+/////////////////////////////////////////////////////////////////////////////////////////
+// config.gs tests
+/////////////////////////////////////////////////////////////////////////////////////////
+
+function testSeasonConfiguration() {
+  Logger.log("Starting testSeasonConfiguration()...");
+  var passed = true;
+  var currentYear = new Date().getFullYear();
+  var expectedSeason = currentYear + "/" + (currentYear + 1);
+  var actualSeason = season; // From config.gs
+
+  if (actualSeason !== expectedSeason) {
+    passed = false;
+    Logger.log("--------------------------------------------------");
+    Logger.log("FAIL: testSeasonConfiguration - Season mismatch");
+    Logger.log("  Expected season for current year (" + currentYear + "): '" + expectedSeason + "'");
+    Logger.log("  Actual season configured in config.gs: '" + actualSeason + "'");
+  } else {
+    Logger.log("PASS: testSeasonConfiguration - Season is correctly set for current year " + currentYear + " (" + actualSeason + ")");
+  }
+  Logger.log("Finished testSeasonConfiguration().");
+  return passed;
+}
+
+function testLicensesConfiguration() {
+  Logger.log("Starting testLicensesConfiguration()...");
+  var allTestsPassed = true;
+  var simulatedFutureYear = new Date().getFullYear() + 1;
+  var maxJeuneAge = 18; // As defined in previous logic
+
+  // licenses_configuration_map from config.gs
+  for (var licenseName in licenses_configuration_map) {
+    if (licenses_configuration_map.hasOwnProperty(licenseName)) {
+      var configuredBirthYear = licenses_configuration_map[licenseName];
+
+      if (licenseName.indexOf('Jeune') !== -1) {
+        var ageInSimulatedFutureYear = simulatedFutureYear - configuredBirthYear;
+        if (ageInSimulatedFutureYear > maxJeuneAge) {
+          allTestsPassed = false;
+          Logger.log("--------------------------------------------------");
+          Logger.log("FAIL: testLicensesConfiguration - Outdated 'Jeune' category");
+          Logger.log("  License: '" + licenseName + "'");
+          Logger.log("  Configured Birth Year: " + configuredBirthYear);
+          Logger.log("  Simulated Future Year: " + simulatedFutureYear);
+          Logger.log("  Calculated Age in Future Year: " + ageInSimulatedFutureYear + ", exceeds max " + maxJeuneAge);
+        }
+      } else if (licenseName.indexOf('Adulte') !== -1 || licenseName.indexOf('Dirigeant') !== -1) {
+        if (configuredBirthYear >= simulatedFutureYear) {
+          allTestsPassed = false;
+          Logger.log("--------------------------------------------------");
+          Logger.log("FAIL: testLicensesConfiguration - Illogical birth year for 'Adulte'/'Dirigeant'");
+          Logger.log("  License: '" + licenseName + "'");
+          Logger.log("  Configured Birth Year: " + configuredBirthYear);
+          Logger.log("  Simulated Future Year: " + simulatedFutureYear);
+          Logger.log("  Birth year must be less than simulated future year.");
+        }
+      }
+    }
+  }
+
+  if (allTestsPassed) {
+    Logger.log("PASS: testLicensesConfiguration - All configurations appear valid for simulated future year " + simulatedFutureYear);
+  } else {
+    // Individual failures already logged
+  }
+  Logger.log("Finished testLicensesConfiguration().");
+  return allTestsPassed;
+}
+
+function testCompSubscriptionConfiguration() {
+  Logger.log("Starting testCompSubscriptionConfiguration()...");
+  var allTestsPassed = true;
+  var simulatedFutureYear = new Date().getFullYear() + 1;
+  var categoryMaxAges = {'U8': 7, 'U10': 9, 'U12+': 13}; // As defined previously
+
+  // comp_subscription_map from config.gs
+  for (var categoryName in comp_subscription_map) {
+    if (comp_subscription_map.hasOwnProperty(categoryName)) {
+      var yearConfig = comp_subscription_map[categoryName]; // e.g., [2017, 2018] or [2014]
+      var yearToTest = (yearConfig.length > 1) ? yearConfig[1] : yearConfig[0];
+      var maxAgeForCategory = categoryMaxAges[categoryName];
+
+      if (maxAgeForCategory !== undefined) {
+        var ageInSimulatedFutureYear = simulatedFutureYear - yearToTest;
+        if (ageInSimulatedFutureYear > maxAgeForCategory) {
+          allTestsPassed = false;
+          Logger.log("--------------------------------------------------");
+          Logger.log("FAIL: testCompSubscriptionConfiguration - Outdated category '" + categoryName + "'");
+          Logger.log("  Configured Year(s): " + JSON.stringify(yearConfig) + ", Year Tested: " + yearToTest);
+          Logger.log("  Simulated Future Year: " + simulatedFutureYear + ", Calculated Age: " + ageInSimulatedFutureYear);
+          Logger.log("  Exceeds max age of " + maxAgeForCategory + " for this category.");
+        }
+      } else {
+        Logger.log("WARNING: testCompSubscriptionConfiguration - Unknown category '" + categoryName + "'. Max age not defined. Skipping.");
+      }
+    }
+  }
+
+  if (allTestsPassed) {
+    Logger.log("PASS: testCompSubscriptionConfiguration - All configurations appear valid for simulated future year " + simulatedFutureYear);
+  } else {
+    // Individual failures already logged
+  }
+  Logger.log("Finished testCompSubscriptionConfiguration().");
+  return allTestsPassed;
+}
+
+function testSkipassConfiguration() {
+  Logger.log("Starting testSkipassConfiguration()...");
+  var allTestsPassed = true;
+  var simulatedFutureYear = new Date().getFullYear() + 1;
+
+  var categoryLogic = {
+    'Adulte':   { type: 'latestBirthYearFromMinAge', minCatAge: 19, configIndex: 0 },
+    'Étudiant': { type: 'latestBirthYear', minCatAge: 18, configIndex: 1 },
+    'Junior':   { type: 'latestBirthYear', minCatAge: 11, configIndex: 1 },
+    'Enfant':   { type: 'latestBirthYear', minCatAge: 6,  configIndex: 1 },
+    'Bambin':   { type: 'earliestBirthYearForMaxAge', maxCatAge: 5, configIndex: 0 },
+    'Senior':   { type: 'ageRange' },
+    'Vermeil':  { type: 'ageRange' }
+  };
+
+  // skipass_configuration_map from config.gs
+  for (var categoryName in skipass_configuration_map) {
+    if (skipass_configuration_map.hasOwnProperty(categoryName)) {
+      var configValue = skipass_configuration_map[categoryName];
+      var logic = categoryLogic[categoryName];
+
+      if (logic) {
+        if (logic.type === 'ageRange') {
+          Logger.log("INFO: testSkipassConfiguration - Category '" + categoryName + "' is age-range defined. Config values [" + configValue.join(", ") + "] don't become outdated annually. Skipping direct year validation.");
+          continue;
+        }
+
+        var expectedBirthYear;
+        var actualBirthYear;
+
+        if (logic.type === 'latestBirthYearFromMinAge' || logic.type === 'latestBirthYear') {
+          expectedBirthYear = simulatedFutureYear - logic.minCatAge;
+          actualBirthYear = configValue[logic.configIndex];
+        } else if (logic.type === 'earliestBirthYearForMaxAge') {
+          expectedBirthYear = simulatedFutureYear - logic.maxCatAge;
+          actualBirthYear = configValue[logic.configIndex];
+        } else { // Should not happen with current logic types
+            Logger.log("WARNING: testSkipassConfiguration - Unknown logic type for category '" + categoryName + "'. Skipping.");
+            continue;
+        }
+
+
+        if (actualBirthYear !== expectedBirthYear) {
+          allTestsPassed = false;
+          Logger.log("--------------------------------------------------");
+          Logger.log("FAIL: testSkipassConfiguration - Outdated '" + categoryName + "' configuration.");
+          Logger.log("  Type: " + logic.type + ", Config Index: " + logic.configIndex);
+          Logger.log("  Configured Birth Year: " + actualBirthYear);
+          Logger.log("  Simulated Future Year: " + simulatedFutureYear);
+          if (logic.minCatAge) Logger.log("  Assumed Min Category Age: " + logic.minCatAge);
+          if (logic.maxCatAge) Logger.log("  Assumed Max Category Age: " + logic.maxCatAge);
+          Logger.log("  Expected Birth Year for " + simulatedFutureYear + ": " + expectedBirthYear);
+        }
+      } else {
+        Logger.log("WARNING: testSkipassConfiguration - Unknown category '" + categoryName + "' in skipass_configuration_map. Test logic not defined. Skipping.");
+      }
+    }
+  }
+
+  if (allTestsPassed) {
+    Logger.log("PASS: testSkipassConfiguration - All configurations appear valid for simulated future year " + simulatedFutureYear);
+  } else {
+    // Individual failures already logged
+  }
+  Logger.log("Finished testSkipassConfiguration().");
+  return allTestsPassed;
+}
+
+function RUN_ALL_TESTS() {
   Logger.log("Starting all invoice tests...");
   var failedSuites = [];
 
@@ -455,6 +630,18 @@ function runInvoiceTests() {
   }
   if (!testFormatPhoneNumberString()) {
     failedSuites.push("testFormatPhoneNumberString");
+  }
+  if (!testSeasonConfiguration()) {
+    failedSuites.push("testSeasonConfiguration");
+  }
+  if (!testLicensesConfiguration()) {
+    failedSuites.push("testLicensesConfiguration");
+  }
+  if (!testCompSubscriptionConfiguration()) {
+    failedSuites.push("testCompSubscriptionConfiguration");
+  }
+  if (!testSkipassConfiguration()) {
+    failedSuites.push("testSkipassConfiguration");
   }
   if (failedSuites.length === 0) {
     Logger.log("Summary: All test suites passed successfully!");

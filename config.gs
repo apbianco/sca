@@ -4,7 +4,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
 // - Name of the season
-var season = "2024/2025"
+var season = "2025/2026"
 //
 // - A map of available licenses and validation dates. This map is used
 //   to create a map of properly configured license objects. Edit this
