@@ -56,7 +56,6 @@ function testNormalizeName() {
     }
   ];
 
-  Logger.log("Starting testNormalizeName()...");
   var failures = 0;
 
   for (var i = 0; i < testCases.length; i++) {
@@ -71,13 +70,12 @@ function testNormalizeName() {
       Logger.log("Got: '" + actual + "'");
     }
   }
-
-  Logger.log("--------------------------------------------------");
-  if (failures === 0) {
-    Logger.log("testNormalizeName: All tests passed.");
-  } else {
+  
+  if (failures > 0) {
+    Logger.log("--------------------------------------------------");
     Logger.log("testNormalizeName: " + failures + " test(s) failed.");
   }
+  // No summary log if all passed, just the "Finished" log.
   Logger.log("Finished testNormalizeName().");
   return failures === 0;
 }
@@ -134,7 +132,6 @@ function testPlural() {
     }
   ];
 
-  Logger.log("Starting testPlural()...");
   var failures = 0;
 
   for (var i = 0; i < testCases.length; i++) {
@@ -150,12 +147,11 @@ function testPlural() {
     }
   }
 
-  Logger.log("--------------------------------------------------");
-  if (failures === 0) {
-    Logger.log("testPlural: All tests passed.");
-  } else {
+  if (failures > 0) {
+    Logger.log("--------------------------------------------------");
     Logger.log("testPlural: " + failures + " test(s) failed.");
   }
+  // No summary log if all passed, just the "Finished" log.
   Logger.log("Finished testPlural().");
   return failures === 0;
 }
@@ -194,7 +190,6 @@ function testGetDoBYear() {
     }
   ];
 
-  Logger.log("Starting testGetDoBYear()...");
   var failures = 0;
 
   for (var i = 0; i < testCases.length; i++) {
@@ -217,39 +212,28 @@ function testGetDoBYear() {
     }
   }
 
-  Logger.log("--------------------------------------------------");
-  if (failures === 0) {
-    Logger.log("testGetDoBYear: All tests passed.");
-  } else {
+  if (failures > 0) {
+    Logger.log("--------------------------------------------------");
     Logger.log("testGetDoBYear: " + failures + " test(s) failed.");
   }
+  // No summary log if all passed, just the "Finished" log.
   Logger.log("Finished testGetDoBYear().");
   return failures === 0;
 }
 
 function runInvoiceTests() {
   Logger.log("Starting all invoice tests...");
-  Logger.log("==============================================");
-
   var failedSuites = [];
 
   if (!testNormalizeName()) {
     failedSuites.push("testNormalizeName");
   }
-  Logger.log("==============================================");
-
   if (!testPlural()) {
     failedSuites.push("testPlural");
   }
-  Logger.log("==============================================");
-
   if (!testGetDoBYear()) {
     failedSuites.push("testGetDoBYear");
   }
-  Logger.log("==============================================");
-
-  Logger.log("All invoice tests completed.");
-
   if (failedSuites.length === 0) {
     Logger.log("Summary: All test suites passed successfully!");
   } else {
