@@ -107,7 +107,7 @@ var coord_total =                     [65, 7]
 var coord_rebate =                    [76, 4]
 var coord_charge =                    [77, 4]
 var coord_owed =                      [78, 7]
-var coord_payment_validation _form =  [79, 7]
+var coord_payment_validation_form =   [79, 7]
 var coord_personal_message =          [85, 3]
 var coord_timestamp =                 [86, 2]
 var coord_version =                   [86, 3]
@@ -1596,7 +1596,6 @@ function TESTValidateInvoice() {
     if (result == {}) {
       displayErrorPanel("Error during test")
     }
-  }
   }
   test(validateInvoice)
 }
