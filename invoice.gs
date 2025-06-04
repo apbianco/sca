@@ -261,8 +261,7 @@ function getCompJuniorLicenseString() {return 'CN Jeune (Compétition)'}
 function getCompAdultLicenseString() {return 'CN Adulte (Compétition)'}
 
 function isLicenseDefined(license) {
-  // FIXME: extra paranoid: check it's a key of the license hash.
-  return license != '' && license != getNoLicenseString()
+  return license != getNoLicenseString() && license in createLicensesMap(SpreadsheetApp.getActiveSheet())
 }
 
 function isLicenseNoLicense(license) {
@@ -1186,20 +1185,35 @@ function getDoBYear(dob) {
 // Input/output formating
 ///////////////////////////////////////////////////////////////////////////////
 
+// Helper function with the core phone number formatting logic
+function formatPhoneNumberString(phoneString) {
+  if (phoneString == null || phoneString == '') {
+    return '';
+  }
+  // Ensure it's a string before calling string methods
+  var phone = String(phoneString);
+
+  // Compress the phone number removing all spaces
+  phone = phone.replace(/\s/g, "");
+  // Compress the phone number removing all hyphens
+  phone = phone.replace(/-/g, "");
+  // Insert replacing groups of two digits by the digits with a space
+  var regex = new RegExp('([0-9]{2})', 'gi');
+  phone = phone.replace(regex, '$1 ');
+  // Remove trailing space if any
+  return phone.replace(/\s$/, "");
+}
+
 // Reformat the phone numbers
 function formatPhoneNumbers() {
   function formatPhoneNumber(coords) {
     var phone = getStringAt(coords);
+    // Only format if not empty, and let formatPhoneNumberString handle actual empty string logic
     if (phone != '') {
-      // Compress the phone number removing all spaces
-      phone = phone.replace(/\s/g, "") 
-      // Compress the phone number removing all hyphens
-      phone = phone.replace(/-/g, "")
-      // Insert replacing groups of two digits by the digits with a space
-      var regex = new RegExp('([0-9]{2})', 'gi');
-      phone = phone.replace(regex, '$1 ');
-      setStringAt(coords, phone.replace(/\s$/, ""), "black");
+      var formattedPhone = formatPhoneNumberString(phone);
+      setStringAt(coords, formattedPhone, "black");
     }
+    // If phone is initially empty, do nothing, consistent with original behavior.
   }
   
   formatPhoneNumber(coord_family_phone1);

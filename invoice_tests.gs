@@ -221,6 +221,219 @@ function testGetDoBYear() {
   return failures === 0;
 }
 
+function testIsLicenseDefined() {
+  var testCases = [
+    {
+      description: "Empty string",
+      input: "",
+      expected: false
+    },
+    {
+      description: "String 'Aucune'",
+      input: "Aucune",
+      expected: false
+    },
+    {
+      description: "String that is not a license but not empty or 'Aucune'",
+      input: "InvalidLicense",
+      expected: false
+    },
+    {
+      description: "Typical valid license string",
+      input: "CN Jeune (Loisir)",
+      expected: true
+    },
+    {
+      description: "License string",
+      input: "CN Adulte (Loisir)",
+      expected: true
+    },
+    {
+      description: "License string",
+      input: "CN Dirigeant",
+      expected: true
+    }
+  ];
+
+  var failures = 0;
+
+  for (var i = 0; i < testCases.length; i++) {
+    var tc = testCases[i];
+    // Assuming isLicenseDefined is globally accessible
+    var actual = isLicenseDefined(tc.input);
+    if (actual !== tc.expected) {
+      failures++;
+      Logger.log("--------------------------------------------------");
+      Logger.log("FAIL: testIsLicenseDefined - " + tc.description);
+      Logger.log("Input: '" + tc.input + "'");
+      Logger.log("Expected: " + tc.expected);
+      Logger.log("Got: '" + actual + "'");
+    }
+  }
+
+  if (failures > 0) {
+    Logger.log("--------------------------------------------------");
+    Logger.log("testIsLicenseDefined: " + failures + " test(s) failed.");
+  }
+  // No summary log if all passed, just the "Finished" log.
+  Logger.log("Finished testIsLicenseDefined().");
+  return failures === 0;
+}
+
+function testAgeFromDoB() {
+  var testCases = [];
+  var today = new Date();
+  var currentYear = today.getFullYear();
+  var currentMonth = today.getMonth();
+  var currentDate = today.getDate();
+
+  // Test Case 1: Exactly 18 years ago
+  testCases.push({
+    description: "Exactly 18 years ago",
+    input: new Date(currentYear - 18, currentMonth, currentDate),
+    expected: 18
+  });
+
+  // Test Case 2: Less than 18 years ago (e.g., 10 years ago)
+  testCases.push({
+    description: "10 years ago",
+    input: new Date(currentYear - 10, currentMonth, currentDate),
+    expected: 10
+  });
+
+  // Test Case 3: More than 18 years ago (e.g., 30 years ago)
+  testCases.push({
+    description: "30 years ago",
+    input: new Date(currentYear - 30, currentMonth, currentDate),
+    expected: 30
+  });
+
+  // Test Case 4: Leap year birthday (Feb 29, 2000)
+  var leapDob = new Date(2000, 1, 29); // Month is 0-indexed, so 1 is February
+  var expectedAgeLeap;
+  // Calculate expected age for leap year case
+  var ageDateLeap = new Date(Date.now() - leapDob.getTime());
+  expectedAgeLeap = Math.abs(ageDateLeap.getUTCFullYear() - 1970);
+  testCases.push({
+    description: "Leap year birthday (Feb 29, 2000)",
+    input: leapDob,
+    expected: expectedAgeLeap
+  });
+
+  // Test Case 5: Today's date
+  testCases.push({
+    description: "Today's date",
+    input: new Date(), // A new Date object for today
+    expected: 0
+  });
+
+  // Test Case 6: Future date (e.g., 1 year in future)
+  var futureDate = new Date(currentYear + 1, currentMonth, currentDate);
+  var month_diff_future = Date.now() - futureDate.getTime();
+  var age_dt_future = new Date(month_diff_future);
+  var year_future = age_dt_future.getUTCFullYear();
+  testCases.push({
+    description: "1 year in the future",
+    input: futureDate,
+    expected: Math.abs(year_future - 1970)
+  });
+
+  var failures = 0;
+
+  for (var i = 0; i < testCases.length; i++) {
+    var tc = testCases[i];
+    var actual = ageFromDoB(tc.input); // Assuming ageFromDoB is globally accessible
+    if (actual !== tc.expected) {
+      // Add a small tolerance for "Today's date" due to execution time lag
+      if (tc.description === "Today's date" && actual === 0 && tc.expected === 0) {
+        // This is fine, often dob.getTime() can be slightly different from Date.now()
+      } else if (tc.description.includes("years ago") && tc.input.getMonth() === currentMonth && tc.input.getDate() === currentDate) {
+        // For "exactly N years ago" cases, if the test runs very close to midnight,
+        // Date.now() might shift to the next day while tc.input is fixed.
+        // This could cause a 1-year difference if not handled.
+        // A more robust way would be to check if actual is tc.expected or tc.expected - 1
+        // but for now, we'll assume tests don't run exactly at midnight causing this specific discrepancy.
+        // The current logic of ageFromDoB is based on millisecond difference, so it should be fairly precise.
+      }
+      // For the leap year, the expected age is calculated dynamically.
+      // For future dates, the expected age is also calculated dynamically.
+      // Allow a small tolerance for floating point comparisons if ages were not integers.
+      // However, ageFromDoB returns integers, so direct comparison should be fine.
+
+      // Check if the difference is due to the "day boundary" issue for exact year differences
+      // If the calculated age is one less than expected, and the birth month/day is today,
+      // it might be due to the time component making the person not "fully" N years old yet.
+      // The ageFromDoB function calculates age purely based on (Current Time - DoB Time) converted to years.
+      // Example: If today is Nov 17, 2023, 10:00 AM.
+      // DoB: Nov 17, 2005, 11:00 AM. Age is 17, not 18 yet. ageFromDoB will give 17.
+      // DoB: Nov 17, 2005, 09:00 AM. Age is 18. ageFromDoB will give 18.
+      // The test cases using currentMonth and currentDate for "exactly N years ago" assume the time component
+      // results in the person being fully N years old.
+
+      // A simple log for now. More complex tolerance logic can be added if needed.
+      if (actual !== tc.expected) {
+        failures++;
+        Logger.log("--------------------------------------------------");
+        Logger.log("FAIL: testAgeFromDoB - " + tc.description);
+        Logger.log("Input Date: " + tc.input.toString());
+        Logger.log("Expected: " + tc.expected);
+        Logger.log("Got: " + actual);
+        // Log for debugging future date calculation
+        if (tc.description.includes("future")) {
+            Logger.log("DEBUG Future Date: month_diff_future=" + month_diff_future +
+                       ", age_dt_future=" + age_dt_future.toUTCString() +
+                       ", year_future=" + year_future);
+        }
+      }
+    }
+  }
+
+  if (failures > 0) {
+    Logger.log("--------------------------------------------------");
+    Logger.log("testAgeFromDoB: " + failures + " test(s) failed.");
+  }
+  Logger.log("Finished testAgeFromDoB().");
+  return failures === 0;
+}
+
+function testFormatPhoneNumberString() {
+  var testCases = [
+    { description: "Already formatted", input: "01 23 45 67 89", expected: "01 23 45 67 89" },
+    { description: "Numbers with hyphens", input: "01-23-45-67-89", expected: "01 23 45 67 89" },
+    { description: "Numbers with mixed spaces and hyphens", input: "01 23-45 67-89", expected: "01 23 45 67 89" },
+    { description: "Numbers with no spaces or hyphens", input: "0123456789", expected: "01 23 45 67 89" },
+    { description: "Numbers with leading/trailing internal spaces (handled by replace all spaces)", input: " 0123456789 ", expected: "01 23 45 67 89" },
+    { description: "Already formatted with extraneous internal spaces", input: "01  23   45--67  89", expected: "01 23 45 67 89" },
+    { description: "Empty string", input: "", expected: "" },
+    { description: "Null input", input: null, expected: "" },
+    { description: "Short number", input: "01234", expected: "01 23 4" },
+    { description: "Odd length number", input: "0123456", expected: "01 23 45 6" },
+    { description: "Number with internal single digits (robustness)", input: "01 2 34 5 67", expected: "01 23 45 67" }
+  ];
+
+  var failures = 0;
+
+  for (var i = 0; i < testCases.length; i++) {
+    var tc = testCases[i];
+    var actual = formatPhoneNumberString(tc.input); // Assuming formatPhoneNumberString is globally accessible
+    if (actual !== tc.expected) {
+      failures++;
+      Logger.log("--------------------------------------------------");
+      Logger.log("FAIL: testFormatPhoneNumberString - " + tc.description);
+      Logger.log("Input: '" + tc.input + "' (type: " + typeof tc.input + ")");
+      Logger.log("Expected: '" + tc.expected + "'");
+      Logger.log("Got: '" + actual + "'");
+    }
+  }
+
+  if (failures > 0) {
+    Logger.log("--------------------------------------------------");
+    Logger.log("testFormatPhoneNumberString: " + failures + " test(s) failed.");
+  }
+  Logger.log("Finished testFormatPhoneNumberString().");
+  return failures === 0;
+}
+
 function runInvoiceTests() {
   Logger.log("Starting all invoice tests...");
   var failedSuites = [];
@@ -233,6 +446,15 @@ function runInvoiceTests() {
   }
   if (!testGetDoBYear()) {
     failedSuites.push("testGetDoBYear");
+  }
+  if (!testIsLicenseDefined()) {
+    failedSuites.push("testIsLicenseDefined");
+  }
+  if (!testAgeFromDoB()) {
+    failedSuites.push("testAgeFromDoB");
+  }
+  if (!testFormatPhoneNumberString()) {
+    failedSuites.push("testFormatPhoneNumberString");
   }
   if (failedSuites.length === 0) {
     Logger.log("Summary: All test suites passed successfully!");
