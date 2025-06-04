@@ -1597,6 +1597,7 @@ function TESTValidateInvoice() {
       displayErrorPanel("Error during test")
     }
   }
+  }
   test(validateInvoice)
 }
 
