@@ -494,6 +494,45 @@ function testLicensesConfiguration() {
     }
   }
 
+  // New checks for row and column validity
+  Logger.log("INFO: testSkipassConfiguration - Validating row and column data in skipass_configuration_map...");
+  for (var categoryName in skipass_configuration_map) {
+    if (skipass_configuration_map.hasOwnProperty(categoryName)) {
+      var configValue = skipass_configuration_map[categoryName];
+
+      if (!configValue || typeof configValue.length === 'undefined') {
+        allTestsPassed = false;
+        Logger.log("--------------------------------------------------");
+        Logger.log("FAIL: testSkipassConfiguration - Invalid or undefined configValue for '" + categoryName + "'");
+        continue; // Skip further checks for this malformed entry
+      }
+
+      if (configValue.length !== 4) {
+        allTestsPassed = false;
+        Logger.log("--------------------------------------------------");
+        Logger.log("FAIL: testSkipassConfiguration - Incorrect array length for '" + categoryName + "'");
+        Logger.log("  Expected 4 elements (Dob/Y1, Dob/Y2, Row, Col). Got: " + configValue.length + " -> [" + configValue.join(", ") + "]");
+      } else {
+        // Only check row and col if length is potentially correct
+        var row = configValue[2];
+        var col = configValue[3];
+        if (typeof row !== 'number' || row <= 0) {
+          allTestsPassed = false;
+          Logger.log("--------------------------------------------------");
+          Logger.log("FAIL: testSkipassConfiguration - Invalid row for '" + categoryName + "'");
+          Logger.log("  Row value: " + row + " (type: " + typeof row + "). Expected a positive number. Array: [" + configValue.join(", ") + "]");
+        }
+        if (typeof col !== 'number' || col <= 0) {
+          allTestsPassed = false;
+          Logger.log("--------------------------------------------------");
+          Logger.log("FAIL: testSkipassConfiguration - Invalid column for '" + categoryName + "'");
+          Logger.log("  Column value: " + col + " (type: " + typeof col + "). Expected a positive number. Array: [" + configValue.join(", ") + "]");
+        }
+      }
+    }
+  }
+  // End of new checks
+
   if (allTestsPassed) {
     Logger.log("PASS: testLicensesConfiguration - All configurations appear valid for simulated future year " + simulatedFutureYear);
   } else {
@@ -609,6 +648,132 @@ function testSkipassConfiguration() {
   return allTestsPassed;
 }
 
+function testCreateSkipassMap_UsesDynamicRanges() {
+  Logger.log("Starting testCreateSkipassMap_UsesDynamicRanges()...");
+  var failures = 0;
+
+  var mockSheet = {
+    getRange: function(row, col) {
+      if (!this.getRangeCalls) {
+        this.getRangeCalls = [];
+      }
+      this.getRangeCalls.push({ row: row, col: col });
+      return { /* mock range object, currently no methods needed */ };
+    },
+    getRangeCalls: []
+  };
+
+  // This map helps convert the function call name (from createSkipassMap's source) to the base name used in skipass_configuration_map
+  var getterToBaseNameMap = {
+    'getSkiPassSenior': 'Senior',
+    'getSkiPassSuperSenior': 'Vermeil',
+    'getSkiPassAdult': 'Adulte',
+    'getSkiPassStudent': 'Étudiant',
+    'getSkiPassJunior': 'Junior',
+    'getSkiPassKid': 'Enfant',
+    'getSkiPassToddler': 'Bambin'
+  };
+
+  // The order of entries as they appear in createSkipassMap's to_return object.
+  // Each entry here corresponds to one call to sheet.getRange().
+  var expectedSkipassOrder = [
+    { localizedKey: 'Collet Senior', getterName: 'getSkiPassSenior' },
+    { localizedKey: 'Collet Vermeil', getterName: 'getSkiPassSuperSenior' },
+    { localizedKey: 'Collet Adulte', getterName: 'getSkiPassAdult' },
+    { localizedKey: 'Collet Étudiant', getterName: 'getSkiPassStudent' },
+    { localizedKey: 'Collet Junior', getterName: 'getSkiPassJunior' },
+    { localizedKey: 'Collet Enfant', getterName: 'getSkiPassKid' },
+    { localizedKey: 'Collet Bambin', getterName: 'getSkiPassToddler' },
+    { localizedKey: '3 Domaines Senior', getterName: 'getSkiPassSenior' },
+    { localizedKey: '3 Domaines Vermeil', getterName: 'getSkiPassSuperSenior' },
+    { localizedKey: '3 Domaines Adulte', getterName: 'getSkiPassAdult' },
+    { localizedKey: '3 Domaines Étudiant', getterName: 'getSkiPassStudent' },
+    { localizedKey: '3 Domaines Junior', getterName: 'getSkiPassJunior' },
+    { localizedKey: '3 Domaines Enfant', getterName: 'getSkiPassKid' },
+    { localizedKey: '3 Domaines Bambin', getterName: 'getSkiPassToddler' }
+  ];
+
+  // Call the function under test
+  // Ensure skipass_configuration_map is available in the global scope for createSkipassMap
+  var skiPassMapResult = createSkipassMap(mockSheet);
+
+  // Check total number of getRange calls
+  if (mockSheet.getRangeCalls.length !== expectedSkipassOrder.length) {
+    failures++;
+    Logger.log("--------------------------------------------------");
+    Logger.log("FAIL: testCreateSkipassMap_UsesDynamicRanges - Incorrect number of getRange calls.");
+    Logger.log("  Expected: " + expectedSkipassOrder.length);
+    Logger.log("  Got: " + mockSheet.getRangeCalls.length);
+  }
+
+  // Check each call for correct row and column, assuming order is preserved
+  for (var i = 0; i < expectedSkipassOrder.length; i++) {
+    var expectedEntry = expectedSkipassOrder[i];
+    var baseName = getterToBaseNameMap[expectedEntry.getterName];
+
+    if (!baseName) {
+      failures++;
+      Logger.log("--------------------------------------------------");
+      Logger.log("FAIL: testCreateSkipassMap_UsesDynamicRanges - Unknown getterName '" + expectedEntry.getterName + "' in test's expectedSkipassOrder for " + expectedEntry.localizedKey);
+      continue;
+    }
+
+    if (!skipass_configuration_map || !skipass_configuration_map[baseName] || skipass_configuration_map[baseName].length < 4) {
+      failures++;
+      Logger.log("--------------------------------------------------");
+      Logger.log("FAIL: testCreateSkipassMap_UsesDynamicRanges - skipass_configuration_map missing or incomplete for baseName '" + baseName + "' (derived from " + expectedEntry.localizedKey + ")");
+      Logger.log("  skipass_configuration_map['" + baseName + "']: " + JSON.stringify(skipass_configuration_map ? skipass_configuration_map[baseName] : "undefined"));
+      continue;
+    }
+
+    var expectedRow = skipass_configuration_map[baseName][2];
+    var expectedCol = skipass_configuration_map[baseName][3];
+
+    var actualCall = mockSheet.getRangeCalls[i];
+
+    if (!actualCall) {
+      // This case should ideally be caught by the length check upfront,
+      // but as a safeguard if the loop runs longer than actual calls.
+      if (mockSheet.getRangeCalls.length >= expectedSkipassOrder.length) {
+         // Only log if we didn't already log a length mismatch for this specific index issue
+        failures++;
+        Logger.log("--------------------------------------------------");
+        Logger.log("FAIL: testCreateSkipassMap_UsesDynamicRanges - Missing getRange call for expected entry: " + expectedEntry.localizedKey + " at index " + i);
+      }
+      continue;
+    }
+
+    if (actualCall.row !== expectedRow || actualCall.col !== expectedCol) {
+      failures++;
+      Logger.log("--------------------------------------------------");
+      Logger.log("FAIL: testCreateSkipassMap_UsesDynamicRanges - Incorrect getRange parameters for: " + expectedEntry.localizedKey + " (Base: " + baseName + ")");
+      Logger.log("  Expected Row: " + expectedRow + ", Expected Col: " + expectedCol);
+      Logger.log("  Actual Row: " + actualCall.row + ", Actual Col: " + actualCall.col);
+      Logger.log("  (from skipass_configuration_map['" + baseName + "']: [" + skipass_configuration_map[baseName].join(", ") + "])");
+    }
+  }
+
+  // Also verify that the created map has the correct keys, as a sanity check
+  var numKeysInResult = Object.keys(skiPassMapResult).length;
+  if (numKeysInResult !== expectedSkipassOrder.length) {
+    failures++;
+    Logger.log("--------------------------------------------------");
+    Logger.log("FAIL: testCreateSkipassMap_UsesDynamicRanges - Incorrect number of entries in the returned skiPassMap.");
+    Logger.log("  Expected: " + expectedSkipassOrder.length);
+    Logger.log("  Got: " + numKeysInResult);
+  }
+
+  if (failures > 0) {
+    Logger.log("--------------------------------------------------");
+    Logger.log("testCreateSkipassMap_UsesDynamicRanges: " + failures + " failure(s) detected.");
+  } else {
+    Logger.log("PASS: testCreateSkipassMap_UsesDynamicRanges - All checks passed.");
+  }
+  Logger.log("Finished testCreateSkipassMap_UsesDynamicRanges().");
+  return failures === 0;
+}
+
+
 function RUN_ALL_TESTS() {
   Logger.log("Starting all invoice tests...");
   var failedSuites = [];
@@ -642,6 +807,9 @@ function RUN_ALL_TESTS() {
   }
   if (!testSkipassConfiguration()) {
     failedSuites.push("testSkipassConfiguration");
+  }
+  if (!testCreateSkipassMap_UsesDynamicRanges()) {
+    failedSuites.push("testCreateSkipassMap_UsesDynamicRanges");
   }
   if (failedSuites.length === 0) {
     Logger.log("Summary: All test suites passed successfully!");

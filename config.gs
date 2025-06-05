@@ -36,14 +36,14 @@ var comp_kids_per_family = 4
 //   map when the year or age of validity is changing.
 //
 var skipass_configuration_map = {
-// What     | Dob/Y | Dob/Y |  Row  | Col
-  'Senior':   [70,    74],
-  'Vermeil':  [75,   -1],
-  'Adulte':   [2005,  70],
-  'Étudiant': [1994,  2005],
-  'Junior':   [2006,  2013],
-  'Enfant':   [2014,  2018],
-  'Bambin':   [2019, -1],
+// What | Dob/Y | Dob/Y | Row | Col
+  'Senior':   [70,    74, 25, 5],
+  'Vermeil':  [75,   -1, 26, 5],
+  'Adulte':   [2005,  70, 27, 5],
+  'Étudiant': [1994,  2005, 28, 5],
+  'Junior':   [2006,  2013, 29, 5],
+  'Enfant':   [2014,  2018, 30, 5],
+  'Bambin':   [2019, -1, 31, 5],
 }
 //
 // - Storage for the current season's database.
