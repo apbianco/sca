@@ -45,6 +45,7 @@ var skipass_configuration_map = {
   'Enfant':   [2014,  2018,   30,   5],
   'Bambin':   [2019, -1,      31,   5],
 }
+var skipass_configuration_map_3d_row_offset = 2
 //
 // - Storage for the current season's database.
 //

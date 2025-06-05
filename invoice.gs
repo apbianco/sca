@@ -611,18 +611,16 @@ function createSkipassMap(sheet) {
     return new Date("December 31, " + skipass_configuration_map[label][1])
   }
 
-  var 3d_row_offset = 2
-
-  function getSkipassConfigRow(label, 3d=False) {
+  function getSkipassConfigRow(label, d3=false) {
     if (!(label in skipass_configuration_map)) {
       displayErrorPanel(label + " n'est pas dans comp_subscription_map!")
       return
     }
-    return skipass_configuration_map[label][2] + (3d ? 3d_row_offset : 0)
+    return skipass_configuration_map[label][2] + (d3 ? skipass_configuration_map_3d_row_offset : 0)
   }
 
-  function getSkipassConfigCol(label, 3d=False) {
-    return skipass_configuration_map[label][3]  + (3d ? 3d_row_offset : 0);
+  function getSkipassConfigCol(label, d3=false) {
+    return skipass_configuration_map[label][3]  + (d3 ? skipass_configuration_map_3d_row_offset : 0);
   }
 
   var to_return = {
