@@ -619,8 +619,8 @@ function createSkipassMap(sheet) {
     return skipass_configuration_map[label][2] + (d3 ? skipass_configuration_map_3d_row_offset : 0)
   }
 
-  function getSkipassConfigCol(label, d3=false) {
-    return skipass_configuration_map[label][3]  + (d3 ? skipass_configuration_map_3d_row_offset : 0);
+  function getSkipassConfigCol(label) {
+    return skipass_configuration_map[label][3];
   }
 
   var to_return = {
@@ -664,7 +664,7 @@ function createSkipassMap(sheet) {
 
     '3 Domaines Senior': new SkiPass(
       localizeSkiPass3D(getSkiPassSenior()),
-      sheet.getRange(getSkipassConfigRow(getSkiPassSenior(), true), getSkipassConfigCol(getSkiPassSenior(), true)),
+      sheet.getRange(getSkipassConfigRow(getSkiPassSenior(), true), getSkipassConfigCol(getSkiPassSenior())),
       // Remember: no local variable capture possible in functor, use function calls only
       (dob) => {return ageVerificationRangeIncluded(dob, getFirstValue(getSkiPassSenior()), getSecondValue(getSkiPassSenior()))},
       getFirstValue(getSkiPassSenior()) + " à " + getSecondValue(getSkiPassSenior()) + " ans révolus"),
@@ -675,28 +675,28 @@ function createSkipassMap(sheet) {
       "plus de "  + getFirstValue(getSkiPassSuperSenior()) + " ans"),
     '3 Domaines Adulte': new SkiPass(
       localizeSkiPass3D(getSkiPassAdult()),
-      sheet.getRange(getSkipassConfigRow(getSkiPassAdult(), true), getSkipassConfigCol(getSkiPassAdult(), true)),
+      sheet.getRange(getSkipassConfigRow(getSkiPassAdult(), true), getSkipassConfigCol(getSkiPassAdult())),
       (dob) => {return ageVerificationBornBeforeDateIncluded(dob, getEarlyDate(getSkiPassAdult())) &&
                        ageVerificationStrictlyYounger(dob, getSecondValue(getSkiPassAdult()))},
       "Adulte non étudiant de moins de " + getSecondValue(getSkiPassAdult()) + " ans"),
     '3 Domaines Étudiant': new SkiPass(
       localizeSkiPass3D(getSkiPassStudent()),
-      sheet.getRange(getSkipassConfigRow(getSkiPassStudent(), true), getSkipassConfigCol(getSkiPassStudent(), true)),
+      sheet.getRange(getSkipassConfigRow(getSkiPassStudent(), true), getSkipassConfigCol(getSkiPassStudent())),
       (dob) => {return ageVerificationBornBetweenDatesIncluded(dob, getEarlyDate(getSkiPassStudent()), getLateDate(getSkiPassStudent()))},
       "1er janvier " + getFirstValue(getSkiPassStudent()) + " et le 31 décembre " + getSecondValue(getSkiPassStudent())),
     '3 Domaines Junior': new SkiPass(
       localizeSkiPass3D(getSkiPassJunior()),
-      sheet.getRange(getSkipassConfigRow(getSkiPassJunior(), true), getSkipassConfigCol(getSkiPassJunior(), true)),
+      sheet.getRange(getSkipassConfigRow(getSkiPassJunior(), true), getSkipassConfigCol(getSkiPassJunior())),
       (dob) => {return ageVerificationBornBetweenDatesIncluded(dob, getEarlyDate(getSkiPassJunior()), getLateDate(getSkiPassJunior()))},
       "1er janvier " + getFirstValue(getSkiPassJunior()) + " et le 31 décembre " + getSecondValue(getSkiPassJunior())),
     '3 Domaines Enfant': new SkiPass(
       localizeSkiPass3D(getSkiPassKid()),
-      sheet.getRange(getSkipassConfigRow(getSkiPassKid(), true), getSkipassConfigCol(getSkiPassKid(), true)),
+      sheet.getRange(getSkipassConfigRow(getSkiPassKid(), true), getSkipassConfigCol(getSkiPassKid())),
       (dob) => {return ageVerificationBornBetweenDatesIncluded(dob, getEarlyDate(getSkiPassKid()), getLateDate(getSkiPassKid()))},
       "1er janvier " + getFirstValue(getSkiPassKid()) + " et le 31 décembre " + getSecondValue(getSkiPassKid())),
     '3 Domaines Bambin': new SkiPass(
       localizeSkiPass3D(getSkiPassToddler()),
-      sheet.getRange(getSkipassConfigRow(getSkiPassToddler(), true), getSkipassConfigCol(getSkiPassToddler(), true)),
+      sheet.getRange(getSkipassConfigRow(getSkiPassToddler(), true), getSkipassConfigCol(getSkiPassToddler())),
       (dob) => {return ageVerificationBornAfterDateIncluded(dob, getEarlyDate(getSkiPassToddler()))},
       "A partir du 1er Janvier " + getFirstValue(getSkiPassKid()) + " et après"),
   }

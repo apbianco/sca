@@ -24,9 +24,9 @@ var licenses_configuration_map = {
 //
 var comp_subscription_map = {
 // What | Dob/Y | Dob/Y |  Row  | Col
-  'U8':   [2017,  2018],
-  'U10':  [2015,  2016],
-  'U12+': [2014]
+  'U8':   [2018,  2019],
+  'U10':  [2016,  2017],
+  'U12+': [2015]
 }
 // Number of kids per competitor families
 var comp_kids_per_family = 4
@@ -39,11 +39,11 @@ var skipass_configuration_map = {
 // What     | Dob/Y | Dob/Y | Row | Col
   'Senior':   [70,    74,     25,   5],
   'Vermeil':  [75,   -1,      26,   5],
-  'Adulte':   [2005,  70,     27,   5],
-  'Étudiant': [1994,  2005,   28,   5],
-  'Junior':   [2006,  2013,   29,   5],
-  'Enfant':   [2014,  2018,   30,   5],
-  'Bambin':   [2019, -1,      31,   5],
+  'Adulte':   [2006,  70,     27,   5],
+  'Étudiant': [1995,  2006,   28,   5],
+  'Junior':   [2007,  2014,   29,   5],
+  'Enfant':   [2015,  2019,   30,   5],
+  'Bambin':   [2020, -1,      31,   5],
 }
 var skipass_configuration_map_3d_row_offset = 2
 //
