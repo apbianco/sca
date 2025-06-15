@@ -250,11 +250,15 @@ function createLicensesMap(sheet) {
       displayErrorPanel(license + " n'est pas dans licenses_configuration_map!")
       return
     } 
-    return licenses_configuration_map[license]
+    return licenses_configuration_map[license][0]
   }
   function createDate(license, day) {
     var date = day + ", " + getYear(license)
     return new Date(date)
+  }
+  function getRange(license) {
+    return sheet.getRange(licenses_configuration_map[license][1],
+                          licenses_configuration_map[license][2])
   }
   var to_return = {
     'Aucune': new License(
@@ -263,33 +267,32 @@ function createLicensesMap(sheet) {
       (dob) => {return true}),
     'CN Jeune (Loisir)': new License(
       getNonCompJuniorLicenseString(),
-      // FIXME: This range should be attached to licenses_configuration_map.
-      sheet.getRange(41, 5),
+      getRange(getNonCompJuniorLicenseString()),
       (dob) => {return ageVerificationBornAfterDateIncluded(dob, createDate(getNonCompJuniorLicenseString(), "January 1"))},
       "requiert d'être né en " + getYear(getNonCompJuniorLicenseString()) + " et après"),
     'CN Adulte (Loisir)': new License(
       getNonCompAdultLicenseString(),
-      sheet.getRange(42, 5),
+      getRange(getNonCompAdultLicenseString()),
       (dob) => {return ageVerificationBornBeforeDateIncluded(dob, createDate(getNonCompAdultLicenseString(), "December 31"))},
       "requiert d'être né en " + getYear(getNonCompAdultLicenseString()) + " et avant"),
     'CN Famille (Loisir)': new License(
       getNonCompFamilyLicenseString(),
-      sheet.getRange(43, 5),
+      getRange(getNonCompFamilyLicenseString()),
       (dob) => {return true},
       ""),
     'CN Dirigeant': new License(
       getExecutiveLicenseString(),
-      sheet.getRange(44, 5),
+      getRange(getExecutiveLicenseString()),
       (dob) => {return ageVerificationBornBeforeDateIncluded(dob, createDate(getExecutiveLicenseString(), "December 31"))},
       "requiert d'être né en " + getYear(getNonCompAdultLicenseString()) + " et avant"),
     'CN Jeune (Compétition)': new License(
       getCompJuniorLicenseString(),
-      sheet.getRange(51, 5),
+      getRange(getCompJuniorLicenseString()),
       (dob) => {return ageVerificationBornAfterDateIncluded(dob, createDate(getCompJuniorLicenseString(), "January 1"))},
       "requiert être né en " + getYear(getCompJuniorLicenseString()) + " et après"),
     'CN Adulte (Compétition)': new License(
       getCompAdultLicenseString(),
-      sheet.getRange(52, 5),
+      getRange(getCompAdultLicenseString()),
       (dob) => {return ageVerificationBornBeforeDateIncluded(dob, createDate(getCompAdultLicenseString(), "December 31"))},
       "requiert d'être né en " + getYear(getCompAdultLicenseString()) + " et avant"),
   }

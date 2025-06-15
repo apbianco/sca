@@ -11,11 +11,13 @@ var season = "2025/2026"
 //   map when the year of validity is changing.
 //
 var licenses_configuration_map = {
-  'CN Jeune (Loisir)':       2010,
-  'CN Jeune (Compétition)':  2010,
-  'CN Adulte (Loisir)':      2009,
-  'CN Adulte (Compétition)': 2009,
-  'CN Dirigeant':            2009,
+// What                     | Year  | Row | Col
+  'CN Jeune (Loisir)':        [2010,  41,   5]
+  'CN Adulte (Loisir)':       [2009,  42,   5]
+  'CN Famille (Loisir)':      [-1,    43,   5]
+  'CN Dirigeant':             [2009,  44,   5]
+  'CN Jeune (Compétition)':   [2010,  51,   5]
+  'CN Adulte (Compétition)':  [2009,  52,   5]
 }
 //
 // - A map of available subscription for competitors and their validations
