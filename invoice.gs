@@ -16,7 +16,7 @@
 // Dev or prod? "dev" sends all email to email_dev. Prod is the
 // real thing: family will receive invoices, and so will email_license,
 // unless the trigger in use is the TEST trigger.
-dev_or_prod = "prod"
+dev_or_prod = "dev"
 
 ///////////////////////////////////////////////////////////////////////////////
 // Advanced functionality and features management
@@ -497,7 +497,7 @@ function createCompSubscriptionMap(sheet) {
 
 function createNonCompSubscriptionMap(sheet) {
   var to_return = {}
-  var row = 45
+  var row = coord_noncomp_start_row
   for (index in noncomp_subscription_categories) {
     var label = noncomp_subscription_categories[index]
     to_return[label] = new Subscription(

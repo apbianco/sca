@@ -109,8 +109,10 @@ var coord_generated_pdf =             [93, 6]
 // 
 var coords_identity_rows = [14, 15, 16, 17, 18, 19];
 //
-// - Row where competitor subscription starts
-var coord_comp_start_row =      54
+// - Row where the non competitor subscriptions start
+var coord_noncomp_start_row =         46
+// - Row where competitor subscriptions start
+var coord_comp_start_row =            54
 //
 // - Columns where information about family members can be found
 //
