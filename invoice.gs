@@ -349,8 +349,11 @@ function getThirdKidString() { return '3ème enfant' }
 function getFourthKidString() { return '4ème enfant' }
 
 var noncomp_subscription_categories = [
-  getRiderLevelString(), getFirstKidString(), getSecondKidString(),
-  getThirdKidString(), getFourthKidString()
+  getRiderLevelString(),
+  getFirstKidString(),
+  getSecondKidString(),
+  getThirdKidString(),
+  getFourthKidString()
 ]
 
 // A level is not adjusted when it starts with "⚠️ "
