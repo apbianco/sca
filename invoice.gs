@@ -308,32 +308,29 @@ function createLicensesMap(sheet) {
 // range). Also define an array with these values as it's needed everywhere.
 // Also define a categories sorting function, used to sort arrays of categories,
 // verifying that comp_subscription_categories.sort() == comp_subscription_categories
+function getU6String() { return 'U6' }
 function getU8String() { return 'U8' }
 function getU10String() { return 'U10'}
 function getU12PlusString() { return 'U12+' }
 var comp_subscription_categories = [
-  getU8String(), getU10String(), getU12PlusString()
+  getU6String(), getU8String(), getU10String(), getU12PlusString()
 ]
 
 function categoriesAscendingOrder(cat1, cat2) {
-  // No order change
-  if (cat1 == cat2) {
+  var v1 = cat1.match(/\d+/)
+  var v2 = cat2.match(/\d+/)
+  if (! v1 || ! v2) {
+    displayErrorPanel("categoriesAscendingOrder(" + cat1, ", " + cat2 + ")")
+  }
+  v1 = parseInt(v1[0])
+  v2 = parseInt(v2[0])
+  if (v1 == v2) {
     return 0
   }
-  // U8 is always the smallest category
-  if (cat1 == getU8String()) {
-    return -1
-  }
-  // U10 will only rank lower than U12+
-  if (cat1 == getU10String()) {
-    if (cat2 == getU12PlusString()) {
-      return -1
-    }
+  if (v1 > v2) {
     return 1
   }
-  // cat1 is U12, it's always last unless it's 
-  // compared against U12 which has already been done
-  return 1
+  return -1
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -467,7 +464,14 @@ function createCompSubscriptionMap(sheet) {
   var row = coord_comp_start_row
   var to_return = {}
   for (var rank = 1; rank <= comp_kids_per_family; rank +=1) {
-    var label = rank + getU8String()
+    var label = rank + getU6String()
+    to_return[label] = new Subscription(
+      label,
+      // FIXME: Should be attached to comp_subscription_map
+      sheet.getRange(row, 5),
+      (dob) => {return ageVerificationBornBetweenYearsIncluded(dob, getFirstYear(getU6String()), getLastYear(getU6String()))})
+    row += 1;
+    label = rank + getU8String()
     to_return[label] = new Subscription(
       label,
       // FIXME: Should be attached to comp_subscription_map

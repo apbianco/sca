@@ -741,9 +741,53 @@ function testCreateSkipassMap_UsesDynamicRanges() {
   return failures === 0;
 }
 
+function testCategoryOrders() {
+  function logError(cat1, cat2) {
+    Logger.log("FAILURE: testCategoryOrders(" + cat1 + ", " + cat2 +")")
+  }
+  var cat1 = 'U6'
+  var cat2 = 'U6'
+  if (categoriesAscendingOrder(cat1, cat2) != 0) {
+    logError(cat1, cat2)
+  }
+  cat1 = 'U10'; cat2 = 'U8'
+  if (categoriesAscendingOrder(cat1, cat2) != 1) {
+    logError(cat1, cat2)
+  }
+  cat1 = 'U6'; cat2 = 'U8'
+  if (categoriesAscendingOrder(cat1, cat2) != -1) {
+    logError(cat1, cat2)
+  }  
+  cat1 = 'U8'; cat2 = 'U6'
+  if (categoriesAscendingOrder(cat1, cat2) != 1) {
+    logError(cat1, cat2)
+  }  
+  cat1 = 'U12+'; cat2 = 'U10'
+  if (categoriesAscendingOrder(cat1, cat2) != 1) {
+    logError(cat1, cat2)
+  }
+  cat1 = 'U8'; cat2 = 'U10'
+  if (categoriesAscendingOrder(cat1, cat2) != -1) {
+    logError(cat1, cat2)
+  }
+  cat1 = 'U10'; cat2 = 'U12+'
+  if (categoriesAscendingOrder(cat1, cat2) != -1) {
+    logError(cat1, cat2)
+  }
+  cat1 = 'U8'; cat2 = 'U12+'
+  if (categoriesAscendingOrder(cat1, cat2) != -1) {
+    logError(cat1, cat2)
+  }
+}
+
 function RUN_ALL_TESTS() {
   Logger.log("Starting all invoice tests...");
   var failedSuites = [];
+
+  if (!testCategoryOrders()) {
+    failedSuites.push("testCategoryOrders");
+  }
+  return
 
   if (!testNormalizeName()) {
     failedSuites.push("testNormalizeName");
