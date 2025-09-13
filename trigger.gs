@@ -27,11 +27,11 @@
 //
 // 2.a- The ID of the empty invoice to use to create content. Adjust
 //      this ID for the new season
-var empty_invoice = '1JNaXFDwBFlznag23TNPJzbAuFiJyHEVHCCIeFF55S10';
+var empty_invoice = '1dDUuq39XMehYejLLDtGL2vJZaTG383mQ2KvyD7NqVUU';
 
 // 2.b- The DB folder for the PREVIOUS season
-var previous_db_folder = '1vTYVaHHs1oRvdbQ3mvmYfUvYGipXPaf3'
-// 2.c- Ranges to copy from/adjust an entry filed last season:
+var previous_db_folder = '1L0NaifkQbytc67qsM2frxKmteHtAlkED'
+// 2.c- Ranges to copy from/adjust an entry filed LAST season:
 var ranges_previous_season = {
   'Civility': 'C6:G10',
   'Members':  'B14:I19',
@@ -41,7 +41,7 @@ var ranges_previous_season = {
 };
 
 // 2.d- The DB folder for the CURRENT season
-var db_folder = '1L0NaifkQbytc67qsM2frxKmteHtAlkED';
+var db_folder = '1dLImiBFObJDxSS1XJOmSSq2aiIVLKqai';
 // 2.e- Ranges to copy from/adjust to for an entry filed this season.
 var ranges_current_season = {
   'Civility': 'C6:G10',
@@ -51,18 +51,21 @@ var ranges_current_season = {
   'All': 'B14:I19',
 };
 
-// 3- Last year's familly need to appear in the list in cell B2 so that they
-//    can be automatically imported over. Before you ask, loading last year's
-//    DB folder content doesn't work directly so it's better to just install
-//    the values in cell B2 as "Validation des données" "List d'éléments".
-//    Here's how to do that:
+// 3- Last year's familly need to appear in the list in cell B2 of the trigger
+//    so that they can be automatically imported over.
+//    Before you ask, loading last year's DB folder content doesn't work
+//    directly so it's better to just install the values in cell B2 as
+//    "Validation des données" "List d'éléments". Here's how to do that:
 //
-// 3.1- Export last year db-YYYY-YYYY as a zip file from the Drive UI.
-//      This will download a zip file in Downloads/
-// 3.2- Extract the list of registered families:
-//      LC_CTYPE=C && LANG=C &&  \
-//      unzip -l ~/Downloads/db-2023-2024-20240929T141950Z-001.zip  | \
-//      egrep db- | sed 's@^.*2024/@@g'  | sort -u | sed 's/\/.*$//g' | \
+// 3.1- Export LAST year db-YYYY-YYYY as a zip file from the Drive UI.
+//      This is achieved using the Télécharger/Download option accessible
+//      via a right click on the folder name. This will download a zip file in
+//      Downloads/
+// 3.2- Extract the list of registered families - change the value for LAST_YEAR
+//      and use the correct value for the db-... filed placed in Downloads/.
+//      export LAST_YEAR=2025 ; LC_CTYPE=C && LANG=C &&  \
+//      unzip -l ~/Downloads/db-<...>.zip  | \
+//      egrep db- | sed 's@^.*${LAST_YEAR}/@@g'  | sort -u | sed 's/\/.*$//g' | \
 //      sed 's/.*_//g' | sort -u > /tmp/LIST
 //
 // 3.3- Edit /tmp/LIST to remove undesirable entries
@@ -74,8 +77,10 @@ var ranges_current_season = {
 //      - The go back to the main tab and adjust the data validation definition
 //        to be =F!$A$1:$A$<LAST> (for instance, F!$A$1:$A$155). To do this,
 //        select B2, Click Donnée > Validation des données and in the pannel that
-//        opened to the right, click on the first rule change F!$A$!...
+//        opened to the right, click on the first rule and change F!$A$!...
 //      - The click on cell B2 to verify all elements are there.
+
+// There's nothing to change past this line...
 
 var allowed_user = 'inscriptions.sca@gmail.com'
 
