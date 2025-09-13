@@ -11,13 +11,12 @@ var season = "2025/2026"
 //   map when the year of validity is changing.
 //
 var licenses_configuration_map = {
-// What                     | Year  | Row | Col
-  'CN Jeune (Loisir)':        [2010,  41,   5]
-  'CN Adulte (Loisir)':       [2009,  42,   5]
-  'CN Famille (Loisir)':      [-1,    43,   5]
-  'CN Dirigeant':             [2009,  44,   5]
-  'CN Jeune (Compétition)':   [2010,  51,   5]
-  'CN Adulte (Compétition)':  [2009,  52,   5]
+  'CN Jeune (Loisir)':        [2011,  42,   5],
+  'CN Adulte (Loisir)':       [2010,  43,   5],
+  'CN Famille (Loisir)':      [-1,    44,   5],
+  'CN Dirigeant':             [2010,  45,   5],
+  'CN Jeune (Compétition)':   [2011,  52,   5],
+  'CN Adulte (Compétition)':  [2010,  53,   5],
 }
 //
 // - A map of available subscription for competitors and their validations
@@ -26,6 +25,7 @@ var licenses_configuration_map = {
 //
 var comp_subscription_map = {
 // What | Dob/Y | Dob/Y |  Row  | Col
+  'U6':   [2020,  2021],
   'U8':   [2018,  2019],
   'U10':  [2016,  2017],
   'U12+': [2015]
@@ -47,28 +47,30 @@ var skipass_configuration_map = {
   'Enfant':   [2015,  2019,   30,   5],
   'Bambin':   [2020, -1,      31,   5],
 }
-var skipass_configuration_map_3d_row_offset = 2
+// The row offset to add to an entry in skipass_configuration_map to
+// obtain the corresponding row in the 3 domains offer. (25+8=33)
+var skipass_configuration_map_3d_row_offset = 8
 //
 // - Storage for the current season's database.
 //
-var db_folder =                            '1GmOdaWlEwH1V9xGx3pTp1L3Z4zXQdjjn'
+var db_folder =                            '1dLImiBFObJDxSS1XJOmSSq2aiIVLKqai'
 //
 //
 // Level aggregation trix to update when a new entry is added
 //
-var license_trix =                         '1tR3HvdpXWwjziRziBkeVxr4CIp10rHWyfTosv20dG_I'
+var license_trix =                         '1TJrV0x_y387WZ4wKYqVp1wnWd-lph4CmUGxe0MtfhYk'
 //
 // - ID of attachements to be sent with the invoice - some may change
 //   from one season to an other when they are refreshed. These documents
 //   are also part of the registration bundle sent to parents.
 //
-var legal_disclaimer_pdf =                  '18jFQWTmLnmBa9HGmPkFS58xr0GjNqERu'
-var rules_pdf =                             '1U-eeiEFelWN4aHMwjHJ9IQRH3h2mZJoW'
-var parents_note_pdf =                      '1fVb5J3o8YikPcn4DDAplt9X-XtP9QdYS'
-var ffs_information_leaflet_pdf =           '1zxP502NjvVo0AKFt_6FCxs1lQeJnNxmV'
-var ffs_information_leaflet_pages_to_sign = 'les pages 16 et 17'
-var autocertification_non_adult =           '1Ir-1TlAB7SoZcamRoX2_i1uk9_l19YUJ'
-var autocertification_adult =               '1nDNByrpln58YET8Gqy6vOXkSQb_aBTrf'
+var legal_disclaimer_pdf =                  '1BcbIL1LUaL49OI8BGbLQQA-lxlijt_0m'
+var rules_pdf =                             '1aTtQ4Hx3JJPgek_d1_NV4WRSBOfVT_yr'
+var parents_note_pdf =                      '1fVb5J3o8YikPcn4DDAplt9X-XtP9QdYS' // TODO
+var ffs_information_leaflet_pdf =           '1zxP502NjvVo0AKFt_6FCxs1lQeJnNxmV' // TODO
+var ffs_information_leaflet_pages_to_sign = 'les pages 16 et 17'                // TODO
+var autocertification_non_adult =           '1Ir-1TlAB7SoZcamRoX2_i1uk9_l19YUJ' // Note: reusing 2024/2025
+var autocertification_adult =               '1rFAJghPwE-6xHzSWdRrMjP8gQKUldX6W' // Note: reusing 2024/2025
 //
 // - Spreadsheet parameters (row, columns, etc...). Adjust as necessary
 //   when the master invoice is modified.
@@ -88,27 +90,27 @@ var coord_family_phone2 =             [10, 5]
 // - Locations of various status line and collected input, located
 //   a the bottom of the invoice.
 // 
-var coord_total =                     [65, 7]
-var coord_rebate =                    [76, 4]
-var coord_charge =                    [77, 4]
-var coord_owed =                      [78, 7]
-var coord_payment_validation_form =   [79, 7]
-var coord_personal_message =          [85, 3]
-var coord_timestamp =                 [86, 2]
-var coord_version =                   [86, 3]
-var coord_legal_disclaimer =          [86, 5]
-var coord_ffs_medical_form =          [86, 7]
-var coord_callme_phone =              [86, 9]
-var coord_yolo =                      [87, 3]
-var coord_status =                    [88, 4]
-var coord_generated_pdf =             [88, 6]
+var coord_total =                     [70, 7]
+var coord_rebate =                    [81, 4]
+var coord_charge =                    [82, 4]
+var coord_owed =                      [83, 7]
+var coord_payment_validation_form =   [84, 7]
+var coord_personal_message =          [90, 3]
+var coord_timestamp =                 [91, 2]
+var coord_version =                   [91, 3]
+var coord_legal_disclaimer =          [91, 5]
+var coord_ffs_medical_form =          [91, 7]
+var coord_callme_phone =              [91, 9]
+var coord_yolo =                      [92, 3]
+var coord_status =                    [93, 4]
+var coord_generated_pdf =             [93, 6]
 //
 // - Rows where the family names are entered
 // 
 var coords_identity_rows = [14, 15, 16, 17, 18, 19];
 //
 // - Row where competitor subscription starts
-var coord_comp_start_row =      53
+var coord_comp_start_row =      54
 //
 // - Columns where information about family members can be found
 //
@@ -136,5 +138,5 @@ var coord_total_ski_pass            = [40, 6]
 //
 var coords_pdf_row_column_ranges = {
     'start':                          [1, 0],
-    'end':                            [86, 9]
+    'end':                            [91, 9]
 }
