@@ -97,7 +97,7 @@ advanced_validation.SetAdvancedVerificationSkipass()
 
 // Validation method use when creating license, skipasses and subscription
 // maps.
-// FIXME: Move this somewhere elsea
+// FIXME: Move this somewhere else
 function validateClassInstancesMap(map, map_name) {
   for (var key in map) {
     if (map[key].Name() != key) {
@@ -464,35 +464,32 @@ function createCompSubscriptionMap(sheet) {
   function getLastYear(label) {
     return comp_subscription_map[label][1]
   }
-  var row = coord_comp_start_row
+  function getRange(label) {
+    sheet.getRange(comp_subscription_map[label][2],
+                   comp_subscription_map[label][3])
+  }
   var to_return = {}
   for (var rank = 1; rank <= comp_kids_per_family; rank +=1) {
     var label = rank + getU6String()
     to_return[label] = new Subscription(
       label,
-      // FIXME: Should be attached to comp_subscription_map
-      sheet.getRange(row, 5),
+      getRange(getU6String()),
       (dob) => {return ageVerificationBornBetweenYearsIncluded(dob, getFirstYear(getU6String()), getLastYear(getU6String()))})
-    row += 1;
     label = rank + getU8String()
     to_return[label] = new Subscription(
       label,
-      // FIXME: Should be attached to comp_subscription_map
-      sheet.getRange(row, 5),
+      getRange(getU8String()),
       (dob) => {return ageVerificationBornBetweenYearsIncluded(dob, getFirstYear(getU8String()), getLastYear(getU8String()))})
-    row += 1;
     label = rank + getU10String()
     to_return[label] = new Subscription(
       label,
-      sheet.getRange(row, 5),
+      getRange(getU10String()),
       (dob) => {return ageVerificationBornBetweenYearsIncluded(dob, getFirstYear(getU10String()), getLastYear(getU10String()))})
-    row += 1
     label = rank + getU12PlusString()
     to_return[label] = new Subscription(
       label,
-      sheet.getRange(row, 5),
+      getRange(getU12PlusString()),
       (dob) => {return ageVerificationBornBeforeYearIncluded(dob, getFirstYear(getU12PlusString()))})
-    row += 1
   }
   validateClassInstancesMap(to_return, 'createCompSubscriptionMap')
   return to_return

@@ -24,11 +24,12 @@ var licenses_configuration_map = {
 //   subscription objects. Edit this map when the year of validity is changing.
 //
 var comp_subscription_map = {
-// What | Dob/Y | Dob/Y |  Row  | Col
-  'U6':   [2020,  2021],
-  'U8':   [2018,  2019],
-  'U10':  [2016,  2017],
-  'U12+': [2015]
+// What | Dob/Y | Dob/Y | Row | Col
+  'U6':   [2020,  2021,   54,   5],
+  'U8':   [2018,  2019,   55,   5],
+  'U10':  [2016,  2017,   56,   5],
+  // U12+ The first listed year is the LAST year of the category
+  'U12+': [2015, -1,      57,   5],
 }
 // Number of kids per competitor families
 var comp_kids_per_family = 4
@@ -111,8 +112,6 @@ var coords_identity_rows = [14, 15, 16, 17, 18, 19];
 //
 // - Row where the non competitor subscriptions start
 var coord_noncomp_start_row =         46
-// - Row where competitor subscriptions start
-var coord_comp_start_row =            54
 //
 // - Columns where information about family members can be found
 //

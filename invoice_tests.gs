@@ -535,13 +535,13 @@ function testLicensesConfiguration() {
 function testCompSubscriptionConfiguration() {
   var allTestsPassed = true;
   var simulatedFutureYear = new Date().getFullYear() + 1;
-  var categoryMaxAges = {'U8': 7, 'U10': 9, 'U12+': 13}; // As defined previously
+  var categoryMaxAges = {'U6': 5, 'U8': 7, 'U10': 9, 'U12+': 13}; // As defined previously
 
   // comp_subscription_map from config.gs
   for (var categoryName in comp_subscription_map) {
     if (comp_subscription_map.hasOwnProperty(categoryName)) {
       var yearConfig = comp_subscription_map[categoryName]; // e.g., [2017, 2018] or [2014]
-      var yearToTest = (yearConfig.length > 1) ? yearConfig[1] : yearConfig[0];
+      var yearToTest = categoryName != 'U12+' ? yearConfig[1] : yearConfig[0];
       var maxAgeForCategory = categoryMaxAges[categoryName];
 
       if (maxAgeForCategory !== undefined) {
@@ -744,40 +744,47 @@ function testCreateSkipassMap_UsesDynamicRanges() {
 function testCategoryOrders() {
   function logError(cat1, cat2) {
     Logger.log("FAILURE: testCategoryOrders(" + cat1 + ", " + cat2 +")")
+    return false
   }
   var cat1 = 'U6'
   var cat2 = 'U6'
   if (categoriesAscendingOrder(cat1, cat2) != 0) {
-    logError(cat1, cat2)
+    return logError(cat1, cat2)
   }
   cat1 = 'U10'; cat2 = 'U8'
   if (categoriesAscendingOrder(cat1, cat2) != 1) {
-    logError(cat1, cat2)
+    return logError(cat1, cat2)
   }
   cat1 = 'U6'; cat2 = 'U8'
   if (categoriesAscendingOrder(cat1, cat2) != -1) {
-    logError(cat1, cat2)
+    return logError(cat1, cat2)
   }  
   cat1 = 'U8'; cat2 = 'U6'
   if (categoriesAscendingOrder(cat1, cat2) != 1) {
-    logError(cat1, cat2)
+    return logError(cat1, cat2)
   }  
   cat1 = 'U12+'; cat2 = 'U10'
   if (categoriesAscendingOrder(cat1, cat2) != 1) {
-    logError(cat1, cat2)
+    return logError(cat1, cat2)
   }
   cat1 = 'U8'; cat2 = 'U10'
   if (categoriesAscendingOrder(cat1, cat2) != -1) {
-    logError(cat1, cat2)
+    return logError(cat1, cat2)
   }
   cat1 = 'U10'; cat2 = 'U12+'
   if (categoriesAscendingOrder(cat1, cat2) != -1) {
-    logError(cat1, cat2)
+    return logError(cat1, cat2)
   }
   cat1 = 'U8'; cat2 = 'U12+'
   if (categoriesAscendingOrder(cat1, cat2) != -1) {
-    logError(cat1, cat2)
+    return logError(cat1, cat2)
   }
+  return true
+}
+
+function testCreateCompSubscriptionMap() {
+  var map = createCompSubscriptionMap(SpreadsheetApp.getActiveSheet())
+  return true
 }
 
 function RUN_ALL_TESTS() {
@@ -787,7 +794,9 @@ function RUN_ALL_TESTS() {
   if (!testCategoryOrders()) {
     failedSuites.push("testCategoryOrders");
   }
-  return
+  if (!testCreateCompSubscriptionMap()) {
+    failedSuites.push("testCreateCompSubscriptionMap");
+  }
 
   if (!testNormalizeName()) {
     failedSuites.push("testNormalizeName");
