@@ -465,8 +465,8 @@ function createCompSubscriptionMap(sheet) {
     return comp_subscription_map[label][1]
   }
   function getRange(label) {
-    sheet.getRange(comp_subscription_map[label][2],
-                   comp_subscription_map[label][3])
+    return sheet.getRange(comp_subscription_map[label][2],
+                          comp_subscription_map[label][3])
   }
   var to_return = {}
   for (var rank = 1; rank <= comp_kids_per_family; rank +=1) {
@@ -1345,8 +1345,8 @@ function autoFillNonCompSubscriptions() {
   subscription_slots.splice(-number_of_riders, number_of_riders)
 
   for (var index in noncomp_subscription_categories) {
-    var subcription = noncomp_subscription_categories[index]
-    subscription_map[subcription].SetPurchasedSubscriptionAmount(subscription_slots[index])
+    var subscription = noncomp_subscription_categories[index]
+    subscription_map[subscription].SetPurchasedSubscriptionAmount(subscription_slots[index])
   }
   return true
 }
