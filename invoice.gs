@@ -506,7 +506,7 @@ function createNonCompSubscriptionMap(sheet) {
     var label = noncomp_subscription_categories[index]
     to_return[label] = new Subscription(
       label,
-      sheet.getRange(row, 5),
+      sheet.getRange(row, coord_noncomp_column),
       (dob) => {return true}),
     row += 1
   }

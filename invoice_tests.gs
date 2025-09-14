@@ -796,6 +796,19 @@ function testCreateCompSubscriptionMap() {
   return true
 }
 
+function testCreateNonCompSubscriptionMap() {
+  var map = createNonCompSubscriptionMap(SpreadsheetApp.getActiveSheet())
+  for (const key of ['Rider', '1er enfant',
+                     '2ème enfant', '3ème enfant',
+                     '4ème enfant']) {
+    if (!map.hasOwnProperty(key)) {
+      Logger.log('FAILURE: Property not found: ' + key)
+      return false
+    }
+  }
+  return true
+}
+
 function RUN_ALL_TESTS() {
   Logger.log("Starting all invoice tests...");
   var failedSuites = [];
@@ -806,7 +819,9 @@ function RUN_ALL_TESTS() {
   if (!testCreateCompSubscriptionMap()) {
     failedSuites.push("testCreateCompSubscriptionMap");
   }
-
+  if (!testCreateNonCompSubscriptionMap()) {
+    failedSuites.push("testCreateNonCompSubscriptionMap");
+  }
   if (!testNormalizeName()) {
     failedSuites.push("testNormalizeName");
   }
