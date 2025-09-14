@@ -470,26 +470,30 @@ function createCompSubscriptionMap(sheet) {
   }
   var to_return = {}
   for (var rank = 1; rank <= comp_kids_per_family; rank +=1) {
-    var label = rank + getU6String()
-    to_return[label] = new Subscription(
-      label,
-      getRange(getU6String()),
-      (dob) => {return ageVerificationBornBetweenYearsIncluded(dob, getFirstYear(getU6String()), getLastYear(getU6String()))})
-    label = rank + getU8String()
-    to_return[label] = new Subscription(
-      label,
-      getRange(getU8String()),
-      (dob) => {return ageVerificationBornBetweenYearsIncluded(dob, getFirstYear(getU8String()), getLastYear(getU8String()))})
-    label = rank + getU10String()
-    to_return[label] = new Subscription(
-      label,
-      getRange(getU10String()),
-      (dob) => {return ageVerificationBornBetweenYearsIncluded(dob, getFirstYear(getU10String()), getLastYear(getU10String()))})
-    label = rank + getU12PlusString()
-    to_return[label] = new Subscription(
-      label,
-      getRange(getU12PlusString()),
-      (dob) => {return ageVerificationBornBeforeYearIncluded(dob, getFirstYear(getU12PlusString()))})
+    var label = getU6String()
+    var ranked_label = rank + label
+    to_return[ranked_label] = new Subscription(
+      ranked_label,
+      getRange(label),
+      (dob) => {return ageVerificationBornBetweenYearsIncluded(dob, getFirstYear(label), getLastYear(label))})
+    label = getU8String()
+    ranked_label = rank + label
+    to_return[ranked_label] = new Subscription(
+      ranked_label,
+      getRange(label),
+      (dob) => {return ageVerificationBornBetweenYearsIncluded(dob, getFirstYear(label), getLastYear(label))})
+    label = getU10String()
+    ranked_label = rank + label
+    to_return[ranked_label] = new Subscription(
+      ranked_label,
+      getRange(label),
+      (dob) => {return ageVerificationBornBetweenYearsIncluded(dob, getFirstYear(label), getLastYear(label))})
+    label = getU12PlusString()
+    ranked_label = rank + label
+    to_return[ranked_label] = new Subscription(
+      ranked_label,
+      getRange(label),
+      (dob) => {return ageVerificationBornBeforeYearIncluded(dob, getFirstYear(label))})
   }
   validateClassInstancesMap(to_return, 'createCompSubscriptionMap')
   return to_return

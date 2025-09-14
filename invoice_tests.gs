@@ -784,6 +784,15 @@ function testCategoryOrders() {
 
 function testCreateCompSubscriptionMap() {
   var map = createCompSubscriptionMap(SpreadsheetApp.getActiveSheet())
+  for (const key of ['1U6', '1U8', '1U10', '1U12+',
+                     '2U6', '2U8', '2U10', '2U12+',
+                     '3U6', '3U8', '3U10', '3U12+',
+                     '4U6', '4U8', '4U10', '4U12+']) {
+    if (!map.hasOwnProperty(key)) {
+      Logger.log('FAILURE: Property not found: ' + key)
+      return false
+    }
+  }
   return true
 }
 
