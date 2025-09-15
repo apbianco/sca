@@ -44,9 +44,9 @@ var skipass_configuration_map = {
   'Senior':   [70,    75,     25,   5],
   // ageVerificationStrictlyOldOrOlder
   'Vermeil':  [76,   -1,      26,   5],
-  // ageVerificationBornBeforeDateIncluded (Jan 1st 2006) + 
+  // ageVerificationBornBeforeDateIncluded (Jan 1st 2007) + 
   // ageVerificationStrictlyYounger
-  'Adulte':   [2006,  70,     27,   5],
+  'Adulte':   [2007,  70,     27,   5],
   'Étudiant': [1995,  2006,   28,   5],
   'Junior':   [2007,  2014,   29,   5],
   'Enfant':   [2015,  2019,   30,   5],

@@ -649,6 +649,8 @@ function createSkipassMap(sheet) {
     'Collet Adulte': new SkiPass(
       localizeSkiPassCollet(getSkiPassAdult()),
       sheet.getRange(getSkipassConfigRow(getSkiPassAdult()), getSkipassConfigCol(getSkiPassAdult())),
+      // Note: the use of getEarlyDate (January 1st, <YEAR>) is sub-obtimal here. We should be using
+      // December 31st, <YEAR>. But getEarlyDate is a clean way to fetch the content. Oh well.
       (dob) => {return ageVerificationBornBeforeDateIncluded(dob, getEarlyDate(getSkiPassAdult())) &&
                        ageVerificationStrictlyYounger(dob, getSecondValue(getSkiPassAdult()))},
       "Adulte non étudiant de moins de " + getSecondValue(getSkiPassAdult()) + " ans"),
