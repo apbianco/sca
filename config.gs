@@ -73,6 +73,8 @@ var license_trix_all_range =               'B10:H'
 // Accounting aggregation trix to update when a new entry is added
 //
 var accounting_trix =                      '1_X6bL8HiDabmbyZdC0N3oQ11rlJ_IxWAo0i9uJiWv34'
+var accounting_trix_row_start =            3
+var accounting_trix_all_range =            'A3:Q'
 //
 // - ID of attachements to be sent with the invoice - some may change
 //   from one season to an other when they are refreshed. These documents

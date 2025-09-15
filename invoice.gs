@@ -2047,7 +2047,7 @@ function getAndUpdateInvoiceNumber() {
 class FamilyMember {
   constructor(first_name, last_name, dob, sex, city,
               license_type, license_number, level,
-              parent1_email, parent1_phone, parent2_email, parent2_phone) {
+              parent1_email, parent1_phone, parent2_email, parent2_phone, parent_city) {
     this.first_name = first_name
     this.last_name = last_name
     this.dob = dob
@@ -2060,6 +2060,11 @@ class FamilyMember {
     this.parent1_phone = parent1_phone
     this.parent2_email = parent2_email
     this.parent2_phone = parent2_phone
+    if (city == "\\") {
+      this.parent_city = parent_city
+    } else {
+      this.parent_city = city
+    }
   }
 }
 
@@ -2103,11 +2108,13 @@ function getListOfFamilyPurchasingALicense() {
     var parent2_email = getStringAt(coord_cc)
     var parent1_phone = getStringAt(coord_family_phone1)
     var parent2_phone = getStringAt(coord_family_phone2)
+    var parent_city = getStringAt(coord_family_city)
 
     family.push(new FamilyMember(first_name, last_name, birth,
                                  sex, city, license, license_number, level,
                                  parent1_email, parent1_phone,
-                                 parent2_email, parent2_phone))
+                                 parent2_email, parent2_phone,
+                                 parent_city))
   }
   return family
 }
@@ -2122,16 +2129,20 @@ function getListOfFamilyPurchasingALicense() {
 // Return the index at which the element was found or the index of the first
 // empty row. Return -1 if more than one element matched the search criteria.
 function SearchEntry(sheet, data, positions) {
-  var index = positions.row_start
-  var global_index = index
-  // slice() skips header data...
-  const allData = sheet.getDataRange().getValues().slice(index-1);
+  var global_index = positions.row_start
+  var index = global_index
   var stop_incrementing_index = false
-  var first_empty_row = -1;
+  var first_empty_row = global_index
+  var stop_updating_first_empty_row = false
+  // slice() skips header data... Note: we have populated a rank/index column at position
+  // 1 for a sufficient number of rows so that the sheet has data past the last element,
+  // which allows us to determine there is an empty element past that.
+  const allData = sheet.getDataRange().getValues().slice(index-1);
   const matchingRows = allData.filter(
       row => {
-        if (row[1] == '' && first_empty_row == -1) {
+        if (row[positions.last_name] == '' && !stop_updating_first_empty_row) {
           first_empty_row = global_index
+          stop_updating_first_empty_row = true
         }
         var found = row[positions.last_name] === data.last_name &&
                     row[positions.first_name] === data.first_name
@@ -2205,6 +2216,41 @@ function updateAggregationTrix() {
   doUpdateAggregationTrix(family)
 }
 
+function doUpdateAccountingTrix(data) {
+  // Update the row at range in sheet with data
+  function UpdateRow(sheet, row, data) {
+    var column = 2
+    sheet.getRange(row,column).setValue(data.last_name)
+    sheet.getRange(row,column+1).setValue(data.first_name)
+    sheet.getRange(row,column+2).setValue(data.sex)
+    sheet.getRange(row,column+3).setValue(data.dob)
+    sheet.getRange(row,column+4).setValue(data.parent_city)
+    sheet.getRange(row,column+5).setValue(data.level)
+    sheet.getRange(row,column+6).setValue(data.license_type)
+    sheet.getRange(row,column+7).setValue(data.license_number)
+  }
+
+  // Open the spread sheet, insert the name if the operation is possible. Sync
+  // the spreadsheet.
+  var sheet = SpreadsheetApp.openById(accounting_trix).getSheets()[0]
+  var entire_range = sheet.getRange(accounting_trix_all_range)
+
+  for (var index in data) {
+    var row = SearchEntry(sheet, data[index],
+                          {row_start: accounting_trix_row_start,
+                           last_name:1,
+                           first_name:2})
+    if (row == -1) {
+      // FIXME: What to signal to the user?
+      continue
+    }
+    UpdateRow(sheet, row, data[index])
+  }
+  // Sort the spread sheet by last name and then first name and sync the spreadsheet.
+  entire_range.sort([{column: entire_range.getColumn()}, {column: entire_range.getColumn()+5}])
+  SpreadsheetApp.flush()
+}
+
 function updateAccountingTrix() {
   var family_dict = getListOfFamilyPurchasingALicense()
   var family = []
@@ -2220,6 +2266,7 @@ function updateAccountingTrix() {
       family.push(family_member)
     }
   }
+  doUpdateAccountingTrix(family)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
