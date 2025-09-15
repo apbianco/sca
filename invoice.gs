@@ -2115,6 +2115,32 @@ function findFirstEmptySlot(sheet, range) {
     return sheet.getRange(range.getRow() + ct,range.getColumn())
 }
 
+function SearchEntry2(sheet, data) {
+  var index = license_trix_row_start
+  // slise() skips header data...
+  const allData = sheet.getDataRange().getValues().slice(index-1);
+  var stop_incrementing_index = false
+  const matchingRows = allData.filter(
+      row => {
+        var found = row[1] === data.last_name && row[2] === data.first_name
+        if (found) {
+          stop_incrementing_index = true
+        }
+        if (! stop_incrementing_index) {
+          index += 1
+        }
+        return found
+      }
+  )
+  if (matchingRows.length > 1) {
+    return -1
+  }
+  if (matchingRows.length == 0) {
+    return 0
+  }
+  return index
+}
+
 // Search for elements in data in sheet over range. If we can't find data,
 // return a range on the first empty slot we find. If we can find data
 // return its range unless allow_overwrite is false, in which case we
@@ -2160,6 +2186,7 @@ function doUpdateAggregationTrix(data, allow_overwrite) {
 
   for (var index in data) {
     var res = SearchEntry(sheet, last_name_range, data[index], allow_overwrite)
+    var res2 = SearchEntry2(sheet, data[index])
     // res can be null if allow_overwrite is false and the entry was found
     if (res == null) {
       continue

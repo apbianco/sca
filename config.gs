@@ -57,9 +57,11 @@ var skipass_configuration_map_3d_row_offset = 8
 var db_folder =                            '1dLImiBFObJDxSS1XJOmSSq2aiIVLKqai'
 //
 //
-// Level aggregation trix to update when a new entry is added
+// Level aggregation trix to update when a new entry is added and the row at which
+// data starts
 //
 var license_trix =                         '1TJrV0x_y387WZ4wKYqVp1wnWd-lph4CmUGxe0MtfhYk'
+var license_trix_row_start = 7
 //
 // Accounting aggregation trix to update when a new entry is added
 //
