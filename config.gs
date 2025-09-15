@@ -39,18 +39,20 @@ var comp_kids_per_family = 4
 //   map when the year or age of validity is changing.
 //
 var skipass_configuration_map = {
-// What     | Dob/Y | Dob/Y | Row | Col
+// What     | Dob/Y1n| Dob/Y2 | Row | Col
   // ageVerificationRangeIncluded
-  'Senior':   [70,    75,     25,   5],
+  'Senior':   [70,     75,      25,   5],
   // ageVerificationStrictlyOldOrOlder
-  'Vermeil':  [76,   -1,      26,   5],
-  // ageVerificationBornBeforeDateIncluded (Jan 1st 2007) + 
+  'Vermeil':  [76,    -1,       26,   5],
+  // ageVerificationBornBeforeDateIncluded (Jan 1st Y1) + 
   // ageVerificationStrictlyYounger
-  'Adulte':   [2007,  70,     27,   5],
-  'Étudiant': [1995,  2006,   28,   5],
-  'Junior':   [2007,  2014,   29,   5],
-  'Enfant':   [2015,  2019,   30,   5],
-  'Bambin':   [2020, -1,      31,   5],
+  'Adulte':   [2007,   70,      27,   5],
+  // ageVerificationBornBetweenDatesIncluded (Jan 1st Y1, Dec 31 Y2)
+  'Étudiant': [1995,   2006,    28,   5],
+  'Junior':   [2007,   2014,    29,   5],
+  'Enfant':   [2015,   2019,    30,   5],
+  // ageVerificationBornAfterDateIncluded (Jan 1st Y1)
+  'Bambin':   [2020,   -1,      31,   5],
 }
 // The row offset to add to an entry in skipass_configuration_map to
 // obtain the corresponding row in the 3 domains offer. (25+8=33)
