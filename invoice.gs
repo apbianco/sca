@@ -2115,13 +2115,21 @@ function findFirstEmptySlot(sheet, range) {
     return sheet.getRange(range.getRow() + ct,range.getColumn())
 }
 
-function SearchEntry2(sheet, data) {
+// Search for data.{first_nane,last_name} in sheet. Return the index 
+// at which the element was found or the index of the first empty row.
+// Return -1 if more than one element matched the search criteria.
+function SearchEntry(sheet, data) {
   var index = license_trix_row_start
-  // slise() skips header data...
+  var global_index = index
+  // slice() skips header data...
   const allData = sheet.getDataRange().getValues().slice(index-1);
   var stop_incrementing_index = false
+  var first_empty_row = -1;
   const matchingRows = allData.filter(
       row => {
+        if (row[1] == '' && first_empty_row == -1) {
+          first_empty_row = global_index
+        }
         var found = row[1] === data.last_name && row[2] === data.first_name
         if (found) {
           stop_incrementing_index = true
@@ -2129,6 +2137,7 @@ function SearchEntry2(sheet, data) {
         if (! stop_incrementing_index) {
           index += 1
         }
+        global_index += 1
         return found
       }
   )
@@ -2136,39 +2145,15 @@ function SearchEntry2(sheet, data) {
     return -1
   }
   if (matchingRows.length == 0) {
-    return 0
+    return first_empty_row
   }
   return index
 }
 
-// Search for elements in data in sheet over range. If we can't find data,
-// return a range on the first empty slot we find. If we can find data
-// return its range unless allow_overwrite is false, in which case we
-// return null: this will be used to avoid overwriting existing data.
-function SearchEntry(sheet, range, data, allow_overwrite) {
-  var finder = range.createTextFinder(data.last_name)
-  while (true) {
-    var current_range = finder.findNext()
-    if (current_range == null) {
-      return findFirstEmptySlot(sheet, range)
-    }
-    var row = current_range.getRow()
-    var col = current_range.getColumn()
-    // This assumes that first_name will be found at col+1 relative to last_name.
-    if (sheet.getRange(row, col+1).getValue().toString() == data.first_name) {
-      if (allow_overwrite) {
-        return sheet.getRange(row, col)
-      }
-      return null
-    }
-  }
-}
-
 function doUpdateAggregationTrix(data, allow_overwrite) {
   // Update the row at range in sheet with data
-  function UpdateRow(sheet, range, data) {
-    var row = range.getRow()
-    var column = range.getColumn()
+  function UpdateRow(sheet, row, data) {
+    var column = 2
     sheet.getRange(row,column).setValue(data.last_name)
     sheet.getRange(row,column+1).setValue(data.first_name)
     sheet.getRange(row,column+2).setValue(data.license_number)
@@ -2181,17 +2166,14 @@ function doUpdateAggregationTrix(data, allow_overwrite) {
   // Open the spread sheet, insert the name if the operation is possible. Sync
   // the spreadsheet.
   var sheet = SpreadsheetApp.openById(license_trix).getSheetByName('FFS');
-  var last_name_range = sheet.getRange('B7:B')
   var entire_range = sheet.getRange('B7:N')
 
   for (var index in data) {
-    var res = SearchEntry(sheet, last_name_range, data[index], allow_overwrite)
-    var res2 = SearchEntry2(sheet, data[index])
-    // res can be null if allow_overwrite is false and the entry was found
-    if (res == null) {
+    var row = SearchEntry(sheet, data[index])
+    if (row == -1) {
       continue
     }
-    UpdateRow(sheet, res, data[index])
+    UpdateRow(sheet, row, data[index])
   }
   // Sort the spread sheet by last name and then first name and sync the spreadsheet.
   entire_range.sort([{column: entire_range.getColumn()}, {column: entire_range.getColumn()+5}])
