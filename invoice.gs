@@ -2043,7 +2043,9 @@ function getAndUpdateInvoiceNumber() {
 
 // Family member description class returned by getListOfFamilyPurchasingALicense.
 class FamilyMember {
-  constructor(first_name, last_name, dob, sex, city, license_type, license_number, level) {
+  constructor(first_name, last_name, dob, sex, city,
+              license_type, license_number, level,
+              parent1_email, parent1_phone, parent2_email, parent2_phone) {
     this.first_name = first_name
     this.last_name = last_name
     this.dob = dob
@@ -2052,6 +2054,10 @@ class FamilyMember {
     this.license_type = license_type
     this.license_number = license_number
     this.level = level
+    this.parent1_email = parent1_email
+    this.parent1_phone = parent1_phone
+    this.parent2_email = parent2_email
+    this.parent2_phone = parent2_phone
   }
 }
 
@@ -2091,8 +2097,15 @@ function getListOfFamilyPurchasingALicense() {
     // in validateAndReturnDropDownValue()
     var level = getStringAt([coords_identity_rows[index], coord_level_column])
 
+    var parent1_email = getStringAt(coord_family_email)
+    var parent2_email = getStringAt(coord_cc)
+    var parent1_phone = getStringAt(coord_family_phone1)
+    var parent2_phone = getStringAt(coord_family_phone2)
+
     family.push(new FamilyMember(first_name, last_name, birth,
-                                 sex, city, license, license_number, level))
+                                 sex, city, license, license_number, level,
+                                 parent1_email, parent1_phone,
+                                 parent2_email, parent2_phone))
   }
   return family
 }
@@ -2102,18 +2115,6 @@ function getListOfFamilyPurchasingALicense() {
 //  - There is one that is used to project future level groups
 //  - There is one used by accounting
 ///////////////////////////////////////////////////////////////////////////////
-
-// Find the first empty slot in range and return the range it corresponds to.
-// Note that parameter range must be a column
-function findFirstEmptySlot(sheet, range) {
-    // Range must be a column
-    var values = range.getValues();
-    var ct = 0;
-    while ( values[ct] && values[ct][0] != "" ) {
-      ct++;
-    }
-    return sheet.getRange(range.getRow() + ct,range.getColumn())
-}
 
 // Search for data.{first_nane,last_name} in sheet. Return the index 
 // at which the element was found or the index of the first empty row.
@@ -2224,6 +2225,19 @@ function updateAccountingTrix() {
 ///////////////////////////////////////////////////////////////////////////////
 
 function updateProblematicRegistration(link, context) {
+
+  // Find the first empty slot in range and return the range it corresponds to.
+  // Note that parameter range must be a column
+  function findFirstEmptySlot(sheet, range) {
+      // Range must be a column
+      var values = range.getValues();
+      var ct = 0;
+      while ( values[ct] && values[ct][0] != "" ) {
+        ct++;
+      }
+      return sheet.getRange(range.getRow() + ct,range.getColumn())
+  }
+
   updateStatusBar('⏳ Enregistrement de la notification de problème...', 'orange')
   var sheet = SpreadsheetApp.openById(license_trix).getSheetByName('Dossiers problématiques')
   var insertion_range = findFirstEmptySlot(sheet, sheet.getRange('A2:A'))
