@@ -2118,9 +2118,9 @@ function getListOfFamilyPurchasingALicense() {
 //  - There is one used by accounting
 ///////////////////////////////////////////////////////////////////////////////
 
-// Search for data.{first_nane,last_name} in sheet. Return the index 
-// at which the element was found or the index of the first empty row.
-// Return -1 if more than one element matched the search criteria.
+// Search for data.{first_name, last_name} starting at data.row_start in sheet.
+// Return the index at which the element was found or the index of the first
+// empty row. Return -1 if more than one element matched the search criteria.
 function SearchEntry(sheet, data, positions) {
   var index = positions.row_start
   var global_index = index
@@ -2154,7 +2154,7 @@ function SearchEntry(sheet, data, positions) {
   return index
 }
 
-function doUpdateAggregationTrix(data, allow_overwrite) {
+function doUpdateAggregationTrix(data) {
   // Update the row at range in sheet with data
   function UpdateRow(sheet, row, data) {
     var column = 2
@@ -2178,6 +2178,7 @@ function doUpdateAggregationTrix(data, allow_overwrite) {
                            last_name:1,
                            first_name:2})
     if (row == -1) {
+      // FIXME: What to signal to the user?
       continue
     }
     UpdateRow(sheet, row, data[index])
@@ -2201,7 +2202,7 @@ function updateAggregationTrix() {
       family.push(family_member)
     }
   }
-  doUpdateAggregationTrix(family, false)
+  doUpdateAggregationTrix(family)
 }
 
 function updateAccountingTrix() {
