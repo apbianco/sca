@@ -2094,7 +2094,9 @@ function getListOfFamilyPurchasingALicense() {
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-// Updating the FFS tab of the aggregation trix with entered data (only once)
+// Update various aggregation trix:
+//  - There is one that is used to project future level groups
+//  - There is one used by accounting
 ///////////////////////////////////////////////////////////////////////////////
 
 // Find the first empty slot in range and return the range it corresponds to.
@@ -2166,22 +2168,37 @@ function doUpdateAggregationTrix(data, allow_overwrite) {
 }
 
 function updateAggregationTrix() {
-  // We computed this already possible in the caller, maybe pass this as an argument?
   var family_dict = getListOfFamilyPurchasingALicense()
   var family = []
-  // Skip over an empty name
   for (var index in family_dict) {
     var family_member = family_dict[index]
+    // Skip over an empty name
     if (family_dict[index].last_name == "") {
       continue
     }
-
     // Retain kids with a non comp license (can be a junior license or a family license)
     if (isMinor(family_member.dob) && isLicenseNonComp(family_member.license_type)) {
       family.push(family_member)
     }
   }
   doUpdateAggregationTrix(family, false)
+}
+
+function updateAccountingTrix() {
+  var family_dict = getListOfFamilyPurchasingALicense()
+  var family = []
+  for (var index in family_dict) {
+    var family_member = family_dict[index]
+    // Skip over an empty name
+    if (family_dict[index].last_name == "") {
+      continue
+    }
+    // Retain the right entries:
+    //   - FIXME
+    if (true) {
+      family.push(family_member)
+    }
+  }
 }
 
 ///////////////////////////////////////////////////////////////////////////////
