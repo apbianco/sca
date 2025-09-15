@@ -817,6 +817,10 @@ function dobRangeToString(dob_start, dob_end) {
   return date_range;
 }
 
+function rangeToString(range) {
+  return 'row=' + range.getRow() + ", col=" + range.getColumn()
+}
+
 function isEmpty(obj) {
   return Object.keys(obj).length === 0;
 }
@@ -2111,30 +2115,30 @@ function findFirstEmptySlot(sheet, range) {
     return sheet.getRange(range.getRow() + ct,range.getColumn())
 }
 
-function doUpdateAggregationTrix(data, allow_overwrite) {
-  // Search for elements in data in sheet over range. If we can't find data,
-  // return a range on the first empty slot we find. If we can find data
-  // return its range unless allow_overwrite is false, in which case we
-  // return null: this will be used to avoid overwriting existing data.
-  function SearchEntry(sheet, range, data, allow_overwrite) {
-    var finder = range.createTextFinder(data.last_name)
-    while (true) {
-      var current_range = finder.findNext()
-      if (current_range == null) {
-        return findFirstEmptySlot(sheet, range)
+// Search for elements in data in sheet over range. If we can't find data,
+// return a range on the first empty slot we find. If we can find data
+// return its range unless allow_overwrite is false, in which case we
+// return null: this will be used to avoid overwriting existing data.
+function SearchEntry(sheet, range, data, allow_overwrite) {
+  var finder = range.createTextFinder(data.last_name)
+  while (true) {
+    var current_range = finder.findNext()
+    if (current_range == null) {
+      return findFirstEmptySlot(sheet, range)
+    }
+    var row = current_range.getRow()
+    var col = current_range.getColumn()
+    // This assumes that first_name will be found at col+1 relative to last_name.
+    if (sheet.getRange(row, col+1).getValue().toString() == data.first_name) {
+      if (allow_overwrite) {
+        return sheet.getRange(row, col)
       }
-      var row = current_range.getRow()
-      var col = current_range.getColumn()
-      // This assumes that first_name will be found at col+1 relative to last_name.
-      if (sheet.getRange(row, col+1).getValue().toString() == data.first_name) {
-        if (allow_overwrite) {
-          return sheet.getRange(row, col)
-        }
-        return null
-      }
+      return null
     }
   }
+}
 
+function doUpdateAggregationTrix(data, allow_overwrite) {
   // Update the row at range in sheet with data
   function UpdateRow(sheet, range, data) {
     var row = range.getRow()
