@@ -2118,8 +2118,8 @@ function findFirstEmptySlot(sheet, range) {
 // Search for data.{first_nane,last_name} in sheet. Return the index 
 // at which the element was found or the index of the first empty row.
 // Return -1 if more than one element matched the search criteria.
-function SearchEntry(sheet, data) {
-  var index = license_trix_row_start
+function SearchEntry(sheet, data, positions) {
+  var index = positions.row_start
   var global_index = index
   // slice() skips header data...
   const allData = sheet.getDataRange().getValues().slice(index-1);
@@ -2130,7 +2130,8 @@ function SearchEntry(sheet, data) {
         if (row[1] == '' && first_empty_row == -1) {
           first_empty_row = global_index
         }
-        var found = row[1] === data.last_name && row[2] === data.first_name
+        var found = row[positions.last_name] === data.last_name &&
+                    row[positions.first_name] === data.first_name
         if (found) {
           stop_incrementing_index = true
         }
@@ -2166,10 +2167,13 @@ function doUpdateAggregationTrix(data, allow_overwrite) {
   // Open the spread sheet, insert the name if the operation is possible. Sync
   // the spreadsheet.
   var sheet = SpreadsheetApp.openById(license_trix).getSheetByName('FFS');
-  var entire_range = sheet.getRange('B7:N')
+  var entire_range = sheet.getRange(license_trix_all_range)
 
   for (var index in data) {
-    var row = SearchEntry(sheet, data[index])
+    var row = SearchEntry(sheet, data[index],
+                          {row_start: license_trix_row_start,
+                           last_name:1,
+                           first_name:2})
     if (row == -1) {
       continue
     }

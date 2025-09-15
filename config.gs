@@ -61,7 +61,8 @@ var db_folder =                            '1dLImiBFObJDxSS1XJOmSSq2aiIVLKqai'
 // data starts
 //
 var license_trix =                         '1TJrV0x_y387WZ4wKYqVp1wnWd-lph4CmUGxe0MtfhYk'
-var license_trix_row_start = 7
+var license_trix_row_start =               10
+var license_trix_all_range =               'B10:H'
 //
 // Accounting aggregation trix to update when a new entry is added
 //
