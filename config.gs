@@ -40,8 +40,12 @@ var comp_kids_per_family = 4
 //
 var skipass_configuration_map = {
 // What     | Dob/Y | Dob/Y | Row | Col
-  'Senior':   [70,    74,     25,   5],
-  'Vermeil':  [75,   -1,      26,   5],
+  // ageVerificationRangeIncluded
+  'Senior':   [70,    75,     25,   5],
+  // ageVerificationStrictlyOldOrOlder
+  'Vermeil':  [76,   -1,      26,   5],
+  // ageVerificationBornBeforeDateIncluded (Jan 1st 2006) + 
+  // ageVerificationStrictlyYounger
   'Adulte':   [2006,  70,     27,   5],
   'Étudiant': [1995,  2006,   28,   5],
   'Junior':   [2007,  2014,   29,   5],
