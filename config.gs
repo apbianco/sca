@@ -61,6 +61,10 @@ var db_folder =                            '1dLImiBFObJDxSS1XJOmSSq2aiIVLKqai'
 //
 var license_trix =                         '1TJrV0x_y387WZ4wKYqVp1wnWd-lph4CmUGxe0MtfhYk'
 //
+// Accounting aggregation trix to update when a new entry is added
+//
+var accounting_trix =                      '1_X6bL8HiDabmbyZdC0N3oQ11rlJ_IxWAo0i9uJiWv34'
+//
 // - ID of attachements to be sent with the invoice - some may change
 //   from one season to an other when they are refreshed. These documents
 //   are also part of the registration bundle sent to parents.
