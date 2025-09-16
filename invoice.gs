@@ -2228,6 +2228,10 @@ function doUpdateAccountingTrix(data) {
     sheet.getRange(row,column+5).setValue(data.level)
     sheet.getRange(row,column+6).setValue(data.license_type)
     sheet.getRange(row,column+7).setValue(data.license_number)
+    sheet.getRange(row,column+13).setValue(data.parent1_phone)
+    sheet.getRange(row,column+14).setValue(data.parent1_email)
+    sheet.getRange(row,column+15).setValue(data.parent2_phone)
+    sheet.getRange(row,column+16).setValue(data.parent2_email)   
   }
 
   // Open the spread sheet, insert the name if the operation is possible. Sync
