@@ -424,6 +424,10 @@ class Subscription {
                                          this.purchase_range.getColumn()])
   }
   PurchasedSubscriptionAmount() { return this.purchased_amount }
+  SubscriptionAmount() {
+    return getNumberAt([this.purchase_range.getRow(),
+                        this.purchase_range.getColumn()-1])
+  }  
   SetPurchasedSubscriptionAmount(amount) {
     // Clear a cell with no information
     var coord = [this.purchase_range.getRow(), this.purchase_range.getColumn()]
@@ -2230,6 +2234,8 @@ function doUpdateAccountingTrix(data) {
     sheet.getRange(row,column+5).setValue(data.level)
     sheet.getRange(row,column+6).setValue(data.license_type)
     sheet.getRange(row,column+7).setValue(data.license_number)
+    sheet.getRange(row, column+9).setValue(data.subscription_type)
+    sheet.getRange(row, column+10).setValue(data.subscription_fee)
     sheet.getRange(row,column+13).setValue(data.parent1_phone)
     sheet.getRange(row,column+14).setValue(data.parent1_email)
     sheet.getRange(row,column+15).setValue(data.parent2_phone)
@@ -2241,6 +2247,41 @@ function doUpdateAccountingTrix(data) {
   var sheet = SpreadsheetApp.openById(accounting_trix).getSheets()[0]
   var entire_range = sheet.getRange(accounting_trix_all_range)
 
+  // Go through sections where a charge applies and match the charges with
+  // entries in data
+
+  var non_comp_subscriptions = createNonCompSubscriptionMap(sheet)
+  for (const key in non_comp_subscriptions) {
+    var entry = non_comp_subscriptions[key]
+    entry.UpdatePurchasedSubscriptionAmountFromTrix()
+    var number_charges = entry.PurchasedSubscriptionAmount()
+    // No charge, no need to process that subscription type.
+    if (number_charges == 0) {
+      continue
+    }
+    var fees = entry.SubscriptionAmount()
+    // How to determine what applies
+    var determination = (key == getRiderLevelString() ?
+                         isLevelRider : isLevelNotRider)
+    // Go over all entries and dispatch charges as possible
+    for (var entry of data) {
+      // Stop when we have dispatched all existing charges
+      if (number_charges == 0) {
+        break
+      }
+      // Do not change an entry that has already been set.        
+      if ('subscription_type' in entry) {
+        continue
+      }
+      // Determination has been previously picked to be the right
+      // function.
+      if (determination(entry.level)) {
+        entry.subscription_type = key
+        entry.subscription_fee = fees
+        number_charges -= 1
+      }
+    }
+  }
   for (var index in data) {
     var row = SearchEntry(sheet, data[index],
                           {row_start: accounting_trix_row_start,
