@@ -1302,7 +1302,9 @@ function autoFillLicensePurchases() {
   return true
 }
 
-function autoFillNonCompSubscriptions_ComputeSubscriptionSlots() {
+function autoFillNonCompSubscriptions() {
+  updateStatusBar("Achat automatique des adhésions loisir...", "grey", add=true)
+  var subscription_map = createNonCompSubscriptionMap(SpreadsheetApp.getActiveSheet())
   var subscription_slots = [0, 0, 0, 0, 0]
   var current_non_rider_slot = 1
   // Collect the licenses and the levels. We assume someone wants 
@@ -1349,13 +1351,7 @@ function autoFillNonCompSubscriptions_ComputeSubscriptionSlots() {
   subscription_slots.splice(0, 0, number_of_riders)
   // Truncate the array by as many 0s we initially inserted
   subscription_slots.splice(-number_of_riders, number_of_riders)
-  return subscription_slots
-}
 
-function autoFillNonCompSubscriptions() {
-  updateStatusBar("Achat automatique des adhésions loisir...", "grey", add=true)
-  var subscription_map = createNonCompSubscriptionMap(SpreadsheetApp.getActiveSheet())
-  var subscription_slots = autoFillNonCompSubscriptions_ComputeSubscriptionSlots()
   for (var index in noncomp_subscription_categories) {
     var subscription = noncomp_subscription_categories[index]
     subscription_map[subscription].SetPurchasedSubscriptionAmount(subscription_slots[index])
