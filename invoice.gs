@@ -132,11 +132,23 @@ function isLicenseNotDefined(license) {
   return !isLicenseDefined(license)
 }
 
+function isLicenseNonCompJunior(license) {
+  return license == getNonCompJuniorLicenseString()
+}
+
+function isLicenseNonCompAdult(license) {
+  return license == getNonCompAdultLicenseString()
+}
+
+function isLicenseNonCompFamily(license) {
+  return license == getNonCompFamilyLicenseString()
+}
+
 function isLicenseNonComp(license) {
   // FIXME: Why is it not !isLicenseComp() ?
-  return (license == getNonCompJuniorLicenseString() ||
-          license == getNonCompFamilyLicenseString() ||
-          license == getNonCompAdultLicenseString())
+  return (isLicenseNonCompJunior(license) ||
+          isLicenseNonCompFamily(license) ||
+          isLicenseNonCompAdult(license))
 }
 
 function isLicenseComp(license) {
@@ -156,15 +168,11 @@ function isLicenseExec(license) {
   return license == getExecutiveLicenseString()
 }
 
-function isLicenseFamily(license) {
-  return license == getNonCompFamilyLicenseString()
-}
-
 // A License class to create an object that has a name, a range in the trix at
 // which it can be marked as purchased, a validation method that takes a DoB
 // as input and a message to issue when the validation failed.
 class License {
-  constructor(name, purchase_range, dob_validation_method, valid_dob_range_message) {
+  constructor(name, purchase_range, dob_validation_method, valid_dob_range_message, isa_method) {
     // The name of the ski pass type
     this.name = name
     // The range at which the number of licenses of the same kind can be found
@@ -172,6 +180,7 @@ class License {
     // The DoB validation method
     this.dob_validation_method = dob_validation_method
     this.valid_dob_range_message = valid_dob_range_message
+    this.isa_method = isa_method
     this.occurence_count = 0
     this.purchased_amount = 0
   }
@@ -186,6 +195,13 @@ class License {
                                            this.purchase_range.getColumn()])
     }
   }
+  LicenseAmount() {
+    if (this.purchase_range == null) {
+      return 0
+    }
+    return getNumberAt([this.purchase_range.getRow(),
+                        this.purchase_range.getColumn()-1])
+  }  
   SetPurchasedLicenseAmount() {
     // Update only if we have a number and if the data is updatable (no license for
     // instance can be counted but can't be updated at a given cell)
@@ -196,7 +212,7 @@ class License {
     // back to zero as there can only be one attributed.
     var count = this.AttributedLicenseCount()
     var coord = [this.purchase_range.getRow(), this.purchase_range.getColumn()]
-    if (count > 0 && isLicenseFamily(this.Name())) {
+    if (count > 0 && isLicenseNonCompFamily(this.Name())) {
       count = 1
     }
     if (count > 0) {
@@ -206,8 +222,9 @@ class License {
       setStringAt(coord, "")
     }
   }
-  PurchasedLicenseAmount() { return this.purchased_amount }
-
+  PurchasedLicenseAmount() {
+    return this.purchase_range == null ? 0 : this.purchased_amount
+  }
   IncrementAttributedLicenseCount() {
     this.occurence_count += 1
   }
@@ -223,6 +240,10 @@ class License {
 
   ValidDoBRangeMessage() {
     return this.valid_dob_range_message
+  }
+
+  IsA(key) {
+    return this.isa_method(key)
   }
 }
 
@@ -264,37 +285,46 @@ function createLicensesMap(sheet) {
     'Aucune': new License(
       getNoLicenseString(),
       null,
-      (dob) => {return true}),
+      (dob) => {return true},
+      "N/A",
+      (key) => {return isLicenseNoLicense(key)}),
     'CN Jeune (Loisir)': new License(
       getNonCompJuniorLicenseString(),
       getRange(getNonCompJuniorLicenseString()),
+      // Remember: no local variable capture possible in functor, use function calls only
       (dob) => {return ageVerificationBornAfterDateIncluded(dob, createDate(getNonCompJuniorLicenseString(), "January 1"))},
-      "requiert d'être né en " + getYear(getNonCompJuniorLicenseString()) + " et après"),
+      "requiert d'être né en " + getYear(getNonCompJuniorLicenseString()) + " et après",
+      (key) => {return isLicenseNonCompJunior(key)}),
     'CN Adulte (Loisir)': new License(
       getNonCompAdultLicenseString(),
       getRange(getNonCompAdultLicenseString()),
       (dob) => {return ageVerificationBornBeforeDateIncluded(dob, createDate(getNonCompAdultLicenseString(), "December 31"))},
-      "requiert d'être né en " + getYear(getNonCompAdultLicenseString()) + " et avant"),
+      "requiert d'être né en " + getYear(getNonCompAdultLicenseString()) + " et avant",
+      (key) => {return isLicenseNonCompAdult(key)}),
     'CN Famille (Loisir)': new License(
       getNonCompFamilyLicenseString(),
       getRange(getNonCompFamilyLicenseString()),
       (dob) => {return true},
-      ""),
+      "",
+      (key) => {return isLicenseNonCompFamily(key)}),
     'CN Dirigeant': new License(
       getExecutiveLicenseString(),
       getRange(getExecutiveLicenseString()),
       (dob) => {return ageVerificationBornBeforeDateIncluded(dob, createDate(getExecutiveLicenseString(), "December 31"))},
-      "requiert d'être né en " + getYear(getNonCompAdultLicenseString()) + " et avant"),
+      "requiert d'être né en " + getYear(getNonCompAdultLicenseString()) + " et avant",
+      (key) => {return isLicenseExec(key)}),
     'CN Jeune (Compétition)': new License(
       getCompJuniorLicenseString(),
       getRange(getCompJuniorLicenseString()),
       (dob) => {return ageVerificationBornAfterDateIncluded(dob, createDate(getCompJuniorLicenseString(), "January 1"))},
-      "requiert être né en " + getYear(getCompJuniorLicenseString()) + " et après"),
+      "requiert être né en " + getYear(getCompJuniorLicenseString()) + " et après",
+      (key) => {return isLicenseCompJunior(key)}),
     'CN Adulte (Compétition)': new License(
       getCompAdultLicenseString(),
       getRange(getCompAdultLicenseString()),
       (dob) => {return ageVerificationBornBeforeDateIncluded(dob, createDate(getCompAdultLicenseString(), "December 31"))},
-      "requiert d'être né en " + getYear(getCompAdultLicenseString()) + " et avant"),
+      "requiert d'être né en " + getYear(getCompAdultLicenseString()) + " et avant",
+      (key) => {return isLicenseCompAdult(key)}),
   }
   validateClassInstancesMap(to_return, 'license_map')
   return to_return
@@ -1692,7 +1722,7 @@ function validateLicenses() {
     // Entry indicating no license is skipped because it can't
     // be collected. Entry indicating a family license skipped because
     // it's been already verified
-    if (isLicenseNotDefined(index) || isLicenseFamily(index)) {
+    if (isLicenseNotDefined(index) || isLicenseNonCompFamily(index)) {
       continue
     }
     // What you attributed must match what you're purchasing...
@@ -2226,62 +2256,115 @@ function doUpdateAccountingTrix(data) {
   // Update the row at range in sheet with data
   function UpdateRow(sheet, row, data) {
     var column = 2
-    sheet.getRange(row,column).setValue(data.last_name)
-    sheet.getRange(row,column+1).setValue(data.first_name)
-    sheet.getRange(row,column+2).setValue(data.sex)
-    sheet.getRange(row,column+3).setValue(data.dob)
-    sheet.getRange(row,column+4).setValue(data.parent_city)
-    sheet.getRange(row,column+5).setValue(data.level)
-    sheet.getRange(row,column+6).setValue(data.license_type)
-    sheet.getRange(row,column+7).setValue(data.license_number)
+    sheet.getRange(row, column).setValue(data.last_name)
+    sheet.getRange(row, column+1).setValue(data.first_name)
+    sheet.getRange(row, column+2).setValue(data.sex)
+    sheet.getRange(row, column+3).setValue(data.dob)
+    sheet.getRange(row, column+4).setValue(data.parent_city)
+    sheet.getRange(row, column+5).setValue(data.level)
+    sheet.getRange(row, column+6).setValue(data.license_type)
+    sheet.getRange(row, column+7).setValue(data.license_number)
+    sheet.getRange(row, column+8).setValue(data.license_fee)
     sheet.getRange(row, column+9).setValue(data.subscription_type)
     sheet.getRange(row, column+10).setValue(data.subscription_fee)
-    sheet.getRange(row,column+13).setValue(data.parent1_phone)
-    sheet.getRange(row,column+14).setValue(data.parent1_email)
-    sheet.getRange(row,column+15).setValue(data.parent2_phone)
-    sheet.getRange(row,column+16).setValue(data.parent2_email)   
+    sheet.getRange(row, column+13).setValue(data.parent1_phone)
+    sheet.getRange(row, column+14).setValue(data.parent1_email)
+    sheet.getRange(row, column+15).setValue(data.parent2_phone)
+    sheet.getRange(row, column+16).setValue(data.parent2_email)   
   }
 
+  function dispatchNonCompSubscriptions() {
+    // Go through sections where a charge applies and match the charges with
+    // entries in data
+    var non_comp_subscriptions = createNonCompSubscriptionMap(sheet)
+    for (const key in non_comp_subscriptions) {
+      var entry = non_comp_subscriptions[key]
+      entry.UpdatePurchasedSubscriptionAmountFromTrix()
+      var number_charges = entry.PurchasedSubscriptionAmount()
+      // No charge, no need to process that subscription type.
+      if (number_charges == 0) {
+        continue
+      }
+      var fees = entry.SubscriptionAmount()
+      // How to determine what applies.
+      // FIXME: that could be in the subscription object...
+      var determination = (isLevelRider(key) ? isLevelRider : isLevelNotRider)
+      // Go over all entries and dispatch charges as possible
+      for (var entry of data) {
+        // Stop when we have dispatched all existing charges
+        if (number_charges == 0) {
+          break
+        }
+        // Do not change an entry that has already been set.        
+        if ('subscription_type' in entry) {
+          continue
+        }
+        // Determination has been previously picked to be the right
+        // function.
+        if (determination(entry.level)) {
+          entry.subscription_type = key
+          entry.subscription_fee = fees
+          number_charges -= 1
+        }
+      }
+    }    
+  }
+
+  function dispatchNonCompLicenses() {
+    var licenses = createLicensesMap(sheet)
+    var family = licenses[getNonCompFamilyLicenseString()]
+    family.UpdatePurchasedLicenseAmountFromTrix()
+    var number_charges = family.PurchasedLicenseAmount()
+    if (number_charges > 0) {
+      for (var entry of data) {
+        // We pick the first one match as the recipient
+        if (family.IsA(entry.license_type)) {
+          if (number_charges > 0) {
+            entry.license_fees = familly.LicenseAmount()
+            number_charges -= 1
+          } else {
+            entry.license_fee = 'Famille'
+          }
+        }
+      }
+    }
+    // Delete the one we just processed and go over the other type
+    // of licenses.
+    delete licenses[getNonCompFamilyLicenseString()]
+    for (const key in licenses) {
+      var license = licenses[key]
+      license.UpdatePurchasedLicenseAmountFromTrix()
+      var number_charges = license.PurchasedLicenseAmount()      
+      // No charge, no need to process that subscription type.
+      if (number_charges == 0) {
+        continue
+      }
+      var fees = license.LicenseAmount()
+      // Go over all entries and dispatch charges as possible
+      for (var entry of data) {
+        // Stop when we have dispatched all existing charges
+        if (number_charges == 0) {
+          break
+        }
+        // Do not change an entry that has already been set.        
+        if ('license_fee' in entry) {
+          continue
+        }
+        if (license.IsA(entry.license_type)) {
+          entry.license_fee = fees
+          number_charges -= 1
+        }
+      }
+    }
+  }
   // Open the spread sheet, insert the name if the operation is possible. Sync
   // the spreadsheet.
   var sheet = SpreadsheetApp.openById(accounting_trix).getSheets()[0]
+
+  dispatchNonCompSubscriptions()
+  dispatchNonCompLicenses()
+
   var entire_range = sheet.getRange(accounting_trix_all_range)
-
-  // Go through sections where a charge applies and match the charges with
-  // entries in data
-
-  var non_comp_subscriptions = createNonCompSubscriptionMap(sheet)
-  for (const key in non_comp_subscriptions) {
-    var entry = non_comp_subscriptions[key]
-    entry.UpdatePurchasedSubscriptionAmountFromTrix()
-    var number_charges = entry.PurchasedSubscriptionAmount()
-    // No charge, no need to process that subscription type.
-    if (number_charges == 0) {
-      continue
-    }
-    var fees = entry.SubscriptionAmount()
-    // How to determine what applies
-    var determination = (key == getRiderLevelString() ?
-                         isLevelRider : isLevelNotRider)
-    // Go over all entries and dispatch charges as possible
-    for (var entry of data) {
-      // Stop when we have dispatched all existing charges
-      if (number_charges == 0) {
-        break
-      }
-      // Do not change an entry that has already been set.        
-      if ('subscription_type' in entry) {
-        continue
-      }
-      // Determination has been previously picked to be the right
-      // function.
-      if (determination(entry.level)) {
-        entry.subscription_type = key
-        entry.subscription_fee = fees
-        number_charges -= 1
-      }
-    }
-  }
   for (var index in data) {
     var row = SearchEntry(sheet, data[index],
                           {row_start: accounting_trix_row_start,
