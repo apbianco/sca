@@ -422,9 +422,12 @@ function isFirstKid(subscription) {
 // which it can be marked as purchased, a validation method that takes a DoB
 // as input and can keep track of occurences and purchases.
 class Subscription {
-  constructor(name, purchase_range, dob_validation_method) {
-    // The name of the subscription
+  constructor(name, hr_name, purchase_range, dob_validation_method) {
+    // The name of the subscription - it's also a key so not always
+    // human readable
     this.name = name
+    // Human readable name
+    this.hr_name = hr_name
     // The range at which the number of subscriptions the same kind can be found
     this.purchase_range = purchase_range
     // The DoB validation method
@@ -436,6 +439,7 @@ class Subscription {
   }
 
   Name() { return this.name }
+  HumanReadableName() { return this.hr_name }
   IsA(key) { return this.name == key}
 
   // When this method run, we capture the amount of subscription of that nature
@@ -500,6 +504,7 @@ function createCompSubscriptionMap(sheet) {
     var ranked_label = rank + label
     to_return[ranked_label] = new Subscription(
       ranked_label,
+      nthString(rank) + " " + label,
       getRange(label, rank-1),
       // Remember: no local variable capture possible in functor, use function calls only
       (dob) => {return ageVerificationBornBetweenYearsIncluded(dob, getFirstYear(getU6String()), getLastYear(getU6String()))})
@@ -507,18 +512,21 @@ function createCompSubscriptionMap(sheet) {
     ranked_label = rank + label
     to_return[ranked_label] = new Subscription(
       ranked_label,
+      nthString(rank) + " " + label,
       getRange(label, rank-1),
       (dob) => {return ageVerificationBornBetweenYearsIncluded(dob, getFirstYear(getU8String()), getLastYear(getU8String()))})
     label = getU10String()
     ranked_label = rank + label
     to_return[ranked_label] = new Subscription(
       ranked_label,
+      nthString(rank) + " " + label,
       getRange(label, rank-1),
       (dob) => {return ageVerificationBornBetweenYearsIncluded(dob, getFirstYear(getU10String()), getLastYear(getU10String()))})
     label = getU12PlusString()
     ranked_label = rank + label
     to_return[ranked_label] = new Subscription(
       ranked_label,
+      nthString(rank) + " " + label,
       getRange(label, rank-1),
       (dob) => {return ageVerificationBornBeforeYearIncluded(dob, getFirstYear(getU12PlusString()))})
   }
@@ -532,6 +540,7 @@ function createNonCompSubscriptionMap(sheet) {
   for (index in noncomp_subscription_categories) {
     var label = noncomp_subscription_categories[index]
     to_return[label] = new Subscription(
+      label,
       label,
       sheet.getRange(row, coord_noncomp_column),
       (dob) => {return true}),

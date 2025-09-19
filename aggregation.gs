@@ -121,14 +121,14 @@ function doUpdateAccountingTrix(data) {
     // entries in data
     var non_comp_subscriptions = createNonCompSubscriptionMap(sheet)
     for (const key in non_comp_subscriptions) {
-      var entry = non_comp_subscriptions[key]
-      entry.UpdatePurchasedSubscriptionAmountFromTrix()
-      var number_charges = entry.PurchasedSubscriptionAmount()
+      var subscription = non_comp_subscriptions[key]
+      subscription.UpdatePurchasedSubscriptionAmountFromTrix()
+      var number_charges = subscription.PurchasedSubscriptionAmount()
       // No charge, no need to process that subscription type.
       if (number_charges == 0) {
         continue
       }
-      var fees = entry.SubscriptionAmount()
+      var fee = subscription.SubscriptionAmount()
       // How to determine what applies.
       var determination = (isLevelRider(key) ? isLevelRider : isLevelNotRider)
       // Go over all entries and dispatch charges as possible
@@ -144,8 +144,8 @@ function doUpdateAccountingTrix(data) {
         // Determination has been previously picked to be the right
         // function.
         if (determination(entry.level)) {
-          entry.subscription_type = key
-          entry.subscription_fee = fees
+          entry.subscription_type = subscription.HumanReadableName()
+          entry.subscription_fee = fee
           number_charges -= 1
         }
       }
@@ -153,7 +153,32 @@ function doUpdateAccountingTrix(data) {
   }
 
   function dispatchCompSubscriptions() {
-
+    var comp_subscriptions = createCompSubscriptionMap(sheet)
+    for (const key in comp_subscriptions) {
+      var subscription = comp_subscriptions[key]
+      subscription.UpdatePurchasedSubscriptionAmountFromTrix()
+      var number_charges = subscription.PurchasedSubscriptionAmount()
+      // No charge, no need to process that subscription type.
+      if (number_charges == 0) {
+        continue
+      }
+      var fee = subscription.SubscriptionAmount()
+      for (var entry of data) {
+        // Stop when we have dispatched all existing charges
+        if (number_charges == 0) {
+          break
+        }
+        // Do not change an entry that has already been set.        
+        if ('subscription_type' in entry) {
+          continue
+        }
+        // Determination is done on the collected age...
+        if (subscription.ValidateDoB(entry.dob)) {
+          entry.subscription_type = subscription.HumanReadableName()
+          entry.subscription_fee = fee
+        }
+      }
+    }
   }
 
   function dispatchLicenses() {
