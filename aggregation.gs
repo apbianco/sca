@@ -152,7 +152,11 @@ function doUpdateAccountingTrix(data) {
     }    
   }
 
-  function dispatchNonCompLicenses() {
+  function dispatchCompSubscriptions() {
+
+  }
+
+  function dispatchLicenses() {
     var licenses = createLicensesMap(sheet)
     var family = licenses[getNonCompFamilyLicenseString()]
     family.UpdatePurchasedLicenseAmountFromTrix()
@@ -199,13 +203,14 @@ function doUpdateAccountingTrix(data) {
       }
     }
   }
-  // Open the spread sheet, insert the name if the operation is possible. Sync
-  // the spreadsheet.
+
   var sheet = SpreadsheetApp.openById(accounting_trix).getSheets()[0]
-
+  // Dispatch all the data
   dispatchNonCompSubscriptions()
-  dispatchNonCompLicenses()
+  dispatchCompSubscriptions()
+  dispatchLicenses()
 
+  // Update all entries, sort the spreadsheet and sync it.
   var entire_range = sheet.getRange(accounting_trix_all_range)
   for (var index in data) {
     var row = SearchEntry(sheet, data[index],
