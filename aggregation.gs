@@ -130,7 +130,6 @@ function doUpdateAccountingTrix(data) {
       }
       var fees = entry.SubscriptionAmount()
       // How to determine what applies.
-      // FIXME: that could be in the subscription object...
       var determination = (isLevelRider(key) ? isLevelRider : isLevelNotRider)
       // Go over all entries and dispatch charges as possible
       for (var entry of data) {
