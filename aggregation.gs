@@ -144,7 +144,7 @@ function doUpdateAccountingTrix(data) {
         // Determination has been previously picked to be the right
         // function.
         if (determination(entry.level)) {
-          entry.subscription_type = subscription.HumanReadableName()
+          entry.subscription_type = subscription.HumanReadableName() + " loisir"
           entry.subscription_fee = fee
           number_charges -= 1
         }
@@ -176,6 +176,7 @@ function doUpdateAccountingTrix(data) {
         if (subscription.ValidateDoB(entry.dob)) {
           entry.subscription_type = subscription.HumanReadableName()
           entry.subscription_fee = fee
+          number_charges -= 1
         }
       }
     }
@@ -191,7 +192,7 @@ function doUpdateAccountingTrix(data) {
         // We pick the first one match as the recipient
         if (family.IsA(entry.license_type)) {
           if (number_charges > 0) {
-            entry.license_fees = familly.LicenseAmount()
+            entry.license_fee = familly.LicenseAmount()
             number_charges -= 1
           } else {
             entry.license_fee = 'Famille'
@@ -230,6 +231,9 @@ function doUpdateAccountingTrix(data) {
   }
 
   var sheet = SpreadsheetApp.openById(accounting_trix).getSheets()[0]
+  // The sheet is filled only for someone with a level or competitor. Remove
+  // all others
+  data = data.filter(entry => isLevelDefined(entry.level))
   // Dispatch all the data
   dispatchNonCompSubscriptions()
   dispatchCompSubscriptions()

@@ -359,7 +359,7 @@ function categoriesAscendingOrder(cat1, cat2) {
 
 // Note: Undertermined level is not absence of level. Absence of level is
 // getNALevelString or ''
-function getNoLevelString() { return 'Non déterminé' } // DOES define an undetermined
+function getNoLevelString() { return 'Non déterminé' } // DOES define an level
 function getNALevelString() { return 'Pas Concerné' }  // DOEST NOT define a level
 function getLevelCompString() {return "Compétiteur" }
 function getRiderLevelString() { return 'Rider' }
@@ -407,7 +407,7 @@ function isLevelRider(level) {
 }
 
 function isLevelNotRider(level) {
-  return isLevelDefined(level) && ! isLevelRider(level)
+  return isLevelDefined(level) && isLevelNotComp(level) && ! isLevelRider(level)
 }
 
 function isFirstKid(subscription) {
