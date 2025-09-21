@@ -110,6 +110,8 @@ function doUpdateAccountingTrix(data) {
     sheet.getRange(row, column+8).setValue(data.license_fee)
     sheet.getRange(row, column+9).setValue(data.subscription_type)
     sheet.getRange(row, column+10).setValue(data.subscription_fee)
+    sheet.getRange(row, column+11).setValue(data.skipass_type)
+    sheet.getRange(row, column+12).setValue(data.skipass_fee)
     sheet.getRange(row, column+13).setValue(data.parent1_phone)
     sheet.getRange(row, column+14).setValue(data.parent1_email)
     sheet.getRange(row, column+15).setValue(data.parent2_phone)
@@ -211,7 +213,7 @@ function doUpdateAccountingTrix(data) {
       if (number_charges == 0) {
         continue
       }
-      var fees = license.LicenseAmount()
+      var fee = license.LicenseAmount()
       // Go over all entries and dispatch charges as possible
       for (var entry of data) {
         // Stop when we have dispatched all existing charges
@@ -223,7 +225,42 @@ function doUpdateAccountingTrix(data) {
           continue
         }
         if (license.IsA(entry.license_type)) {
-          entry.license_fee = fees
+          entry.license_fee = fee
+          number_charges -= 1
+        }
+      }
+    }
+  }
+
+  function dispatchSkiPasses() {
+    var skipasses = createSkipassMap(sheet)
+
+    // If the familly saving is added, we enter just one price for
+    // the first data element and that price is the one computed for
+    // all ski passes. Just like licenses
+    // FIXME
+
+    for (const key in skipasses) {
+      var skipass = skipasses[key]
+      skipass.UpdatePurchasedSkiPassAmountFromTrix()
+      var number_charges = skipass.PurchasedSkiPassAmount()
+      // No charge, no need to process that subscription type.
+      if (number_charges == 0) {
+        continue
+      }
+      var fees = skipass.SkiPassAmount()
+      for (var entry of data) {
+        // Stop when we have dispatched all existing charges
+        if (number_charges == 0) {
+          break
+        }
+        // Do not change an entry that has already been set.        
+        if ('skipass_fee' in entry) {
+          continue
+        }
+        if (skipass.ValidateDoB(entry.dob)) {
+          entry.skipass_fee = fees
+          entry.skipass_type = key
           number_charges -= 1
         }
       }
@@ -238,6 +275,7 @@ function doUpdateAccountingTrix(data) {
   dispatchNonCompSubscriptions()
   dispatchCompSubscriptions()
   dispatchLicenses()
+  dispatchSkiPasses()
 
   // Update all entries, sort the spreadsheet and sync it.
   var entire_range = sheet.getRange(accounting_trix_all_range)

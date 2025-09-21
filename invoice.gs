@@ -595,6 +595,14 @@ class SkiPass {
   }
   PurchasedSkiPassAmount() { return this.purchased_amount }
 
+  SkiPassAmount() {
+    if (this.purchase_range == null) {
+      return 0
+    }
+    return getNumberAt([this.purchase_range.getRow(),
+                        this.purchase_range.getColumn()-1])
+  } 
+
   // When this method run, we return the total amount paid a given skipass kind 
   // that we fetch at the row for this ski pass but in column G so two columns
   // to the right of the purchased amount column
