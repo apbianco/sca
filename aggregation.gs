@@ -233,13 +233,25 @@ function doUpdateAccountingTrix(data) {
   }
 
   function dispatchSkiPasses() {
+
+    // If there's a rebate, we have a familly ski pass. Compute and assign the total amoun
+    // amount paid in ski passes (rebate included) to the first familly member, mark the
+    // others as 'Family' and we're done.
+    var ski_pass_rebate_amount = getSkiPassesRebateAmount()
+    if (ski_pass_rebate_amount) {
+      var final_amount = getTotakSkiPassesAmountBeforeRebate() - ski_pass_rebate_amount;
+      for (var entry of data) {
+        if (ski_pass_rebate_amount) {
+          entry.skipass_fee = final_amount
+          entry.skipass_type = 'Famille'
+          ski_pass_rebate_amount = 0
+        } else {
+          entry.skipass_type = 'Famille'
+        }
+      }
+      return
+    }
     var skipasses = createSkipassMap(sheet)
-
-    // If the familly saving is added, we enter just one price for
-    // the first data element and that price is the one computed for
-    // all ski passes. Just like licenses
-    // FIXME
-
     for (const key in skipasses) {
       var skipass = skipasses[key]
       skipass.UpdatePurchasedSkiPassAmountFromTrix()

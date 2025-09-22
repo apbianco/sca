@@ -147,9 +147,10 @@ var coord_rebate_family_of_4_amount = [23, 4]
 var coord_rebate_family_of_4_count  = [23, 5]
 var coord_rebate_family_of_5_amount = [24, 4]
 var coord_rebate_family_of_5_count  = [24, 5]
-// - Location where the total amount of ski passes is
-//   stored
+// - Location where total number of order ski passes is stored and where
+//   the total amount paid for ski passes is due (before rebate)
 var coord_total_ski_pass            = [40, 6]
+var coord_total_ski_pass_amount    =  [40, 9]
 //
 // - Parameters defining the valid ranges to be retained during the
 //   generation of the invoice's PDF

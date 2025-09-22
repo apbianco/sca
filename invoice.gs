@@ -1946,6 +1946,20 @@ function getTotalSkiPasses() {
   return getNumberAt(coord_total_ski_pass)
 }
 
+function getTotakSkiPassesAmountBeforeRebate() {
+  return getNumberAt(coord_total_ski_pass_amount)
+}
+
+// Return the rebate amount that may apply to the total
+// paid for all ski passes
+function getSkiPassesRebateAmount() {
+  var rebate = getNumberAt(coord_rebate_family_of_4_amount)
+  if (rebate) {
+    return rebate
+  }
+  return getNumbeAt(coord_rebate_family_of_5_amount)
+}
+
 function validateSkiPasses() {
   updateStatusBar("Validation des forfaits loisir...", "grey", add=true)
   // Always clear the rebate section before eventually recomputing it at the end
@@ -2031,8 +2045,7 @@ function validateSkiPasses() {
     }
   }
 
-  // FIXME: Validation of the students
-
+  // FIXME: Validation of the students. Also: this should be in the magic wand
   if (number_of_non_student_adults == 2) {
     if (family_size == 4) {
       var rebate = -(total_paid_skipass * 0.1)
