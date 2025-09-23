@@ -362,6 +362,7 @@ function categoriesAscendingOrder(cat1, cat2) {
 function getNoLevelString() { return 'Non déterminé' } // DOES define an level
 function getNALevelString() { return 'Pas Concerné' }  // DOEST NOT define a level
 function getLevelCompString() {return "Compétiteur" }
+function getAdultLevelString() { return 'Adulte' }
 function getRiderLevelString() { return 'Rider' }
 function getFirstKidString() { return '1er enfant' }
 function getSecondKidString() { return '2ème enfant' }
@@ -369,6 +370,7 @@ function getThirdKidString() { return '3ème enfant' }
 function getFourthKidString() { return '4ème enfant' }
 
 var noncomp_subscription_categories = [
+  getAdultLevelString(),
   getRiderLevelString(),
   getFirstKidString(),
   getSecondKidString(),
@@ -1347,6 +1349,7 @@ function autoFillLicensePurchases() {
 function autoFillNonCompSubscriptions() {
   updateStatusBar("Achat automatique des adhésions loisir...", "grey", add=true)
   var subscription_map = createNonCompSubscriptionMap(SpreadsheetApp.getActiveSheet())
+  // FIXME: This needs to accomodate the Adult category?
   var subscription_slots = [0, 0, 0, 0, 0]
   var current_non_rider_slot = 1
   // Collect the licenses and the levels. We assume someone wants 

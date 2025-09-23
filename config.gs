@@ -15,8 +15,8 @@ var licenses_configuration_map = {
   'CN Adulte (Loisir)':       [2010,  43,   5],
   'CN Famille (Loisir)':      [-1,    44,   5],
   'CN Dirigeant':             [2010,  45,   5],
-  'CN Jeune (Compétition)':   [2011,  52,   5],
-  'CN Adulte (Compétition)':  [2010,  53,   5],
+  'CN Jeune (Compétition)':   [2011,  53,   5],
+  'CN Adulte (Compétition)':  [2010,  54,   5],
 }
 //
 // - A map of available subscription for competitors and their validations
@@ -25,11 +25,11 @@ var licenses_configuration_map = {
 //
 var comp_subscription_map = {
 // What | Dob/Y | Dob/Y | Row | Col
-  'U6':   [2020,  2021,   54,   5],
-  'U8':   [2018,  2019,   55,   5],
-  'U10':  [2016,  2017,   56,   5],
+  'U6':   [2020,  2021,   55,   5],
+  'U8':   [2018,  2019,   56,   5],
+  'U10':  [2016,  2017,   57,   5],
   // U12+ The first listed year is the LAST year of the category
-  'U12+': [2015, -1,      57,   5],
+  'U12+': [2015, -1,      58,   5],
 }
 // Number of kids per competitor families
 var comp_kids_per_family = 4
@@ -106,20 +106,20 @@ var coord_family_phone2 =             [10, 5]
 // - Locations of various status line and collected input, located
 //   a the bottom of the invoice.
 // 
-var coord_total =                     [70, 7]
-var coord_rebate =                    [81, 4]
-var coord_charge =                    [82, 4]
-var coord_owed =                      [83, 7]
-var coord_payment_validation_form =   [84, 7]
-var coord_personal_message =          [90, 3]
-var coord_timestamp =                 [91, 2]
-var coord_version =                   [91, 3]
-var coord_legal_disclaimer =          [91, 5]
-var coord_ffs_medical_form =          [91, 7]
-var coord_callme_phone =              [91, 9]
-var coord_yolo =                      [92, 3]
-var coord_status =                    [93, 4]
-var coord_generated_pdf =             [93, 6]
+var coord_total =                     [71, 7]
+var coord_rebate =                    [82, 4]
+var coord_charge =                    [83, 4]
+var coord_owed =                      [84, 7]
+var coord_payment_validation_form =   [85, 7]
+var coord_personal_message =          [91, 3]
+var coord_timestamp =                 [92, 2]
+var coord_version =                   [92, 3]
+var coord_legal_disclaimer =          [92, 5]
+var coord_ffs_medical_form =          [92, 7]
+var coord_callme_phone =              [92, 9]
+var coord_yolo =                      [93, 3]
+var coord_status =                    [94, 4]
+var coord_generated_pdf =             [94, 6]
 //
 // - Rows where the family names are entered
 // 
@@ -157,5 +157,5 @@ var coord_total_ski_pass_amount    =  [40, 9]
 //
 var coords_pdf_row_column_ranges = {
     'start':                          [1, 0],
-    'end':                            [91, 9]
+    'end':                            [92, 9]
 }

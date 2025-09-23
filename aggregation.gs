@@ -331,7 +331,6 @@ function updateAccountingTrix() {
 ///////////////////////////////////////////////////////////////////////////////
 
 function updateProblematicRegistration(link, context) {
-
   // Find the first empty slot in range and return the range it corresponds to.
   // Note that parameter range must be a column
   function findFirstEmptySlot(sheet, range) {
