@@ -779,6 +779,7 @@ function testCategoryOrders() {
   if (categoriesAscendingOrder(cat1, cat2) != -1) {
     return logError(cat1, cat2)
   }
+  Logger.log("Finished testCategoryOrders().");
   return true
 }
 
@@ -793,6 +794,7 @@ function testCreateCompSubscriptionMap() {
       return false
     }
   }
+  Logger.log("Finished testCreateCompSubscriptionMap().");
   return true
 }
 
@@ -806,6 +808,7 @@ function testCreateNonCompSubscriptionMap() {
       return false
     }
   }
+  Logger.log("Finished testCreateNonCompSubscriptionMap().");
   return true
 }
 
@@ -871,6 +874,7 @@ function testIsLevel() {
       return false      
     }
   }
+  Logger.log("Finished testIsLevel().");
   return true
 }
 
