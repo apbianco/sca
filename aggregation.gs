@@ -87,8 +87,13 @@ function updateAggregationTrix() {
     if (family_dict[index].last_name == "") {
       continue
     }
-    // Retain kids with a non comp license (can be a junior license or a family license)
-    if (isMinor(family_member.dob) && isLicenseNonComp(family_member.license_type)) {
+    // Retain someone with a non comp license that has a ski level. Setting a ski level
+    // signal the intention to be placed under the supervision of an instructor.
+    if (isLevelRecreationalNonRider(family_member.level) || isLevelRider(family_member.level)) {
+      // If the member is an adult, its category is changed to "Adulte"
+      if (isAdult(family_member.dob)) {
+        family_member.level = 'Adulte'
+      }
       family.push(family_member)
     }
   }
@@ -115,7 +120,7 @@ function doUpdateAccountingTrix(data) {
     sheet.getRange(row, column+13).setValue(data.parent1_phone)
     sheet.getRange(row, column+14).setValue(data.parent1_email)
     sheet.getRange(row, column+15).setValue(data.parent2_phone)
-    sheet.getRange(row, column+16).setValue(data.parent2_email)   
+    sheet.getRange(row, column+16).setValue(data.parent2_email)
   }
 
   function dispatchNonCompSubscriptions() {
@@ -123,6 +128,9 @@ function doUpdateAccountingTrix(data) {
     // entries in data
     var non_comp_subscriptions = createNonCompSubscriptionMap(sheet)
     for (const key in non_comp_subscriptions) {
+      function levelRider(entry) { return isLevelRider(entry.level) }
+      function levelRecreationalNonRider(entry) { return isLevelRecreationalNonRider(entry.level)}
+      function levelAdult(entry) { return isAdult(new Date(entry.dob)) }
       var subscription = non_comp_subscriptions[key]
       subscription.UpdatePurchasedSubscriptionAmountFromTrix()
       var number_charges = subscription.PurchasedSubscriptionAmount()
@@ -131,8 +139,11 @@ function doUpdateAccountingTrix(data) {
         continue
       }
       var fee = subscription.SubscriptionAmount()
-      // How to determine what applies.
-      var determination = (isLevelRider(key) ? isLevelRider : isLevelRecreationalNonRider)
+      // How to determine what applies - as we're going to all the entries in
+      // data, this is the last filter to select a particular entry in data.
+      var determination = (isSubscriptionAdult(key) ?
+                           levelAdult : isLevelRider(key) ?
+                                        levelRider : levelRecreationalNonRider)
       // Go over all entries and dispatch charges as possible
       for (var entry of data) {
         // Stop when we have dispatched all existing charges
@@ -145,7 +156,7 @@ function doUpdateAccountingTrix(data) {
         }
         // Determination has been previously picked to be the right
         // function.
-        if (determination(entry.level)) {
+        if (determination(entry)) {
           entry.subscription_type = subscription.HumanReadableName() + " loisir"
           entry.subscription_fee = fee
           number_charges -= 1
@@ -233,7 +244,6 @@ function doUpdateAccountingTrix(data) {
   }
 
   function dispatchSkiPasses() {
-
     // If there's a rebate, we have a familly ski pass. Compute and assign the total amoun
     // amount paid in ski passes (rebate included) to the first familly member, mark the
     // others as 'Family' and we're done.
@@ -280,9 +290,6 @@ function doUpdateAccountingTrix(data) {
   }
 
   var sheet = SpreadsheetApp.openById(accounting_trix).getSheets()[0]
-  // The sheet is filled only for someone with a level or competitor. Remove
-  // all others
-  data = data.filter(entry => isLevelDefined(entry.level))
   // Dispatch all the data
   dispatchNonCompSubscriptions()
   dispatchCompSubscriptions()
@@ -291,6 +298,7 @@ function doUpdateAccountingTrix(data) {
 
   // Update all entries, sort the spreadsheet and sync it.
   var entire_range = sheet.getRange(accounting_trix_all_range)
+  var max_row = 0
   for (var index in data) {
     var row = SearchEntry(sheet, data[index],
                           {row_start: accounting_trix_row_start,
@@ -300,10 +308,14 @@ function doUpdateAccountingTrix(data) {
       // FIXME: What to signal to the user?
       continue
     }
+    max_row = Math.max(max_row, row)
     UpdateRow(sheet, row, data[index])
   }
   // Sort the spread sheet by last name and then first name and sync the spreadsheet.
   entire_range.sort([{column: entire_range.getColumn()}, {column: entire_range.getColumn()+5}])
+  // ...
+  var entireRowRange = sheet.getRange(max_row, 1, 1, sheet.getMaxColumns());
+  entireRowRange.setBorder(null, null, true, null, null, null, '#000000', SpreadsheetApp.BorderStyle.DASHED);
   SpreadsheetApp.flush()
 }
 
@@ -316,9 +328,11 @@ function updateAccountingTrix() {
     if (family_dict[index].last_name == "") {
       continue
     }
-    // Retain the right entries:
-    //   - FIXME
-    if (true) {
+    // Retain the right entries: only folks placed under the supervision of an
+    // instructor
+    if (isLevelComp(family_member.level) ||
+        isLevelRecreationalNonRider(family_member.level) ||
+        isLevelRider(family_member.level)) {
       family.push(family_member)
     }
   }

@@ -358,11 +358,12 @@ function categoriesAscendingOrder(cat1, cat2) {
 ///////////////////////////////////////////////////////////////////////////////
 
 // Note: Undertermined level is not absence of level. Absence of level is
-// getNALevelString or ''
-function getNoLevelString() { return 'Non déterminé' } // DOES define an level
+// getNALevelString or ''. Absence of a level indicates that the skier will
+// NOT be placed under the supervision of an instructor or a coach
 function getNALevelString() { return 'Pas Concerné' }  // DOEST NOT define a level
+function getNoLevelString() { return 'Non déterminé' } // DOES define an level
 function getLevelCompString() {return "Compétiteur" }
-function getAdultLevelString() { return 'Adulte' }
+function getAdultString() { return 'Adulte' }
 function getRiderLevelString() { return 'Rider' }
 function getFirstKidString() { return '1er enfant' }
 function getSecondKidString() { return '2ème enfant' }
@@ -370,7 +371,7 @@ function getThirdKidString() { return '3ème enfant' }
 function getFourthKidString() { return '4ème enfant' }
 
 var noncomp_subscription_categories = [
-  getAdultLevelString(),
+  getAdultString(),
   getRiderLevelString(),
   getFirstKidString(),
   getSecondKidString(),
@@ -412,8 +413,12 @@ function isLevelRecreationalNonRider(level) {
   return isLevelDefined(level) && isLevelNotComp(level) && ! isLevelRider(level)
 }
 
-function isFirstKid(subscription) {
+function isSubscriptionFirstKid(subscription) {
   return isLevelDefined(subscription) && subscription == getFirstKidString()
+}
+
+function isSubscriptionAdult(subscription) {
+  return isLevelDefined(subscription) && subscription == getAdultString()
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1357,9 +1362,11 @@ function autoFillLicensePurchases() {
 function autoFillNonCompSubscriptions() {
   updateStatusBar("Achat automatique des adhésions loisir...", "grey", add=true)
   var subscription_map = createNonCompSubscriptionMap(SpreadsheetApp.getActiveSheet())
-  // FIXME: This needs to accomodate the Adult category?
-  var subscription_slots = [0, 0, 0, 0, 0]
+  //                        Rider, 1st Kid, 2nd Kid, 3rd Kid, 4th Kid
+  var subscription_slots = [0,     0,       0,       0,       0]
+  var rider_index = 0
   var current_non_rider_slot = 1
+  var number_of_adults = 0
   // Collect the licenses and the levels. We assume someone wants 
   // a subscription when they have a adult/kid non comp license and that
   // their level has a value that isn't "not in scope" (non concernée)
@@ -1375,13 +1382,18 @@ function autoFillNonCompSubscriptions() {
     if (isLicenseNonComp(selected_license) && isLevelDefined(level)) {
       // Riders are accumulated
       if (isLevelRider(level)) {
-        subscription_slots[0] += 1
+        subscription_slots[rider_index] += 1
       } else {
-        // Non riders are dispatched. We stop filling things past 4
-        // FIXME: Issue a warning?
-        if (current_non_rider_slot < 5) {
-          subscription_slots[current_non_rider_slot] = 1
-          current_non_rider_slot += 1
+        // If we have an adult by DOB, we fill in the adult section
+        if (isAdult(getDoB([row, coord_dob_column]))) {
+          number_of_adults += 1
+        } else {
+          // Non riders are dispatched. We stop filling things past 4
+          // FIXME: Issue a warning?
+          if (current_non_rider_slot < 5) {
+            subscription_slots[current_non_rider_slot] = 1
+            current_non_rider_slot += 1
+          }
         }
       }
     }
@@ -1404,6 +1416,8 @@ function autoFillNonCompSubscriptions() {
   subscription_slots.splice(0, 0, number_of_riders)
   // Truncate the array by as many 0s we initially inserted
   subscription_slots.splice(-number_of_riders, number_of_riders)
+  // Insert the number of adults 
+  subscription_slots.splice(0, 0, number_of_adults)
 
   for (var index in noncomp_subscription_categories) {
     var subscription = noncomp_subscription_categories[index]
@@ -1856,7 +1870,7 @@ function validateNonCompSubscriptions() {
   //   2- level_or_subscription is FirstKid and there's one or more rider defined
   function skipRiderOrFirstKidIfRider(level_or_subscription) {
     return (isLevelRider(level_or_subscription) || 
-            (isFirstKid(level_or_subscription) &&
+            (isSubscriptionFirstKid(level_or_subscription) &&
              subscription_map[getRiderLevelString()].PurchasedSubscriptionAmount() > 0))
   }
 
@@ -1908,7 +1922,7 @@ function validateNonCompSubscriptions() {
       // If we're skipping first kid because there's one or more riders declared
       // we adjust the accumulator so that the rest of the verification can
       // happen.
-      if (isFirstKid(subscription)) {
+      if (isSubscriptionFirstKid(subscription)) {
         subscribed_non_rider_number_accumulator = 1
       }
       continue
@@ -1968,7 +1982,7 @@ function getSkiPassesRebateAmount() {
   if (rebate) {
     return rebate
   }
-  return getNumbeAt(coord_rebate_family_of_5_amount)
+  return getNumberAt(coord_rebate_family_of_5_amount)
 }
 
 function validateSkiPasses() {
