@@ -132,7 +132,7 @@ function doUpdateAccountingTrix(data) {
       }
       var fee = subscription.SubscriptionAmount()
       // How to determine what applies.
-      var determination = (isLevelRider(key) ? isLevelRider : isLevelNotRider)
+      var determination = (isLevelRider(key) ? isLevelRider : isLevelRecreationalNonRider)
       // Go over all entries and dispatch charges as possible
       for (var entry of data) {
         // Stop when we have dispatched all existing charges

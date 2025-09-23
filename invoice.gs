@@ -408,7 +408,7 @@ function isLevelRider(level) {
   return level == getRiderLevelString()
 }
 
-function isLevelNotRider(level) {
+function isLevelRecreationalNonRider(level) {
   return isLevelDefined(level) && isLevelNotComp(level) && ! isLevelRider(level)
 }
 
@@ -851,6 +851,14 @@ function arrayToString(v) {
     to_return += index + ": " + v[index] + "\n";
   }
   return to_return;
+}
+
+function arrayToRawString(v) {
+  var to_return = ""
+  for (const entry of v) {
+    to_return += " " + entry
+  }
+  return to_return
 }
 
 function dobRangeToString(dob_start, dob_end) {
@@ -1870,7 +1878,7 @@ function validateNonCompSubscriptions() {
     if (isLevelRider(level)) {
       rider_number += 1
     }
-    if (isLevelNotComp(level) && isLevelNotRider(level)) {
+    if (isLevelRecreationalNonRider(level)) {
       non_rider_number += 1
     }
   })

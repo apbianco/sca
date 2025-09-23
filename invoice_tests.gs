@@ -809,9 +809,78 @@ function testCreateNonCompSubscriptionMap() {
   return true
 }
 
+function testIsLevel() {
+  function areArraysEqual(arr1, arr2) {
+    if (arr1.length !== arr2.length) { return false }
+    for (let i = 0; i < arr1.length; i++) {
+      if (arr1[i] !== arr2[i]) {
+        return false;
+      } 
+    }
+    return true
+  }
+  var existing_levels = {
+    //                  NotAdjusted | NotDefined | Defined | Comp |  NotComp | Rider | RecreationalNonRider
+    "":                [false,        true,        false,    false,  false,    false,  false],
+    "Pas Concerné":    [false,        true,        false,    false,  false,    false,  false],
+    "Non déterminé":   [false,        false,       true,     false,  true,     false,  true],
+    "Compétiteur":     [false,        false,       true,     true,   false,    false,  false],
+    "Débutant/Ourson": [false,        false,       true,     false,  true,     false,  true],
+    "Flocon":          [false,        false,       true,     false,  true,     false,  true],
+    "Étoile 1":        [false,        false,       true,     false,  true,     false,  true],
+    "Étoile 2":        [false,        false,       true,     false,  true,     false,  true],
+    "Étoile 3":        [false,        false,       true,     false,  true,     false,  true],
+    "Bronze":          [false,        false,       true,     false,  true,     false,  true],
+    "Argent":          [false,        false,       true,     false,  true,     false,  true],
+    "Or":              [false,        false,       true,     false,  true,     false,  true],
+    "Ski/Fun":         [false,        false,       true,     false,  true,     false,  true],
+    "Rider":           [false,        false,       true,     false,  true,     true,   false],
+    "Snow Découverte": [false,        false,       true,     false,  true,     false,  true],
+    "Snow 1":          [false,        false,       true,     false,  true,     false,  true],
+    "Snow 2":          [false,        false,       true,     false,  true,     false,  true],
+    "Snow 3":          [false,        false,       true,     false,  true,     false,  true],
+    "Snow Expert":     [false,        false,       true,     false,  true,     false,  true],
+  }
+
+  for (const [key, values] of Object.entries(existing_levels)) {
+      var results = [isLevelNotAdjusted(key),
+                     isLevelNotDefined(key),
+                     isLevelDefined(key),
+                     isLevelComp(key),
+                     isLevelNotComp(key),
+                     isLevelRider(key),
+                     isLevelRecreationalNonRider(key)]
+      // Logger.log('INFO: [' + key + ']: ' + arrayToRawString(results))
+      if (! areArraysEqual(values, results)) {
+        Logger.log('FAILURE: for existing_levels[' + key + ']. Got:' + arrayToRawString(results) + ', expected: ' + arrayToRawString(values))
+        return false
+      }
+  }
+  var existing_levels_not_set = {}
+  for (const [key, value_] of Object.entries(existing_levels)) {
+    if (key == '') {
+      continue
+    }
+    entry = "⚠️ " + key
+    existing_levels_not_set[entry] = true
+  }
+  for (const [key, value] of Object.entries(existing_levels_not_set)) {
+    var result = isLevelNotAdjusted(key)
+    if (result != value) {
+      Logger.log('FAILURE: for existing_levels_not_set[' + key + ']. Got:' + result + ', expected: ' + value)
+      return false      
+    }
+  }
+  return true
+}
+
 function RUN_ALL_TESTS() {
   Logger.log("Starting all invoice tests...");
   var failedSuites = [];
+
+  if (!testIsLevel()) {
+    failedSuites.push("testIsLevel");
+  }
 
   if (!testCategoryOrders()) {
     failedSuites.push("testCategoryOrders");
@@ -856,8 +925,8 @@ function RUN_ALL_TESTS() {
     failedSuites.push("testCreateSkipassMap_UsesDynamicRanges");
   }
   if (failedSuites.length === 0) {
-    Logger.log("Summary: All test suites passed successfully!");
+    Logger.log("Summary: ✅✅✅ All test suites passed successfully!");
   } else {
-    Logger.log("Summary: Failures detected in the following test suite(s): " + failedSuites.join(", ") + ".");
+    Logger.log("Summary: ⚠️⚠️⚠️ Failures detected in the following test suite(s): " + failedSuites.join(", ") + ".");
   }
 }
