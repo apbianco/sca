@@ -18,6 +18,7 @@ var licenses_configuration_map = {
   'CN Jeune (Compétition)':   [2011,  53,   5],
   'CN Adulte (Compétition)':  [2010,  54,   5],
 }
+var basic_subscription_coord = [41, 5]
 //
 // - A map of available subscription for competitors and their validations
 //   dates. This map is used to create a map of properly configured non competitor

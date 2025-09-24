@@ -572,6 +572,10 @@ function createNonCompSubscriptionMap(sheet) {
   return to_return
 }
 
+function UpdateBasicSubscriptionNumber(basic_subscriptions_number) {
+  setStringAt(basic_subscription_coord, basic_subscriptions_number <= 0 ? '' : basic_subscriptions_number)
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 // Skipass management code
 ///////////////////////////////////////////////////////////////////////////////
@@ -1379,11 +1383,16 @@ function autoFillLicensePurchases() {
 function autoFillNonCompSubscriptions() {
   updateStatusBar("Achat automatique des adhésions loisir...", "grey", add=true)
   var subscription_map = createNonCompSubscriptionMap(SpreadsheetApp.getActiveSheet())
+  //       current_non_rider_slot
+  //           rider_index       \
+  //                       \      \
+  //                        V      V
   //                        Rider, 1st Kid, 2nd Kid, 3rd Kid, 4th Kid
   var subscription_slots = [0,     0,       0,       0,       0]
   var rider_index = 0
   var current_non_rider_slot = 1
   var number_of_adults = 0
+  var basic_subscriptions_number = 0
   // Collect the licenses and the levels. We assume someone wants 
   // a subscription when they have a adult/kid non comp license and that
   // their level has a value that isn't "not in scope" (non concernée)
@@ -1394,8 +1403,8 @@ function autoFillNonCompSubscriptions() {
     var row = coords_identity_rows[index];
     var selected_license = getLicenseAt([row, coord_license_column])
     var level = getStringAt([row, coord_level_column])
-    // Non competitor license and only if level indicates interest in a non competitor
-    // subscription.
+    // Handle non competitor license with a level defined, indicating interest
+    // in being under the supervision of an instructor, which includes adults.
     if (isLicenseNonComp(selected_license) && isLevelDefined(level)) {
       // Riders are accumulated
       if (isLevelRider(level)) {
@@ -1413,6 +1422,12 @@ function autoFillNonCompSubscriptions() {
           }
         }
       }
+    }
+    // Handle non competitors license with no level defined, which indicates there's
+    // no interest in being under the supervision of an instructure - which means that
+    // a basic subscription has to be registred.
+    if (isLicenseNonComp(selected_license) && isLevelNotDefined(level)) {
+      basic_subscriptions_number += 1
     }
   }
   // A rider subscription counts as an occupied non-rider subscription slot:
@@ -1440,6 +1455,7 @@ function autoFillNonCompSubscriptions() {
     var subscription = noncomp_subscription_categories[index]
     subscription_map[subscription].SetPurchasedSubscriptionAmount(subscription_slots[index])
   }
+  UpdateBasicSubscriptionNumber(basic_subscriptions_number)
   return true
 }
 
