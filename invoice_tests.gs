@@ -812,37 +812,38 @@ function testCreateNonCompSubscriptionMap() {
   return true
 }
 
-function testIsLevel() {
-  function areArraysEqual(arr1, arr2) {
-    if (arr1.length !== arr2.length) { return false }
-    for (let i = 0; i < arr1.length; i++) {
-      if (arr1[i] !== arr2[i]) {
-        return false;
-      } 
-    }
-    return true
+function areArraysEqual(arr1, arr2) {
+  if (arr1.length !== arr2.length) { return false }
+  for (let i = 0; i < arr1.length; i++) {
+    if (arr1[i] !== arr2[i]) {
+      return false;
+    } 
   }
+  return true
+}
+
+function testIsLevel() {
   var existing_levels = {
     //                  NotAdjusted | NotDefined | Defined | Comp |  NotComp | Rider | RecreationalNonRider
     "":                [false,        true,        false,    false,  false,    false,  false],
     "Pas Concerné":    [false,        true,        false,    false,  false,    false,  false],
-    "Non déterminé":   [false,        false,       true,     false,  true,     false,  true],
+    "Non déterminé":   [false,        false,       true,     false,  true,     false,  true ],
     "Compétiteur":     [false,        false,       true,     true,   false,    false,  false],
-    "Débutant/Ourson": [false,        false,       true,     false,  true,     false,  true],
-    "Flocon":          [false,        false,       true,     false,  true,     false,  true],
-    "Étoile 1":        [false,        false,       true,     false,  true,     false,  true],
-    "Étoile 2":        [false,        false,       true,     false,  true,     false,  true],
-    "Étoile 3":        [false,        false,       true,     false,  true,     false,  true],
-    "Bronze":          [false,        false,       true,     false,  true,     false,  true],
-    "Argent":          [false,        false,       true,     false,  true,     false,  true],
-    "Or":              [false,        false,       true,     false,  true,     false,  true],
-    "Ski/Fun":         [false,        false,       true,     false,  true,     false,  true],
+    "Débutant/Ourson": [false,        false,       true,     false,  true,     false,  true ],
+    "Flocon":          [false,        false,       true,     false,  true,     false,  true ],
+    "Étoile 1":        [false,        false,       true,     false,  true,     false,  true ],
+    "Étoile 2":        [false,        false,       true,     false,  true,     false,  true ],
+    "Étoile 3":        [false,        false,       true,     false,  true,     false,  true ],
+    "Bronze":          [false,        false,       true,     false,  true,     false,  true ],
+    "Argent":          [false,        false,       true,     false,  true,     false,  true ],
+    "Or":              [false,        false,       true,     false,  true,     false,  true ],
+    "Ski/Fun":         [false,        false,       true,     false,  true,     false,  true ],
     "Rider":           [false,        false,       true,     false,  true,     true,   false],
-    "Snow Découverte": [false,        false,       true,     false,  true,     false,  true],
-    "Snow 1":          [false,        false,       true,     false,  true,     false,  true],
-    "Snow 2":          [false,        false,       true,     false,  true,     false,  true],
-    "Snow 3":          [false,        false,       true,     false,  true,     false,  true],
-    "Snow Expert":     [false,        false,       true,     false,  true,     false,  true],
+    "Snow Découverte": [false,        false,       true,     false,  true,     false,  true ],
+    "Snow 1":          [false,        false,       true,     false,  true,     false,  true ],
+    "Snow 2":          [false,        false,       true,     false,  true,     false,  true ],
+    "Snow 3":          [false,        false,       true,     false,  true,     false,  true ],
+    "Snow Expert":     [false,        false,       true,     false,  true,     false,  true ],
   }
 
   for (const [key, values] of Object.entries(existing_levels)) {
@@ -878,10 +879,47 @@ function testIsLevel() {
   return true
 }
 
+function testIsLicense() {
+  var existing_licenses = {
+    //                          Defined | NoLicense | NotDefined | NonCompJunior | NonCompAdult | NonCompFamily | NonComp | Comp | CompAdult | CompJunior | Exec
+    'Z@%!':                    [false,    false,      true,        false,          false,         false,          false,    false, false,      false,       false],
+    'Aucune':                  [false,    true,       true,        false,          false,         false,          false,    false, false,      false,       false],
+    'CN Jeune (Loisir)':       [true,     false,      false,       true,           false,         false,          true,     false, false,      false,       false],
+    'CN Adulte (Loisir)':      [true,     false,      false,       false,          true,          false,          true,     false, false,      false,       false],
+    'CN Famille (Loisir)':     [true,     false,      false,       false,          false,         true,           true,     false, false,      false,       false],
+    'CN Dirigeant':            [true,     false,      false,       false,          false,         false,          false,    false, false,      false,       true ],
+    'CN Jeune (Compétition)':  [true,     false,      false,       false,          false,         false,          false,    true,  false,      true,        false],
+    'CN Adulte (Compétition)': [true,     false,      false,       false,          false,         false,          false,    true,  true,       false,       false],
+  }
+  for (const [key, values] of Object.entries(existing_licenses)) {
+    var results = [isLicenseDefined(key),
+                   isLicenseNoLicense(key),
+                   isLicenseNotDefined(key),
+                   isLicenseNonCompJunior(key),
+                   isLicenseNonCompAdult(key),
+                   isLicenseNonCompFamily(key),
+                   isLicenseNonComp(key),
+                   isLicenseComp(key),
+                   isLicenseCompAdult(key),
+                   isLicenseCompJunior(key),
+                   isLicenseExec(key)]
+    // Logger.log('INFO: [' + key + ']: ' + arrayToRawString(results))
+    if (! areArraysEqual(values, results)) {
+      Logger.log('FAILURE: for existing_licences[' + key + ']. Got:' + arrayToRawString(results) + ', expected: ' + arrayToRawString(values))
+      return false
+    }  
+  }
+  Logger.log("Finished testIsLicense().");
+  return true  
+}
+
 function RUN_ALL_TESTS() {
   Logger.log("Starting all invoice tests...");
   var failedSuites = [];
 
+  if (!testIsLicense()) {
+    failedSuites.push('testIsLicense')
+  }
   if (!testIsLevel()) {
     failedSuites.push("testIsLevel");
   }

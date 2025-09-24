@@ -120,14 +120,28 @@ function getExecutiveLicenseString() {return 'CN Dirigeant'}
 function getCompJuniorLicenseString() {return 'CN Jeune (Compétition)'}
 function getCompAdultLicenseString() {return 'CN Adulte (Compétition)'}
 
+const getLicensesMapForIsTest = (function() {
+  let cached_license_map = null
+  return function() {
+    if (cached_license_map === null) {
+      cached_license_map = createLicensesMap(SpreadsheetApp.getActiveSheet())
+    }
+    return cached_license_map
+  }
+})();
+
 function isLicenseDefined(license) {
-  return license != getNoLicenseString() && license in createLicensesMap(SpreadsheetApp.getActiveSheet())
+  return license != getNoLicenseString() && license in getLicensesMapForIsTest()
 }
 
+// If license is not a valid license that's not getNoLicenseString(),
+// this will return false and that's fine.
 function isLicenseNoLicense(license) {
   return license == getNoLicenseString()
 }
 
+// If license is something that's not a known license, this will return
+// true and that's fine.
 function isLicenseNotDefined(license) {
   return !isLicenseDefined(license)
 }
@@ -144,8 +158,8 @@ function isLicenseNonCompFamily(license) {
   return license == getNonCompFamilyLicenseString()
 }
 
+// This excludes Executive license.
 function isLicenseNonComp(license) {
-  // FIXME: Why is it not !isLicenseComp() ?
   return (isLicenseNonCompJunior(license) ||
           isLicenseNonCompFamily(license) ||
           isLicenseNonCompAdult(license))
