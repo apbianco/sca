@@ -120,18 +120,8 @@ function getExecutiveLicenseString() {return 'CN Dirigeant'}
 function getCompJuniorLicenseString() {return 'CN Jeune (Compétition)'}
 function getCompAdultLicenseString() {return 'CN Adulte (Compétition)'}
 
-const getLicensesMapForIsTest = (function() {
-  let cached_license_map = null
-  return function() {
-    if (cached_license_map === null) {
-      cached_license_map = createLicensesMap(SpreadsheetApp.getActiveSheet())
-    }
-    return cached_license_map
-  }
-})();
-
 function isLicenseDefined(license) {
-  return license != getNoLicenseString() && license in getLicensesMapForIsTest()
+  return license != getNoLicenseString() && license in getMemoizedLicensesMap()
 }
 
 // If license is not a valid license that's not getNoLicenseString(),
@@ -333,6 +323,17 @@ function createLicensesMap(sheet) {
   validateClassInstancesMap(to_return, 'license_map')
   return to_return
 }
+
+// Only for const use of the license map.
+const getMemoizedLicensesMap = (function() {
+  let cached_license_map = null
+  return function() {
+    if (cached_license_map === null) {
+      cached_license_map = createLicensesMap(SpreadsheetApp.getActiveSheet())
+    }
+    return cached_license_map
+  }
+})();
 
 ///////////////////////////////////////////////////////////////////////////////
 // Competitor categories management
@@ -1285,6 +1286,7 @@ function autoComputeLicenses() {
             license == getNonCompAdultLicenseString())
   }
   updateStatusBar("Attribution automatique des licenses...", "grey")
+  // FIXME: Eligible to using getMemoizedLicensesMap.
   var license_map = createLicensesMap(SpreadsheetApp.getActiveSheet())
   // We're going to store what will be computed in these two array: one
   // to remember the row we changed and an other one to remember the
@@ -1360,6 +1362,7 @@ function autoComputeLicenses() {
 
 function autoFillLicensePurchases() {
   updateStatusBar("Achat automatique des licenses...", "grey", add=true)
+  // Not eligible to use getMemoizedLicensesMap.
   var license_map = createLicensesMap(SpreadsheetApp.getActiveSheet())
   // Collect the attributed licenses
   for (var index in coords_identity_rows) {
@@ -1597,6 +1600,7 @@ function validateFamilyMembers() {
   updateStatusBar("Validation des données de la famille...", "grey", add=true)
   // Get a licene map so that we can immediately verify the age picked
   // for a license is correct.
+  // FIXME: eligible to use getMemoizedLicensesMap.
   var license_map = createLicensesMap(SpreadsheetApp.getActiveSheet())
   for (var index in coords_identity_rows) {
     var first_name = getStringAt([coords_identity_rows[index], coord_first_name_column]);
@@ -1723,6 +1727,7 @@ function validateFamilyMembers() {
 // Cross check the attributed licenses with the ones selected for payment
 function validateLicenses() {
   updateStatusBar("Validation du choix des licenses...", "grey", add=true)
+  // Not eligible to use getMemoizedLicensesMap.
   var license_map = createLicensesMap(SpreadsheetApp.getActiveSheet())
   // Collect the attributed licenses
   for (var index in coords_identity_rows) {

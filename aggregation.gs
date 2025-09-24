@@ -196,6 +196,7 @@ function doUpdateAccountingTrix(data) {
   }
 
   function dispatchLicenses() {
+    // Not eligible to using getMemoizedLicensesMap
     var licenses = createLicensesMap(sheet)
     var family = licenses[getNonCompFamilyLicenseString()]
     family.UpdatePurchasedLicenseAmountFromTrix()
