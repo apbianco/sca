@@ -46,16 +46,6 @@ function TESTValidation() {
   test(validateSkiPasses)
 }
 
-function TESTValidateInvoice() {
-  function test(f) {
-    var result = f()
-    if (result == {}) {
-      displayErrorPanel("Error during test")
-    }
-  }
-  test(validateInvoice)
-}
-
 // Verify that family members are properly defined, especially with regard to
 // what they are claiming to be associated to (level, type of license, etc...)
 // When this succeeds, the family members should be defined in such a way that
@@ -348,15 +338,6 @@ function validateCompSubscriptions() {
 // family members have been validated, which means that we are guaranteed here
 // that people declared to have a non comp license also have a level entered.
 function validateNonCompSubscriptions() {
-  // Return true if:
-  //   1- level_or_subscription is Rider
-  //   2- level_or_subscription is FirstKid and there's one or more rider defined
-  function skipRiderOrFirstKidIfRider(level_or_subscription) {
-    return (isLevelRider(level_or_subscription) || 
-            (isSubscriptionFirstKid(level_or_subscription) &&
-             subscription_map[getRiderLevelString()].PurchasedSubscriptionAmount() > 0))
-  }
-
   updateStatusBar("Validation des adhésions loisir...", "grey", add=true)
   var subscription_map = createNonCompSubscriptionMap(SpreadsheetApp.getActiveSheet())
 
@@ -380,58 +361,59 @@ function validateNonCompSubscriptions() {
     }
   })
 
-  // The number of riders must be equal to the number of riders we found. First count them all
-  // and the perform the verification
+  // 1- The number of riders must be equal to the number of riders we found. First count them all
+  //    and the perform the verification
   var subscribed_rider_number = subscription_map[getRiderLevelString()].PurchasedSubscriptionAmount()
   if (rider_number != subscribed_rider_number) {
     return ("Le nombre d'adhésion(s) rider souscrite(s) (" + subscribed_rider_number + ") ne correspond pas au nombre " +
             "de rider(s) renseigné(s) (" + rider_number + ")")
   }
 
-  // If we have a rider, the first subscription can not exist, we jump directly to the second kid
-  var first_kid = subscription_map[getFirstKidString()].PurchasedSubscriptionAmount()
-  if (first_kid != 0 && rider_number > 0) {
-    return ("L'adhésion rider compte comme une première Adhésion / Stage / Transport - 1er enfant. " +
-            "Veuillez saisir les adhésion à partir du deuxièmme enfant.")
+  // 2- If we have N riders, the N first non Rider subscriptions can not be purchased,
+  //    we jump directly to N+1
+  var kids = [getFirstKidString(), getSecondKidString(), getThirdKidString(), getFourthKidString()]
+  for (var index = 0; index < rider_number; index += 1) {
+    var kid = subscription_map[kids[index]].PurchasedSubscriptionAmount()
+    if (kid != 0) {
+    return ("Une ou plusieurs adhésions Rider comptent comme des Adhésions / Stage / Transport - " +
+            "Veuillez saisir les adhésions non Rider à partir du " + kids[rider_number])
+    }
   }
 
-  // 2- Go over the 1st to 4th subscription and make sure that N is matched by N-1 for
-  //    N > 1. This verification is adjusted in case we have a rider as a first kid.
-  var subscribed_non_rider_number_accumulator = 0
-  for (var index in noncomp_subscription_categories) {
-    // Skip Rider and skip first kid if we had a rider registered
-    var subscription = noncomp_subscription_categories[index]
-    if (skipRiderOrFirstKidIfRider(subscription)) {
-      // If we're skipping first kid because there's one or more riders declared
-      // we adjust the accumulator so that the rest of the verification can
-      // happen.
-      if (isSubscriptionFirstKid(subscription)) {
-        subscribed_non_rider_number_accumulator = 1
+  // 3- Start with the first non rider subscription that is allowed to exist and verify that
+  //    if it exists, it is followed by an other subscription or no subscription. As soon as
+  //    no subscription is found, no other subscrition can exist. This is a state machine
+  //    with the following allowed transitions: ? -> {1, 0}, 1 -> {1, 0}, 0 -> {0}
+  var state = -1
+  var adjusted_noncomp_subscription_categories = noncomp_subscription_categories.slice(2+rider_number)
+  for (var index in adjusted_noncomp_subscription_categories) {
+    var subscription = adjusted_noncomp_subscription_categories[index]
+    var current_purchased = subscription_map[subscription].PurchasedSubscriptionAmount()
+    if (current_purchased < 0 || current_purchased > 1) {
+      return ("La valeur du champ Adhésion / Stage / Transport pour le " +
+              subscription + " ne peut prendre que la valeur 0 ou 1 et non " + current_purchased)      
+    }
+    if (state == 0) {
+      if (current_purchased == 0) {
+        continue
       }
+      return ('Une adhésion existe pour un ' + subscription +
+              ' sans adhésion déclarée pour un ' + adjusted_noncomp_subscription_categories[index-1])
+    }
+    if (state == -1 || state == 1) {
+      state = current_purchased
       continue
     }
-    var current_purchased = subscription_map[subscription].PurchasedSubscriptionAmount()
-    if (current_purchased == 1 && subscribed_non_rider_number_accumulator != (index - 1)) {
-      return ('Une adhésion existe pour un ' + subscription +
-              ' sans adhésion déclarée pour un ' + noncomp_subscription_categories[index-1])
-    }
-    subscribed_non_rider_number_accumulator += subscription_map[subscription].PurchasedSubscriptionAmount()
+    return ("Error de vérification d'adhésion: state=" + state + 
+            ", current_purchased" + current_purchased)
   }
 
-  // 3- Go over 1st to 4th subscription and accumulate the number of subscriptions entered.
+  // 4- Go over the declared subscriptions and accumulate the number of subscriptions entered.
   //    that number must match the number of non rider member entered.
   var subscribed_non_rider_number = 0
-  for (var subscription in subscription_map) {
-    // Skip riders, we already verified them. This works because there's a subscription
-    // that bears the level it matches ('Rider')
-    if(skipRiderOrFirstKidIfRider(subscription)) {
-      continue
-    }
+  for (var index in adjusted_noncomp_subscription_categories) {
+    var subscription = adjusted_noncomp_subscription_categories[index]
     var found_non_rider_number = subscription_map[subscription].PurchasedSubscriptionAmount()
-    if (found_non_rider_number < 0 || found_non_rider_number > 1) {
-      return ("La valeur du champ Adhésion / Stage / Transport pour le " +
-              subscription + " ne peut prendre que la valeur 0 ou 1.")
-    }
     subscribed_non_rider_number += found_non_rider_number
   }
   if (subscribed_non_rider_number != non_rider_number) {

@@ -1706,6 +1706,16 @@ function validateEmailAddress(email_address, mandatory=true) {
   return true
 }
 
+function TESTValidateInvoice() {
+  function test(f) {
+    var result = f()
+    if (result == {}) {
+      displayErrorPanel("Error during test")
+    }
+  }
+  test(validateInvoice)
+}
+
 // Validate the invoice and return a dictionary of values
 // to use during invoice generation.
 function validateInvoice() {
