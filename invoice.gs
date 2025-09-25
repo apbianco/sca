@@ -503,7 +503,8 @@ class Subscription {
   }
 }
 
-// Definition of all possible subscription values
+// Definition of all possible subscription values. This map can not be memoized
+// as not const instances of it are created (map elements are always modified)
 function createCompSubscriptionMap(sheet) {
   function getFirstYear(label) {
     if (! label in comp_subscription_map) {
