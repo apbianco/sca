@@ -428,10 +428,6 @@ function isLevelRecreationalNonRider(level) {
   return isLevelDefined(level) && isLevelNotComp(level) && ! isLevelRider(level)
 }
 
-function isSubscriptionFirstKid(subscription) {
-  return isLevelDefined(subscription) && subscription == getFirstKidString()
-}
-
 function isSubscriptionAdult(subscription) {
   return isLevelDefined(subscription) && subscription == getAdultString()
 }

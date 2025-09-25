@@ -907,7 +907,7 @@ function testIsLicense() {
     if (! areArraysEqual(values, results)) {
       Logger.log('FAILURE: for existing_licences[' + key + ']. Got:' + arrayToRawString(results) + ', expected: ' + arrayToRawString(values))
       return false
-    }  
+    }
   }
   Logger.log("Finished testIsLicense().");
   return true  
