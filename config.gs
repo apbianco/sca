@@ -84,8 +84,8 @@ var accounting_trix_all_range =            'A3:Q'
 var legal_disclaimer_pdf =                  '1BcbIL1LUaL49OI8BGbLQQA-lxlijt_0m'
 var rules_pdf =                             '1aTtQ4Hx3JJPgek_d1_NV4WRSBOfVT_yr'
 var parents_note_pdf =                      '1IYzKukze9O7-ZFUiRI5x12iZAQmr0fIF'
-var ffs_information_leaflet_pdf =           '1zxP502NjvVo0AKFt_6FCxs1lQeJnNxmV' // TODO
-var ffs_information_leaflet_pages_to_sign = 'les pages 16 et 17'                // TODO
+var ffs_information_leaflet_pdf =           '12DH7chhB-Ye8S29VuGu0lkuCHl5SRJVO'
+var ffs_information_leaflet_pages_to_sign = 'les pages 16 et 17'
 var autocertification_non_adult =           '1Ir-1TlAB7SoZcamRoX2_i1uk9_l19YUJ' // Note: reusing 2024/2025
 var autocertification_adult =               '1rFAJghPwE-6xHzSWdRrMjP8gQKUldX6W' // Note: reusing 2024/2025
 //
