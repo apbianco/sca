@@ -2763,8 +2763,8 @@ function generatePDFAndMaybeSendEmail(config) {
       ffs_medical_form_text +
 
       "<p>Des questions concernant cette facture? Contacter Marlène: " +
-      "marlene.czajka@gmail.com (06-60-69-75-39) / Aurélien: " +
-      "armand.aurelien@gmail.com (07-69-62-84-29) pour le ski loisir ou " +
+      "marlene.czajka@gmail.com (06-60-69-75-39) / Anne-So Marchand: " +
+      "annesophie.marchand6857@gmail.com (06-26-26-27-97) pour le ski loisir ou " +
       "Ludivine: tresorerie.sca@gmail.com pour le ski compétition.</p>" +
       "<p>Des questions concernant la saison " + season + " ? " +
       "Envoyez un mail à " + email_loisir + " (ski loisir) " +
