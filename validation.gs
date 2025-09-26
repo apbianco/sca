@@ -350,14 +350,23 @@ function validateNonCompSubscriptions() {
   // These are the people that need a subscription. Note that a level indicating a competitor
   // is not taken into account.
   var rider_number = 0
-  var non_rider_number = 0
+  var non_rider_kid_number = 0
+  var non_rider_adult_number = 0
   coords_identity_rows.forEach(function(row) {
     var level = getStringAt([row, coord_level_column])
     if (isLevelRider(level)) {
       rider_number += 1
     }
     if (isLevelRecreationalNonRider(level)) {
-      non_rider_number += 1
+      // Here we need to make a difference between a kid and an adult:
+      //   - License is NonCompAdult or Familly, person is an adult.
+      var license = getStringAt([row, coord_license_column])
+      var dob = getDoB([row, coord_dob_column])
+      if (isLicenseNonCompAdult(license) || (isLicenseNonCompFamily(license) && isAdult(dob))) {
+        non_rider_adult_number += 1
+      } else {
+        non_rider_kid_number += 1
+      }
     }
   })
 
@@ -410,17 +419,26 @@ function validateNonCompSubscriptions() {
 
   // 4- Go over the declared subscriptions and accumulate the number of subscriptions entered.
   //    that number must match the number of non rider member entered.
-  var subscribed_non_rider_number = 0
+  var subscribed_non_rider_kid_number = 0
   for (var index in adjusted_noncomp_subscription_categories) {
     var subscription = adjusted_noncomp_subscription_categories[index]
-    var found_non_rider_number = subscription_map[subscription].PurchasedSubscriptionAmount()
-    subscribed_non_rider_number += found_non_rider_number
+    var found_non_rider_kid_number = subscription_map[subscription].PurchasedSubscriptionAmount()
+    subscribed_non_rider_kid_number += found_non_rider_kid_number
   }
-  if (subscribed_non_rider_number != non_rider_number) {
-    return ("Le nombre d'adhésion(s) NON rider souscrite(s) (" + subscribed_non_rider_number + ") " +
+  if (subscribed_non_rider_kid_number != non_rider_kid_number) {
+    return ("Le nombre d'adhésion(s) NON rider souscrite(s) (" + subscribed_non_rider_kid_number + ") " +
             "ne correspond pas au nombre " +
-            "de NON rider(s) renseigné(s) (" + non_rider_number + ")")    
+            "de NON rider(s) renseigné(s) (" + non_rider_kid_number + ")")    
   }
+
+  // 5- The number of non rider adults found and the number of matching subscriptions must agree.
+  var subscribed_non_rider_adult_number = subscription_map[getAdultString()].PurchasedSubscriptionAmount()
+  if (subscribed_non_rider_adult_number != non_rider_adult_number) {
+    return ("Le nombre d'adhésion(s) loisir adulte souscrite(s) (" + subscribed_non_rider_adult_number + ") " +
+            "ne correspond pas au nombre " +
+            "de loisir adulte renseigné(s) (" + non_rider_adult_number + ")")    
+  }
+
   return ''
 }
 
