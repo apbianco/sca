@@ -119,17 +119,41 @@ function testPlural() {
       expected: " apples trees "
     },
     {
+      description: "Input with only one space, singular",
+      number: 1,
+      message: " ",
+      expected: " "
+    },
+    {
       description: "Input with only spaces, singular",
       number: 1,
+      message: "     ",
+      expected: "     "
+    },    
+    {
+      description: "Input with only one space, plural",
+      number: 2,
       message: " ",
       expected: " "
     },
     {
       description: "Input with only spaces, plural",
       number: 2,
-      message: " ",
-      expected: " "
-    }
+      message: "   ",
+      expected: "   "
+    },
+    {
+      description: "Empty input, singular",
+      number: 1,
+      message: "",
+      expected: ""
+    },
+    {
+      description: "Empty input, plural",
+      number: 2,
+      message: "",
+      expected: ""
+    },
   ];
 
   var failures = 0;
