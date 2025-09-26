@@ -352,21 +352,29 @@ function validateNonCompSubscriptions() {
   var rider_number = 0
   var non_rider_kid_number = 0
   var non_rider_adult_number = 0
+  var basic_subscription_number = 0
   coords_identity_rows.forEach(function(row) {
     var level = getStringAt([row, coord_level_column])
+    var license = getStringAt([row, coord_license_column])
     if (isLevelRider(level)) {
       rider_number += 1
     }
     if (isLevelRecreationalNonRider(level)) {
       // Here we need to make a difference between a kid and an adult:
       //   - License is NonCompAdult or Familly, person is an adult.
-      var license = getStringAt([row, coord_license_column])
       var dob = getDoB([row, coord_dob_column])
       if (isLicenseNonCompAdult(license) || (isLicenseNonCompFamily(license) && isAdult(dob))) {
         non_rider_adult_number += 1
       } else {
         non_rider_kid_number += 1
       }
+    }
+    // We have someone taking a license but not practicing with the club. We are going to
+    // verify they paid a small fee subscription giving them access to that feature. Executive
+    // license holders are exempt. This item is called a basic subscription. We're testing
+    // against not being an empty string because isLevelNotDefined does too much.
+    if (level != '' && isLevelNotDefined(level) && !isLicenseExec(license)) {
+      basic_subscription_number += 1
     }
   })
 
@@ -438,7 +446,13 @@ function validateNonCompSubscriptions() {
             "ne correspond pas au nombre " +
             "de loisir adulte renseigné(s) (" + non_rider_adult_number + ")")    
   }
-
+  // 6- The number of basic subscription collected matches the number of charges for that item
+  var subscribed_basic_subscription_number = GetBasicSubscriptionNumber()
+  if (basic_subscription_number != subscribed_basic_subscription_number) {
+    return ("Le nombre de license(s) sans enseignement de ski souscrite(s) (" + subscribed_basic_subscription_number + ") " +
+            "ne correspond pas au nombre " +
+            "de license(s) sans enseignement de ski  renseignée(s) (" + subscribed_basic_subscription_number + ")")        
+  }
   return ''
 }
 

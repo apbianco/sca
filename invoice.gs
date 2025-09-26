@@ -573,6 +573,10 @@ function UpdateBasicSubscriptionNumber(basic_subscriptions_number) {
   setStringAt(basic_subscription_coord, basic_subscriptions_number <= 0 ? '' : basic_subscriptions_number)
 }
 
+function GetBasicSubscriptionNumber() {
+  return getNumberAt(basic_subscription_coord)
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 // Skipass management code
 ///////////////////////////////////////////////////////////////////////////////
