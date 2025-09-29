@@ -418,8 +418,13 @@ function createNewFamilySheetFromOld(sheet, family_name) {
       }
       // Sixth column is the level obtained last year. We invalidate it and
       // force user adjustment by adding something in front of it.
+      // Transition 2024/2025 -> 2025/2026, we replace "Pas Concerné" by an
+      // empty string
       else if (column == 6) {
         var new_level = old_level_range.getCell(row, 1).getValue().toString()
+        if (new_level == "Pas Concerné") {
+          new_level = ""
+        }
         // Add a ⚠️ in front of the old value only if it's possible to do so.
         if (new_level[0] != '⚠️' && new_level != '') {
           new_level = '⚠️ ' + new_level
