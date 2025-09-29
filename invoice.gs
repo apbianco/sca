@@ -372,12 +372,16 @@ function categoriesAscendingOrder(cat1, cat2) {
 // Non competitor levels and subscription values management
 ///////////////////////////////////////////////////////////////////////////////
 
-// Note: Undertermined level is not absence of level. Absence of level is
-// getNALevelString or ''. Absence of a level indicates that the skier will
-// NOT be placed under the supervision of an instructor or a coach
-function getNALevelString() { return 'Pas Concerné' }  // DOEST NOT define a level
-function getNoLevelString() { return 'Non déterminé' } // DOES define an level
+// Note:
+//  - Absence of level is '' - no selection was made when one was expected.
+//  - No LevelString hints at the existence of a level that hasn't yet been defined.  
+//  - Only License is a level (so it defines one) that indicates that the skier
+//    doesn't seek receiving ski instructions.
+function getNoLevelString() { return 'Non déterminé' } // DOES define a level
+function getOnlyLicense() { return 'Licence seule'}    // DOES define a level
 function getLevelCompString() {return "Compétiteur" }
+
+// Subscription categories
 function getAdultString() { return 'Adulte' }
 function getRiderLevelString() { return 'Rider' }
 function getFirstKidString() { return '1er enfant' }
@@ -399,25 +403,30 @@ function isLevelNotAdjusted(level) {
   return level.substring(0, 3) == "⚠️ ";
 }
 
-// NOTE: A level is not defined when it has not been entered or
-// when it has been set to getNALevelString()
+// NOTE: A level is not defined when it has not been entered.
 // NOTABLY:
 //  - A level of getNoLevelString() value *DEFINES* a level.
 //  - A level not yet adjusted *DEFINES* a level.
 function isLevelNotDefined(level) {
-  return level == '' || level == getNALevelString()
+  return level == ''
+}
+
+function isLevelLicenseOnly(level) {
+  return level == getOnlyLicense()
 }
 
 function isLevelDefined(level) {
-  return ! isLevelNotDefined(level)
+  return level != ''
 }
 
 function isLevelComp(level) {
-  return level == getLevelCompString()
+  return level == getLevelCompString(level)
 }
 
 function isLevelNotComp(level) {
-  return isLevelDefined(level) && ! isLevelComp(level);
+  return (isLevelLicenseOnly(level) ?
+          false : (! isLevelDefined(level) ?
+                   false : ! isLevelComp(level)))
 }
 
 function isLevelRider(level) {
@@ -425,7 +434,10 @@ function isLevelRider(level) {
 }
 
 function isLevelRecreationalNonRider(level) {
-  return isLevelDefined(level) && isLevelNotComp(level) && ! isLevelRider(level)
+  return (isLevelLicenseOnly(level) ?
+          false : (! isLevelDefined(level) ?
+                   false : (isLevelRider(level) ?
+                            false : isLevelNotComp(level))))
 }
 
 function isSubscriptionAdult(subscription) {
@@ -1314,7 +1326,12 @@ function autoComputeLicenses() {
     // the user only if the license has been knowingly set to Exec license
     // or no license.
     var selected_license = getRawLicenseAt([row, coord_license_column])
-    if (isLicenseExec(selected_license) || isLicenseNoLicense(selected_license)) {
+    // For an exec license, we adjust the level accordingly.
+    if (isLicenseExec(selected_license)) {
+      setStringAt([row, coord_level_column], getOnlyLicense())
+      continue
+    }
+    if (isLicenseNoLicense(selected_license)) {
       continue
     }
     var dob = getDoB([row, coord_dob_column])
@@ -1404,31 +1421,38 @@ function autoFillNonCompSubscriptions() {
     var row = coords_identity_rows[index];
     var selected_license = getLicenseAt([row, coord_license_column])
     var level = getStringAt([row, coord_level_column])
+    // Level not defined or level is competitor or license is competition or license is exec: we skip
+    if (!isLevelDefined(level) || isLevelComp(level) ||
+         isLicenseComp(selected_license) || isLicenseExec(selected_license)) {
+      continue
+    }
+    // Handle non competitors license with level set to license only, which indicates
+    // there's no interest in being under the supervision of an instructure. This means
+    // that a basic subscription has to be registred. Executive licenses are exclused.
+    if (isLevelLicenseOnly(level)) {
+      basic_subscriptions_number += 1
+      continue
+    }
     // Handle non competitor license with a level defined, indicating interest
     // in being under the supervision of an instructor, which includes adults.
-    if (isLicenseNonComp(selected_license) && isLevelDefined(level)) {
-      // Riders are accumulated
-      if (isLevelRider(level)) {
-        subscription_slots[rider_index] += 1
+    // Riders are accumulated
+    if (isLevelRider(level)) {
+      subscription_slots[rider_index] += 1
+      continue
+    } else {
+      // If we have an adult by DOB, we fill in the adult section. Again, an
+      // adult getting a executive license is excluded.
+      if (isAdult(getDoB([row, coord_dob_column]))) {
+        number_of_adults += 1
       } else {
-        // If we have an adult by DOB, we fill in the adult section
-        if (isAdult(getDoB([row, coord_dob_column]))) {
-          number_of_adults += 1
-        } else {
-          // Non riders are dispatched. We stop filling things past 4
-          // FIXME: Issue a warning?
-          if (current_non_rider_slot < 5) {
-            subscription_slots[current_non_rider_slot] = 1
-            current_non_rider_slot += 1
-          }
+        // Non riders are dispatched. We stop filling things past 4
+        // FIXME: Issue a warning?
+        if (current_non_rider_slot < 5) {
+          subscription_slots[current_non_rider_slot] = 1
+          current_non_rider_slot += 1
         }
       }
-    }
-    // Handle non competitors license with no level defined, which indicates there's
-    // no interest in being under the supervision of an instructure - which means that
-    // a basic subscription has to be registred.
-    if (isLicenseNonComp(selected_license) && isLevelNotDefined(level)) {
-      basic_subscriptions_number += 1
+      continue
     }
   }
   // A rider subscription counts as an occupied non-rider subscription slot:
@@ -1827,6 +1851,13 @@ function validateInvoice() {
       }
     }
 
+    // Perform the validation of the level that says license only
+    validation_error = validateOnlyLicensesLevel()
+    if (validation_error) {
+        displayErrorPanel(validation_error);
+        return validatationDataError()      
+    }
+
     // Validate the competitor subscriptions
     validation_error = validateCompSubscriptions()
     if (validation_error) {
@@ -2033,7 +2064,6 @@ function maybeEmailLicenseSCA(invoice, just_test, ignore_payment) {
 }
 
 function updateStatusBar(message, color, add=false) {
-  var content = message
   if (add) {
     message = getStringAt(coord_status) + ' ✔\n' + message
     var messages = message.split("\n")

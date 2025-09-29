@@ -15,6 +15,9 @@
 // validateLicenses              | Validate selected licenses with the one     | NO
 //                               | selected for payment.                       | string if error
 // ------------------------------+---------------------------------------------+----------------
+// validateOnlyLicensesLevel     | Validate the level that says that only a    | NO
+//                               | license is required                         | string if error
+// ------------------------------+---------------------------------------------+----------------
 // validateNonCompSubscriptions  | Validate the non competitor subscriptions.  | YES
 //                               |                                             | string if error
 // ------------------------------+---------------------------------------------+----------------
@@ -29,6 +32,7 @@
 //
 // - validateFamilyMembers()      | if error, bail
 // - validateLicenses()           | if error, bail
+// - validateOnlyLicensesLevel(). | if error, bail
 // - validateCompSubscriptions    | if error, Yes/No
 // - validateNonCompSubscriptions | if error, Yes/No
 // - validateSkiPasses            | if error, Yes/No.
@@ -42,6 +46,8 @@ function TESTValidation() {
   }
   test(validateFamilyMembers)
   test(validateLicenses)
+  test(validateOnlyLicensesLevel)
+  test(validateCompSubscriptions)
   test(validateNonCompSubscriptions)
   test(validateSkiPasses)
 }
@@ -113,45 +119,41 @@ function validateFamilyMembers() {
     // a level set to something. The rest of the code assumes that a level set to something
     // is an other way of identifying a non comp license.
     //
-    //   1- When a level is defined, it must have been validated
-    //   2- When a level is defined, a license must be defined.
-    //   3- A level must be defined for non competitor minor
-    //   4- A competitor can not declare a level, it will confuse the rest of the validation
-    //   5- An executive can not declare a level, it will confuse the rest of the validation
-    //
-
+    // 1- When a level is defined, it must have been adjusted
     if (isLevelDefined(level) && isLevelNotAdjusted(level)) {
       return ("Ajuster le niveau de " + first_name + " " + last_name + " en précisant " +
               "le niveau de pratique pour la saison " + season)
     }
 
+    // 2- When a level is defined a license must be defined.
     if (isLevelDefined(level) && isLicenseNotDefined(license)) {
-      return (first_name + " " + last_name + " est un loisir junior avec un niveau de ski " +
-              "défini ce qui traduit l'intention de prendre une adhésion au club. Choisissez " +
-              "une license appropriée (CN Jeune Loisir ou Famille) pour cette personne")
+      return ("Le niveau de pratique '" + level + "' est défini pour " +
+               first_name + " " + last_name +
+              " ce qui traduit l'intention de prendre une adhésion au club. Choisissez " +
+              "une license appropriée pour cette personne")
     }
-    if (isLevelNotDefined(level) && isMinor(dob) && isLicenseNonComp(license)) {
+    // 3- A level must be defined for non competitor
+    if (isLevelNotDefined(level) && isLicenseNonComp(license)) {
       return (
-        "Vous devez fournir un niveau pour le junior non compétiteur " + 
-        first_name + " " + last_name + " qui prend une license " + license         
+        "Vous devez fournir un niveau de pratique ou choisir le niveau " +
+        "'Licence seule' pour le  non compétiteur " + 
+        first_name + " " + last_name + " qui prend une licence " + license + ""
       )
     }
+    // 4- A competitor can not declare a level, it will confuse the rest of the validation
     if (isLevelNotComp(level) && isLicenseComp(license)) {
       return (
         "Vous devez utiliser le niveau 'Compétiteur' pour " + 
-        first_name + " " + last_name + " qui prend une license " + license +
-        " ou choisir une autre license."         
+        first_name + " " + last_name + " qui prend une licence " + license +
+        " ou choisir une autre license ou un autre niveau de pratique"         
       )      
-    }
-    if (isLevelDefined(level) && isLicenseExec(license)) {
-      return (first_name + " " + last_name + " est un cadre/dirigeant. Ne définissez pas " +
-              "de niveau pour un cadre/dirigeant")      
     }
 
     // License validation:
     //
+    // 0- A license must be in the list of possible licenses
     // 1- A license must match the age of the person it's attributed to
-    // 2- An exec license requires a city of birth
+    // 2- An exec license requires a city of birth an a License only level
     // 3- An existing non exec license doesn't require a city of birth
     if (!license_map.hasOwnProperty(license)) {
       return (first_name + " " + last_name + "La licence attribuée '" + license +
@@ -165,9 +167,15 @@ function validateFamilyMembers() {
               "license choisie. Une " + license + ' ' +
               license_map[license].ValidDoBRangeMessage() + '.')
     }
-    if (isLicenseExec(license) && city == '') {
-      return (first_name + " " + last_name + ": la licence attribuée (" +
-              license + ") requiert de renseigner une ville et un pays de naissance");
+    if (isLicenseExec(license)) {
+      if (city == '') {
+        return (first_name + " " + last_name + ": la licence attribuée (" +
+                license + ") requiert de renseigner une ville et un pays de naissance");
+      }
+      if (!isLevelLicenseOnly(level)) {
+        return (first_name + " " + last_name + ": la licence attribuée (" +
+                license + ") requiert de choisir le niveau '" + getOnlyLicense() + "'.");        
+      }
     }
     if (isLicenseDefined(license) && !isLicenseExec(license) && city != '') {
       return (first_name + " " + last_name + ": la licence attribuée (" +
@@ -241,6 +249,28 @@ function validateLicenses() {
         "ne correspond pas au nombre de " +
         Plural(pla, "licence achetée") + " (au nombre de " + pla  + ")")
     }
+  }
+  return ''
+}
+
+// Validate those who picked up just a license but aren't going ski under
+// supervision
+function validateOnlyLicensesLevel() {
+  updateStatusBar("Validation licences seules...", "grey", add=true)
+  var basic_subscription_number = 0
+  coords_identity_rows.forEach(function(row) {
+    var level = getStringAt([row, coord_level_column])
+    var license = getStringAt([row, coord_license_column])
+    if (isLevelLicenseOnly(level) && !isLicenseExec(license)) {
+      basic_subscription_number += 1
+    }
+  })
+  // The number of basic subscription collected must match the number of charges for that item
+  var subscribed_basic_subscription_number = GetBasicSubscriptionNumber()
+  if (basic_subscription_number != subscribed_basic_subscription_number) {
+    return ("Le nombre de license(s) sans enseignement de ski souscrite(s) (" + basic_subscription_number + ") " +
+            "ne correspond pas au nombre " +
+            "de license(s) sans enseignement de ski  renseignée(s) (" + subscribed_basic_subscription_number + ")")        
   }
   return ''
 }
@@ -352,7 +382,6 @@ function validateNonCompSubscriptions() {
   var rider_number = 0
   var non_rider_kid_number = 0
   var non_rider_adult_number = 0
-  var basic_subscription_number = 0
   coords_identity_rows.forEach(function(row) {
     var level = getStringAt([row, coord_level_column])
     var license = getStringAt([row, coord_license_column])
@@ -368,13 +397,6 @@ function validateNonCompSubscriptions() {
       } else {
         non_rider_kid_number += 1
       }
-    }
-    // We have someone taking a license but not practicing with the club. We are going to
-    // verify they paid a small fee subscription giving them access to that feature. Executive
-    // license holders are exempt. This item is called a basic subscription. We're testing
-    // against not being an empty string because isLevelNotDefined does too much.
-    if (level != '' && isLevelNotDefined(level) && !isLicenseExec(license)) {
-      basic_subscription_number += 1
     }
   })
 
@@ -445,13 +467,6 @@ function validateNonCompSubscriptions() {
     return ("Le nombre d'adhésion(s) loisir adulte souscrite(s) (" + subscribed_non_rider_adult_number + ") " +
             "ne correspond pas au nombre " +
             "de loisir adulte renseigné(s) (" + non_rider_adult_number + ")")    
-  }
-  // 6- The number of basic subscription collected matches the number of charges for that item
-  var subscribed_basic_subscription_number = GetBasicSubscriptionNumber()
-  if (basic_subscription_number != subscribed_basic_subscription_number) {
-    return ("Le nombre de license(s) sans enseignement de ski souscrite(s) (" + subscribed_basic_subscription_number + ") " +
-            "ne correspond pas au nombre " +
-            "de license(s) sans enseignement de ski  renseignée(s) (" + subscribed_basic_subscription_number + ")")        
   }
   return ''
 }

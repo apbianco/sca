@@ -848,26 +848,26 @@ function areArraysEqual(arr1, arr2) {
 
 function testIsLevel() {
   var existing_levels = {
-    //                  NotAdjusted | NotDefined | Defined | Comp |  NotComp | Rider | RecreationalNonRider
-    "":                [false,        true,        false,    false,  false,    false,  false],
-    "Pas Concerné":    [false,        true,        false,    false,  false,    false,  false],
-    "Non déterminé":   [false,        false,       true,     false,  true,     false,  true ],
-    "Compétiteur":     [false,        false,       true,     true,   false,    false,  false],
-    "Débutant/Ourson": [false,        false,       true,     false,  true,     false,  true ],
-    "Flocon":          [false,        false,       true,     false,  true,     false,  true ],
-    "Étoile 1":        [false,        false,       true,     false,  true,     false,  true ],
-    "Étoile 2":        [false,        false,       true,     false,  true,     false,  true ],
-    "Étoile 3":        [false,        false,       true,     false,  true,     false,  true ],
-    "Bronze":          [false,        false,       true,     false,  true,     false,  true ],
-    "Argent":          [false,        false,       true,     false,  true,     false,  true ],
-    "Or":              [false,        false,       true,     false,  true,     false,  true ],
-    "Ski/Fun":         [false,        false,       true,     false,  true,     false,  true ],
-    "Rider":           [false,        false,       true,     false,  true,     true,   false],
-    "Snow Découverte": [false,        false,       true,     false,  true,     false,  true ],
-    "Snow 1":          [false,        false,       true,     false,  true,     false,  true ],
-    "Snow 2":          [false,        false,       true,     false,  true,     false,  true ],
-    "Snow 3":          [false,        false,       true,     false,  true,     false,  true ],
-    "Snow Expert":     [false,        false,       true,     false,  true,     false,  true ],
+    //                  NotAdjusted | NotDefined | Defined | Comp |  NotComp | Rider | RecreationalNonRider | LicenseOnly
+    "":                [false,        true,        false,    false,  false,    false,  false,                 false],
+    "Licence seule":   [false,        false,       true,     false,  false,    false,  false,                 true ],
+    "Non déterminé":   [false,        false,       true,     false,  true,     false,  true,                  false],
+    "Compétiteur":     [false,        false,       true,     true,   false,    false,  false,                 false],
+    "Débutant/Ourson": [false,        false,       true,     false,  true,     false,  true,                  false],
+    "Flocon":          [false,        false,       true,     false,  true,     false,  true,                  false],
+    "Étoile 1":        [false,        false,       true,     false,  true,     false,  true,                  false],
+    "Étoile 2":        [false,        false,       true,     false,  true,     false,  true,                  false],
+    "Étoile 3":        [false,        false,       true,     false,  true,     false,  true,                  false],
+    "Bronze":          [false,        false,       true,     false,  true,     false,  true,                  false],
+    "Argent":          [false,        false,       true,     false,  true,     false,  true,                  false],
+    "Or":              [false,        false,       true,     false,  true,     false,  true,                  false],
+    "Ski/Fun":         [false,        false,       true,     false,  true,     false,  true,                  false],
+    "Rider":           [false,        false,       true,     false,  true,     true,   false,                 false],
+    "Snow Découverte": [false,        false,       true,     false,  true,     false,  true,                  false],
+    "Snow 1":          [false,        false,       true,     false,  true,     false,  true,                  false],
+    "Snow 2":          [false,        false,       true,     false,  true,     false,  true,                  false],
+    "Snow 3":          [false,        false,       true,     false,  true,     false,  true,                  false],
+    "Snow Expert":     [false,        false,       true,     false,  true,     false,  true,                  false],
   }
 
   for (const [key, values] of Object.entries(existing_levels)) {
@@ -877,7 +877,8 @@ function testIsLevel() {
                      isLevelComp(key),
                      isLevelNotComp(key),
                      isLevelRider(key),
-                     isLevelRecreationalNonRider(key)]
+                     isLevelRecreationalNonRider(key),
+                     isLevelLicenseOnly(key)]
       // Logger.log('INFO: [' + key + ']: ' + arrayToRawString(results))
       if (! areArraysEqual(values, results)) {
         Logger.log('FAILURE: for existing_levels[' + key + ']. Got:' + arrayToRawString(results) + ', expected: ' + arrayToRawString(values))
