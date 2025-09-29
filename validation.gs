@@ -130,7 +130,7 @@ function validateFamilyMembers() {
       return ("Le niveau de pratique '" + level + "' est défini pour " +
                first_name + " " + last_name +
               " ce qui traduit l'intention de prendre une adhésion au club. Choisissez " +
-              "une license appropriée pour cette personne")
+              "une licence appropriée pour cette personne")
     }
     // 3- A level must be defined for non competitor
     if (isLevelNotDefined(level) && isLicenseNonComp(license)) {
@@ -145,7 +145,7 @@ function validateFamilyMembers() {
       return (
         "Vous devez utiliser le niveau 'Compétiteur' pour " + 
         first_name + " " + last_name + " qui prend une licence " + license +
-        " ou choisir une autre license ou un autre niveau de pratique"         
+        " ou choisir une autre licence ou un autre niveau de pratique"         
       )      
     }
 
@@ -157,14 +157,14 @@ function validateFamilyMembers() {
     // 3- An existing non exec license doesn't require a city of birth
     if (!license_map.hasOwnProperty(license)) {
       return (first_name + " " + last_name + "La licence attribuée '" + license +
-              "' n'est pas une license existante !")
+              "' n'est pas une licence existante !")
     }   
     // When a license for a family member, it must match the dob requirement
     if (isLicenseDefined(license) && ! license_map[license].ValidateDoB(dob)) {
       return (first_name + " " + last_name +
               ": l'année de naissance " + getDoBYear(dob) +
               " ne correspond critère de validité de la " +
-              "license choisie. Une " + license + ' ' +
+              "licence choisie. Une " + license + ' ' +
               license_map[license].ValidDoBRangeMessage() + '.')
     }
     if (isLicenseExec(license)) {
@@ -188,7 +188,7 @@ function validateFamilyMembers() {
 
 // Cross check the attributed licenses with the ones selected for payment
 function validateLicenses() {
-  updateStatusBar("Validation du choix des licenses...", "grey", add=true)
+  updateStatusBar("Validation du choix des licences...", "grey", add=true)
   // Not eligible to use getMemoizedLicensesMap.
   var license_map = createLicensesMap(SpreadsheetApp.getActiveSheet())
   // Collect the attributed licenses
@@ -268,9 +268,9 @@ function validateOnlyLicensesLevel() {
   // The number of basic subscription collected must match the number of charges for that item
   var subscribed_basic_subscription_number = GetBasicSubscriptionNumber()
   if (basic_subscription_number != subscribed_basic_subscription_number) {
-    return ("Le nombre de license(s) sans enseignement de ski souscrite(s) (" + basic_subscription_number + ") " +
+    return ("Le nombre de licence(s) sans enseignement de ski souscrite(s) (" + basic_subscription_number + ") " +
             "ne correspond pas au nombre " +
-            "de license(s) sans enseignement de ski  renseignée(s) (" + subscribed_basic_subscription_number + ")")        
+            "de licence(s) sans enseignement de ski  renseignée(s) (" + subscribed_basic_subscription_number + ")")        
   }
   return ''
 }
@@ -575,7 +575,7 @@ function validateSkiPasses() {
       message += ("\n\nIl ce peut que ce choix de forfait soit valide mais pas " +
                   "automatiquement vérifiable. C'est le cas lorsque plusieurs options  " +
                   "correctes existent comment par exemple un membre étudiant qui est aussi " +
-                  "d'âge adulte ou un adulte qui prend un license mais pas de forfait.")                     
+                  "d'âge adulte ou un adulte qui prend un licence mais pas de forfait.")                     
       if (! displayYesNoPanel(augmentEscapeHatch(message))) {
         return 'BUTTON_NO'
       }

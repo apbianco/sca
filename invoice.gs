@@ -1302,7 +1302,7 @@ function autoComputeLicenses() {
     return (license == getNonCompJuniorLicenseString() ||
             license == getNonCompAdultLicenseString())
   }
-  updateStatusBar("Attribution automatique des licenses...", "grey")
+  updateStatusBar("Attribution automatique des licences...", "grey")
   // FIXME: Eligible to using getMemoizedLicensesMap.
   var license_map = createLicensesMap(SpreadsheetApp.getActiveSheet())
   // We're going to store what will be computed in these two array: one
@@ -1383,7 +1383,7 @@ function autoComputeLicenses() {
 }
 
 function autoFillLicensePurchases() {
-  updateStatusBar("Achat automatique des licenses...", "grey", add=true)
+  updateStatusBar("Achat automatique des licences...", "grey", add=true)
   // Not eligible to use getMemoizedLicensesMap.
   var license_map = createLicensesMap(SpreadsheetApp.getActiveSheet())
   // Collect the attributed licenses
@@ -2006,7 +2006,7 @@ function askingLicenseOK() {
 // FIXME: Split in two really.
 function maybeEmailLicenseSCA(invoice, just_test, ignore_payment) {
   if (! ignore_payment && just_test == false && ! askingLicenseOK()) {
-    updateStatusBar("⚠️ PAS de demande de license (voir paiement)", "orange", add=true)      
+    updateStatusBar("⚠️ PAS de demande de licence (voir paiement)", "orange", add=true)      
     return false
   }
   var operator = getOperator()
@@ -2032,7 +2032,7 @@ function maybeEmailLicenseSCA(invoice, just_test, ignore_payment) {
       "Fille/Garçon: " + family_dict[index].sex + "<br>" +
       "Ville de Naissance: " + family_dict[index].city + "<br>" +
       "Licence: " + family_dict[index].license_type + "<br>" +
-      "Numéro License: " + license_number + "<br>" +
+      "Numéro Licence: " + license_number + "<br>" +
       "----------------------------------------------------</tt><br>\n");
       license_count += 1;
   }
@@ -2097,7 +2097,7 @@ function generatePDFAndMaybeSendEmail(config) {
     updateStatusBar("⏳ Génération et envoit du dossier...", "orange")
   }
   else if (license_request) {
-    updateStatusBar("⏳ Envoit de la demande de license", "orange")    
+    updateStatusBar("⏳ Envoit de la demande de licence", "orange")    
   }
   else if (just_generate_invoice) {
     updateStatusBar("⏳ Génération de la facture sans envoi...", "orange")
@@ -2282,15 +2282,15 @@ function generatePDFAndMaybeSendEmail(config) {
       // When the license wasn't sent, warn and add to the status bar so that
       // it is visible
       if (! maybeEmailLicenseSCA([attachments[0]], just_test=false)) {
-        final_status[0] += ".\n⚠️ PAS de demande de license (voir paiement)"
+        final_status[0] += ".\n⚠️ PAS de demande de licence (voir paiement)"
         final_status[1] = "orange";
       } else {
-        final_status[0] += ", demande de license faite"
+        final_status[0] += ", demande de licence faite"
       }
     }
   } else if (license_request) {
     maybeEmailLicenseSCA([attachments[0]], just_test=false, ignore_payment=true);
-    final_status[0] = "✅ Demande de license envoyée"
+    final_status[0] = "✅ Demande de licence envoyée"
   } else if (just_generate_invoice) {
       final_status[0] = "✅ Facture générée"
   } else {
@@ -2345,8 +2345,8 @@ function SignalProblem() {
 function magicWand() {
   updateStatusBar("")
   if (!displayYesNoPanel("Le remplissage automatique va replacer certains choix que vous " +
-                         "avez déjà fait (attribution automatique des licenses, achats des " +
-                         "licenses, adhésion loisir, etc...) Vous pourrez toujours modifier " +
+                         "avez déjà fait (attribution automatique des licences, achats des " +
+                         "licences, adhésion loisir, etc...) Vous pourrez toujours modifier " +
                          "ces choix et une validation de la facture sera toujours effectuée \n\n" +
                          "Cliquez OK pour continuer, cliquez Annuler pour ne pas utiliser la " +
                          "fonctionalité remplissage automatique")) {
