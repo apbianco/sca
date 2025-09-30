@@ -1331,6 +1331,11 @@ function autoComputeLicenses() {
       setStringAt([row, coord_level_column], getOnlyLicense())
       continue
     }
+    // For a competitor license, we adjust the level accordingly
+    if (isLicenseCompAdult(selected_license) || isLicenseCompJunior(selected_license)) {
+      setStringAt([row, coord_level_column], getLevelCompString())
+      continue      
+    }
     if (isLicenseNoLicense(selected_license)) {
       continue
     }
