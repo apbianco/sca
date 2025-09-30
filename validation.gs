@@ -503,12 +503,16 @@ function validateSkiPasses() {
   clearSkiPassesRebates()
   var ski_passes_map = createSkipassMap(SpreadsheetApp.getActiveSheet())
 
+  var count_adults = 0
   for (var index in coords_identity_rows) {
     var row = coords_identity_rows[index];
     var dob = getDoB([row, coord_dob_column])
     // Undefined DoB marks a non existing entry that we skip
     if (dob == undefined) {
       continue
+    }
+    if (isAdult(dob)) {
+      count_adults += 1
     }
     // Increment the ski pass count that validates for a DoB. This will tell us
     // how many ski passes suitable for a non competitor we can expect to be
@@ -524,6 +528,8 @@ function validateSkiPasses() {
   var family_size = 0
   var number_of_non_student_adults = 0
   var total_paid_skipass = 0
+  var total_adult_skipasses = 0
+  var total_student_skipasses = 0
   for (var skipass_name in ski_passes_map) {
     skipass = ski_passes_map[skipass_name]
     skipass.UpdatePurchasedSkiPassAmountFromTrix()
@@ -531,6 +537,12 @@ function validateSkiPasses() {
     if (purchased_amount < 0 || isNaN(purchased_amount)) {
       return (purchased_amount + ' forfait ' + skipass_name + 
               ' acheté n\'est pas un nombre valide')
+    }
+    if (skipass.IsStudent()) {
+      total_student_skipasses += purchased_amount
+    }
+    if (skipass.IsAdult()) {
+      total_adult_skipasses += purchased_amount
     }
     // Family size MUST exclude students
     if (! skipass.IsStudent() && purchased_amount > 0) {
@@ -540,6 +552,12 @@ function validateSkiPasses() {
       family_size += purchased_amount
       total_paid_skipass += skipass.GetTotalPrice() 
     }
+  }
+
+  if (total_adult_skipasses + total_student_skipasses != count_adults) {
+    return ("[" + count_adults + "] "+ Plural(count_adults, "forfait adulte renseigné") +
+            " pour [" + total_adult_skipasses + "] " + Plural(total_adult_skipasses, "forfait adulte attribué") +
+            " et [" + total_student_skipasses + "] " + Plural(total_student_skipasses, "forfait étudiant attribué"))
   }
 
   var ski_passes_pairs = getSkiPassesPairs()

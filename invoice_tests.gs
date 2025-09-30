@@ -101,10 +101,16 @@ function testPlural() {
       expected: "item"
     },
     {
-      description: "Multi-word input",
+      description: "Multi-word input 1",
       number: 3,
       message: "apple tree",
       expected: "apples trees"
+    },
+    {
+      description: "Multi-word input 2",
+      number: 3,
+      message: "apple tree top",
+      expected: "apples trees tops"
     },
     {
       description: "Input with leading/trailing spaces, singular",

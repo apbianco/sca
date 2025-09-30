@@ -1768,7 +1768,7 @@ function validateInvoice() {
     return validatationDataError();
   }
   
-  updateStatusBar("Validation des coordonées...", "grey")
+  updateStatusBar("Validation des coordonnées...", "grey")
   // Validation: proper civility
   var civility = validateAndReturnDropDownValue(
     coord_family_civility,
