@@ -169,17 +169,17 @@ function validateFamilyMembers() {
     }
     if (isLicenseExec(license)) {
       if (city == '') {
-        return (first_name + " " + last_name + ": la licence attribuée (" +
-                license + ") requiert de renseigner une ville et un pays de naissance");
+        return (first_name + " " + last_name + ": la licence attribuée [" +
+                license + "] requiert de renseigner une ville et un pays de naissance");
       }
       if (!isLevelLicenseOnly(level)) {
-        return (first_name + " " + last_name + ": la licence attribuée (" +
-                license + ") requiert de choisir le niveau '" + getOnlyLicense() + "'.");        
+        return (first_name + " " + last_name + ": la licence attribuée [" +
+                license + "] requiert de choisir le niveau '" + getOnlyLicense() + "'.");        
       }
     }
     if (isLicenseDefined(license) && !isLicenseExec(license) && city != '') {
-      return (first_name + " " + last_name + ": la licence attribuée (" +
-              license + ") ne requiert pas de renseigner une ville et un pays de naissance. " +
+      return (first_name + " " + last_name + ": la licence attribuée [" +
+              license + "] ne requiert pas de renseigner une ville et un pays de naissance. " +
               "Supprimez cette donnée")
     }
   }
@@ -268,9 +268,9 @@ function validateOnlyLicensesLevel() {
   // The number of basic subscription collected must match the number of charges for that item
   var subscribed_basic_subscription_number = GetBasicSubscriptionNumber()
   if (basic_subscription_number != subscribed_basic_subscription_number) {
-    return ("Le nombre de licence(s) sans enseignement de ski souscrite(s) (" + basic_subscription_number + ") " +
+    return ("Le nombre de licence(s) sans enseignement de ski souscrite(s) [" + basic_subscription_number + "] " +
             "ne correspond pas au nombre " +
-            "de licence(s) sans enseignement de ski  renseignée(s) (" + subscribed_basic_subscription_number + ")")        
+            "de licence(s) sans enseignement de ski  renseignée(s) [" + subscribed_basic_subscription_number + "]")        
   }
   return ''
 }
@@ -404,8 +404,8 @@ function validateNonCompSubscriptions() {
   //    and the perform the verification
   var subscribed_rider_number = subscription_map[getRiderLevelString()].PurchasedSubscriptionAmount()
   if (rider_number != subscribed_rider_number) {
-    return ("Le nombre d'adhésion(s) rider souscrite(s) (" + subscribed_rider_number + ") ne correspond pas au nombre " +
-            "de rider(s) renseigné(s) (" + rider_number + ")")
+    return ("Le nombre d'adhésion(s) rider souscrite(s) [" + subscribed_rider_number + "] ne correspond pas au nombre " +
+            "de rider(s) renseigné(s) [" + rider_number + "]")
   }
 
   // 2- If we have N riders, the N first non Rider subscriptions can not be purchased,
@@ -456,17 +456,17 @@ function validateNonCompSubscriptions() {
     subscribed_non_rider_kid_number += found_non_rider_kid_number
   }
   if (subscribed_non_rider_kid_number != non_rider_kid_number) {
-    return ("Le nombre d'adhésion(s) NON rider souscrite(s) (" + subscribed_non_rider_kid_number + ") " +
+    return ("Le nombre d'adhésion(s) NON rider souscrite(s) [" + subscribed_non_rider_kid_number + "] " +
             "ne correspond pas au nombre " +
-            "de NON rider(s) renseigné(s) (" + non_rider_kid_number + ")")    
+            "de NON rider(s) renseigné(s) [" + non_rider_kid_number + "]")    
   }
 
   // 5- The number of non rider adults found and the number of matching subscriptions must agree.
   var subscribed_non_rider_adult_number = subscription_map[getAdultString()].PurchasedSubscriptionAmount()
   if (subscribed_non_rider_adult_number != non_rider_adult_number) {
-    return ("Le nombre d'adhésion(s) loisir adulte souscrite(s) (" + subscribed_non_rider_adult_number + ") " +
+    return ("Le nombre d'adhésion(s) loisir adulte souscrite(s) [" + subscribed_non_rider_adult_number + "] " +
             "ne correspond pas au nombre " +
-            "de loisir adulte renseigné(s) (" + non_rider_adult_number + ")")    
+            "de loisir adulte renseigné(s) [" + non_rider_adult_number + "]")    
   }
   return ''
 }
