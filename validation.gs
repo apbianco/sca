@@ -268,9 +268,11 @@ function validateOnlyLicensesLevel() {
   // The number of basic subscription collected must match the number of charges for that item
   var subscribed_basic_subscription_number = GetBasicSubscriptionNumber()
   if (basic_subscription_number != subscribed_basic_subscription_number) {
-    return ("Le nombre de licence(s) sans enseignement de ski souscrite(s) [" + basic_subscription_number + "] " +
-            "ne correspond pas au nombre " +
-            "de licence(s) sans enseignement de ski  renseignée(s) [" + subscribed_basic_subscription_number + "]")        
+    return ("Le nombre de " + Plural(basic_subscription_number, "licence") + " sans enseignement de ski " +
+            Plural(basic_subscription_number, "souscrite") + " [" + basic_subscription_number + "] " +
+            "ne correspond pas au nombre de " + Plural(subscribed_basic_subscription_number, "licence") +
+            " sans enseignement de ski " + Plural(subscribed_basic_subscription_number, "renseignée") +
+	    " [" + subscribed_basic_subscription_number + "]")        
   }
   return ''
 }
@@ -316,8 +318,8 @@ function validateCompSubscriptions() {
       total_existing = comp_subscription_map[indexed_category].AttributedSubscriptionCount()
       var current_purchased = comp_subscription_map[indexed_category].PurchasedSubscriptionAmount()
       if (current_purchased > 1 || current_purchased < 0 || ~~current_purchased != current_purchased) {
-        return ('Le nombre d\'adhésion(s) ' + category + ' achetée(s) (' + 
-                current_purchased + ') n\'est pas valide.')
+        return ('Le nombre d\'" + Plural(current_purchased, "adhésion") + "' + category + ' " +
+	        Plural(current_purchased, "achetée") + " [' + current_purchased + '] n\'est pas valide.')
       }
       // If we have a current purchased subscription past rank 1, we should have a purchased
       // subscription in the previous ranks for all categories
@@ -342,9 +344,9 @@ function validateCompSubscriptions() {
     // For that category, the total number of purchased licenses must match
     // the number of accumulated purchases accross all ranks.
     if (total_existing != total_purchased) {
-      return (total_purchased + ' adhésion(s) compétition ' + category +
-              ' achetée(s) pour ' + total_existing +
-              ' license(s) compétiteur dans cette tranche d\'âge')
+      return ("[" + total_purchased + "] " + Plural(total_purchased, "adhésion") + " compétition '" +
+      	      category + Plural(total_purchased, "' achetée") + " pour [" + total_existing + "] " +
+	      Plural(total_existing, "license") + " compétiteur dans cette tranche d\'âge")
     }
   }
   // 4- Only one category can be filled per rank. That loops needs
@@ -404,8 +406,10 @@ function validateNonCompSubscriptions() {
   //    and the perform the verification
   var subscribed_rider_number = subscription_map[getRiderLevelString()].PurchasedSubscriptionAmount()
   if (rider_number != subscribed_rider_number) {
-    return ("Le nombre d'adhésion(s) rider souscrite(s) [" + subscribed_rider_number + "] ne correspond pas au nombre " +
-            "de rider(s) renseigné(s) [" + rider_number + "]")
+    return ("Le nombre d'" + Plural(subscribed_rider_number, "adhésion") + " rider " +
+            Plural(subscribed_rider_number, "souscrite") + " [" + subscribed_rider_number +
+	    "] ne correspond pas au nombre de " +
+	    Plural(rider_number, "rider renseigné") + " [" + rider_number + "]")
   }
 
   // 2- If we have N riders, the N first non Rider subscriptions can not be purchased,
@@ -456,17 +460,20 @@ function validateNonCompSubscriptions() {
     subscribed_non_rider_kid_number += found_non_rider_kid_number
   }
   if (subscribed_non_rider_kid_number != non_rider_kid_number) {
-    return ("Le nombre d'adhésion(s) NON rider souscrite(s) [" + subscribed_non_rider_kid_number + "] " +
-            "ne correspond pas au nombre " +
-            "de NON rider(s) renseigné(s) [" + non_rider_kid_number + "]")    
+    return ("Le nombre d'" + Plural(subscribed_non_rider_kid_number, "adhésion") +
+            " NON rider " + Plural(subscribed_non_rider_kid_number, "souscrite") +
+	    " [" + subscribed_non_rider_kid_number + "] ne correspond pas au nombre " +
+            "de NON " + Plural(non_rider_kid_number, "rider renseigné") +
+	    " [" + non_rider_kid_number + "]")
   }
 
   // 5- The number of non rider adults found and the number of matching subscriptions must agree.
   var subscribed_non_rider_adult_number = subscription_map[getAdultString()].PurchasedSubscriptionAmount()
   if (subscribed_non_rider_adult_number != non_rider_adult_number) {
-    return ("Le nombre d'adhésion(s) loisir adulte souscrite(s) [" + subscribed_non_rider_adult_number + "] " +
+    return ("Le nombre d'" + Plural(subscribed_non_rider_adult_number, "adhésion") + " loisir adulte " +
+	    Plural(subscribed_non_rider_adult_number, "souscrite") + " [" + subscribed_non_rider_adult_number + "] " +
             "ne correspond pas au nombre " +
-            "de loisir adulte renseigné(s) [" + non_rider_adult_number + "]")    
+            "de loisir adulte " + Plural(non_rider_adult_number, "renseigné") + " [" + non_rider_adult_number + "]")
   }
   return ''
 }
