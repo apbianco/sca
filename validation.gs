@@ -345,7 +345,7 @@ function validateCompSubscriptions() {
     // the number of accumulated purchases accross all ranks.
     if (total_existing != total_purchased) {
       return ("[" + total_purchased + "] " + Plural(total_purchased, "adhésion") + " compétition '" +
-      	      category + Plural(total_purchased, "' achetée") + " pour [" + total_existing + "] " +
+      	      category + "'" + Plural(total_purchased, " achetée") + " pour [" + total_existing + "] " +
 	      Plural(total_existing, "license") + " compétiteur dans cette tranche d\'âge")
     }
   }
