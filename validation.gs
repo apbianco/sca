@@ -318,8 +318,8 @@ function validateCompSubscriptions() {
       total_existing = comp_subscription_map[indexed_category].AttributedSubscriptionCount()
       var current_purchased = comp_subscription_map[indexed_category].PurchasedSubscriptionAmount()
       if (current_purchased > 1 || current_purchased < 0 || ~~current_purchased != current_purchased) {
-        return ('Le nombre d\'" + Plural(current_purchased, "adhésion") + "' + category + ' " +
-	        Plural(current_purchased, "achetée") + " [' + current_purchased + '] n\'est pas valide.')
+        return ("Le nombre d'" + Plural(current_purchased, "adhésion") + "'" + category + "' " +
+	        Plural(current_purchased, "achetée") + " ['" + current_purchased + "'] n'est pas valide.")
       }
       // If we have a current purchased subscription past rank 1, we should have a purchased
       // subscription in the previous ranks for all categories
