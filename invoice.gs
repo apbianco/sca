@@ -2307,6 +2307,9 @@ function generatePDFAndMaybeSendEmail(config) {
   // where declared as not competitors
   updateStatusBar("⏳ Enregistrement des niveaux...", "orange")
   updateAggregationTrix()
+  // Now we can update the accounting trix as well
+  updateStatusBar("⏳ Enregistrement des données comptables...", "orange")
+  updateAccountingTrix()
   // And deliver the final status.
   updateStatusBar(final_status[0], final_status[1])
 
