@@ -66,12 +66,12 @@ function doUpdateAggregationTrix(data) {
 
   // Open the spread sheet, insert the name if the operation is possible. Sync
   // the spreadsheet.
-  var sheet = SpreadsheetApp.openById(license_trix).getSheetByName('FFS');
-  var entire_range = sheet.getRange(license_trix_all_range)
+  var sheet = SpreadsheetApp.openById(license_trix).getSheetByName(license_trix_ffs_sheet);
+  var entire_range = sheet.getRange(license_trix_ffs_all_range)
 
   for (var index in data) {
     var row = SearchEntry(sheet, data[index],
-                          {row_start: license_trix_row_start,
+                          {row_start: license_trix_ffs_row_start,
                            last_name:1,
                            first_name:2})
     if (row == -1) {
@@ -364,9 +364,9 @@ function updateProblematicRegistration(link, context) {
   }
 
   updateStatusBar('⏳ Enregistrement de la notification de problème...', 'orange')
-  var sheet = SpreadsheetApp.openById(license_trix).getSheetByName('Dossiers problématiques')
-  var insertion_range = findFirstEmptySlot(sheet, sheet.getRange('A2:A'))
-  var entire_range = sheet.getRange('A2:D')
+  var sheet = SpreadsheetApp.openById(license_trix).getSheetByName(license_trix_pb_sheet)
+  var insertion_range = findFirstEmptySlot(sheet, sheet.getRange(license_trix_pb_sheet_search_range))
+  var entire_range = sheet.getRange(license_trix_pb_sheet_whole_range)
   var row = insertion_range.getRow()
   var column = insertion_range.getColumn()
   var date = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'dd-MM-YYYY, HH:mm')

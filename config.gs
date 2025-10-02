@@ -68,8 +68,12 @@ var db_folder =                            '1dLImiBFObJDxSS1XJOmSSq2aiIVLKqai'
 // data starts
 //
 var license_trix =                         '1TJrV0x_y387WZ4wKYqVp1wnWd-lph4CmUGxe0MtfhYk'
-var license_trix_row_start =               10
-var license_trix_all_range =               'B10:H'
+var license_trix_pb_sheet =                'Dossiers problématiques'
+var license_trix_pb_sheet_search_range =   'A2:A'
+var license_trix_pb_sheet_whole_range =    'A2:D'
+var license_trix_ffs_sheet =               'FFS'
+var license_trix_ffs_row_start =           10
+var license_trix_ffs_all_range =           'B10:H'
 //
 // Accounting aggregation trix to update when a new entry is added
 //
