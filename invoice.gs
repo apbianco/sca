@@ -1795,7 +1795,7 @@ function validateInvoice() {
   // Validation: a correct address
   var street_address = getStringAt(coord_family_street)
   var zip_number = getStringAt(coord_family_zip)
-  var city = getStringAt(coord_family_city)
+  var city = getStringAt(coord_family_city).toUpperCase()
   if (street_address == "" || zip_number == "" || city == "") {
     displayErrorPanel(
       "Vous n'avez pas correctement renseigné une adresse de facturation:\n" +
@@ -1804,6 +1804,8 @@ function validateInvoice() {
       "de valider une valeur entrée par [return] ou [enter]...")
     return validatationDataError()
   }
+  // Write city back using all caps
+  setStringAt(coord_family_city, city)
 
   // Validation: first phone number
   var phone_number = getStringAt(coord_family_phone1)
