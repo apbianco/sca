@@ -245,9 +245,9 @@ function validateLicenses() {
         var pla = license_map[index].PurchasedLicenseAmount()
       return (
         "Le nombre de " + Plural(alc, "licence") + " '" + index + "' "+
-        Plural(alc, "attribuée") + " (au nombre de " + alc + ")\n" +
+        Plural(alc, "attribuée") + " [" + alc + "]\n" +
         "ne correspond pas au nombre de " +
-        Plural(pla, "licence achetée") + " (au nombre de " + pla  + ")")
+        Plural(pla, "licence achetée") + " [" + pla  + "]")
     }
   }
   return ''
