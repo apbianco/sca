@@ -71,13 +71,14 @@ var license_trix =                         '1TJrV0x_y387WZ4wKYqVp1wnWd-lph4CmUGx
 var license_trix_pb_sheet =                'Dossiers problématiques'
 var license_trix_pb_sheet_search_range =   'A2:A'
 var license_trix_pb_sheet_whole_range =    'A2:D'
-var license_trix_ffs_sheet =               'FFS'
+var license_trix_ffs_sheet =               'Groupes de niveaux'
 var license_trix_ffs_row_start =           10
 var license_trix_ffs_all_range =           'B10:H'
 //
 // Accounting aggregation trix to update when a new entry is added
 //
 var accounting_trix =                      '1_X6bL8HiDabmbyZdC0N3oQ11rlJ_IxWAo0i9uJiWv34'
+var accounting_trix_sheet =                'Pointage tréso'
 var accounting_trix_row_start =            3
 var accounting_trix_all_range =            'A3:Q'
 //

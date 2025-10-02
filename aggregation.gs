@@ -7,7 +7,7 @@
 // Search for data.{first_name, last_name} starting at data.row_start in sheet.
 // Return the index at which the element was found or the index of the first
 // empty row. Return -1 if more than one element matched the search criteria.
-function SearchEntry(sheet, data, positions) {
+function SearchEntry(sheet, data, positions, label) {
   var global_index = positions.row_start
   var index = global_index
   var stop_incrementing_index = false
@@ -41,7 +41,8 @@ function SearchEntry(sheet, data, positions) {
       ranks += (ranks.length > 0 ? ", " : "") + element[0] 
     }
     var message = matchingRows.length + " " + matchingRows[0][1] + " "  + matchingRows[0][2] +
-                  " existent aux rangs " + ranks + ".\nMise à jour du tableau impossible..."
+                  " existent aux rangs " + ranks + ".\nMise à jour du tableau " +
+                  label + " impossible..."
     displayWarningPanel(message)
     return -1
   }
@@ -73,7 +74,8 @@ function doUpdateAggregationTrix(data) {
     var row = SearchEntry(sheet, data[index],
                           {row_start: license_trix_ffs_row_start,
                            last_name:1,
-                           first_name:2})
+                           first_name:2},
+                          license_trix_ffs_sheet)
     if (row == -1) {
       continue
     }
@@ -296,7 +298,7 @@ function doUpdateAccountingTrix(data) {
     }
   }
 
-  var sheet = SpreadsheetApp.openById(accounting_trix).getSheets()[0]
+  var sheet = SpreadsheetApp.openById(accounting_trix).getSheetByName(accounting_trix_sheet)
   // Dispatch all the data
   dispatchNonCompSubscriptions()
   dispatchCompSubscriptions()
@@ -310,7 +312,8 @@ function doUpdateAccountingTrix(data) {
     var row = SearchEntry(sheet, data[index],
                           {row_start: accounting_trix_row_start,
                            last_name:1,
-                           first_name:2})
+                           first_name:2},
+                          accounting_trix_sheet)
     if (row == -1) {
       continue
     }
