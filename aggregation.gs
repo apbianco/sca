@@ -36,6 +36,13 @@ function SearchEntry(sheet, data, positions) {
       }
   )
   if (matchingRows.length > 1) {
+    var ranks = ''
+    for (element of matchingRows) {
+      ranks += (ranks.length > 0 ? ", " : "") + element[0] 
+    }
+    var message = matchingRows.length + " " + matchingRows[0][1] + " "  + matchingRows[0][2] +
+                  " existent aux rangs " + ranks + ".\nMise à jour du tableau impossible..."
+    displayWarningPanel(message)
     return -1
   }
   if (matchingRows.length == 0) {
@@ -68,7 +75,6 @@ function doUpdateAggregationTrix(data) {
                            last_name:1,
                            first_name:2})
     if (row == -1) {
-      // FIXME: What to signal to the user?
       continue
     }
     UpdateRow(sheet, row, data[index])
@@ -306,7 +312,6 @@ function doUpdateAccountingTrix(data) {
                            last_name:1,
                            first_name:2})
     if (row == -1) {
-      // FIXME: What to signal to the user?
       continue
     }
     max_row = Math.max(max_row, row)
