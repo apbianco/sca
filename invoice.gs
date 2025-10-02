@@ -1931,7 +1931,7 @@ function validateInvoice() {
     // Verify that what's set matches the tally
     var owed = getNumberAt(coord_owed)
     if (owed < 0) {
-      displayErrorPanel('Le montnant dû (' + owed + '€) ne peux pas être négatif')
+      displayErrorPanel('Le montant dû (' + owed + '€) ne peux pas être négatif')
       return validatationDataError()      
     }
     var total = getNumberAt(coord_total)
