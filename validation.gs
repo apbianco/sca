@@ -510,16 +510,12 @@ function validateSkiPasses() {
   clearSkiPassesRebates()
   var ski_passes_map = createSkipassMap(SpreadsheetApp.getActiveSheet())
 
-  var count_adults = 0
   for (var index in coords_identity_rows) {
     var row = coords_identity_rows[index];
     var dob = getDoB([row, coord_dob_column])
     // Undefined DoB marks a non existing entry that we skip
     if (dob == undefined) {
       continue
-    }
-    if (isAdult(dob)) {
-      count_adults += 1
     }
     // Increment the ski pass count that validates for a DoB. This will tell us
     // how many ski passes suitable for a non competitor we can expect to be
@@ -532,6 +528,7 @@ function validateSkiPasses() {
   // Collect the amount of skipasses that have be declared for purchase.
   // We also use this loop to compute the size of the familly to see if a rebate is
   // going to apply. A family member for a rebate is anyone who is not a student.
+  var count_adults = 0
   var family_size = 0
   var number_of_non_student_adults = 0
   var total_paid_skipass = 0
@@ -544,6 +541,10 @@ function validateSkiPasses() {
     if (purchased_amount < 0 || isNaN(purchased_amount)) {
       return (purchased_amount + ' forfait ' + skipass_name + 
               ' acheté n\'est pas un nombre valide')
+    }
+    // This count_adults update hinges on the fact that a student is necessarily an adult.
+    if (purchased_amount > 0 && (skipass.IsStudent() || skipass.IsAdult())) {
+      count_adults += 1
     }
     if (skipass.IsStudent()) {
       total_student_skipasses += purchased_amount
