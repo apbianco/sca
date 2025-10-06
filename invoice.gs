@@ -835,15 +835,17 @@ var email_license = 'licence.sca@gmail.com'
 ///////////////////////////////////////////////////////////////////////////////
 
 function isProd() {
-  return dev_or_prod == 'prod'
+  return !isDev()
+  // return dev_or_prod == 'prod'
 }
 
 function isDev() {
-  return dev_or_prod == 'dev'
+  return isTest()
+  // return dev_or_prod == 'dev'
 }
 
 function isTest() {
-  return getOperator() == 'TEST'
+  return getOperator().includes('TEST')
 }
 
 // If we're in dev mode, return email_dev.
@@ -1756,7 +1758,7 @@ function validateInvoice() {
           "Aucun email ne sera envoyé, " +
           "ni à la famile ni à " + email_license + ".\n\n" +
           "Vous pouvez néamoins continuer et un dossier sera préparé et " +
-          "les mails serons envoyés à " + email_dev + ".\n\n" +
+          "les mails seront envoyés à " + email_dev + ".\n\n" +
           "Contacter " + email_dev + " pour obtenir plus d\'aide.")
   }
   
