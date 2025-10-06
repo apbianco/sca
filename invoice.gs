@@ -692,13 +692,18 @@ function createSkipassMap(sheet) {
   function getSecondValue(label) {
     return skipass_configuration_map[label][1]
   }
-  // Early dates are starting January 1st,
-  function getEarlyDate(label) {
+  // Early dates are starting January 1st, unless dec_31 is true, in which case the
+  // value is December 31st.
+  function getEarlyDate(label, dec_31=false) {
     if (! label in skipass_configuration_map) {
       displayErrorPanel(label + " n'est pas dans comp_subscription_map!")
       return
     }
-    return new Date("January 1, " + skipass_configuration_map[label][0])
+    var year = skipass_configuration_map[label][0]
+    if (dec_31) {
+      return new Date("December 31, " + year)
+    }
+    return new Date("January 1, " + year)
   }
   // Late dates are ending December 31st.
   function getLateDate(label) {
@@ -732,9 +737,12 @@ function createSkipassMap(sheet) {
     'Collet Adulte': new SkiPass(
       localizeSkiPassCollet(getSkiPassAdult()),
       sheet.getRange(getSkipassConfigRow(getSkiPassAdult()), getSkipassConfigCol(getSkiPassAdult())),
-      // Note: the use of getEarlyDate (January 1st, <YEAR>) is sub-obtimal here. We should be using
-      // December 31st, <YEAR>. But getEarlyDate is a clean way to fetch the content. Oh well.
-      (dob) => {return ageVerificationBornBeforeDateIncluded(dob, getEarlyDate(getSkiPassAdult())) &&
+      // getEarlyDate() gets the FIRST year in skipass_configuration_map, which is usually transformed
+      // into Jan 1st YEAR, unless the dec_31 is set to true, in which case it is transformed into
+      // Dec 31st YEAR.
+      // getLateData() gets the LAST year in skipass_configuration_map, which is alway transformed
+      // into Dec 31st YEAR.
+      (dob) => {return ageVerificationBornBeforeDateIncluded(dob, getEarlyDate(getSkiPassAdult(), true)) &&
                        ageVerificationStrictlyYounger(dob, getSecondValue(getSkiPassAdult()))},
       "Adulte non étudiant de moins de " + getSecondValue(getSkiPassAdult()) + " ans"),
     'Collet Étudiant': new SkiPass(
@@ -772,7 +780,12 @@ function createSkipassMap(sheet) {
     '3 Domaines Adulte': new SkiPass(
       localizeSkiPass3D(getSkiPassAdult()),
       sheet.getRange(getSkipassConfigRow(getSkiPassAdult(), true), getSkipassConfigCol(getSkiPassAdult())),
-      (dob) => {return ageVerificationBornBeforeDateIncluded(dob, getEarlyDate(getSkiPassAdult())) &&
+      // getEarlyDate() gets the FIRST year in skipass_configuration_map, which is usually transformed
+      // into Jan 1st YEAR, unless the dec_31 is set to true, in which case it is transformed into
+      // Dec 31st YEAR.
+      // getLateData() gets the LAST year in skipass_configuration_map, which is alway transformed
+      // into Dec 31st YEAR.
+      (dob) => {return ageVerificationBornBeforeDateIncluded(dob, getEarlyDate(getSkiPassAdult(), true)) &&
                        ageVerificationStrictlyYounger(dob, getSecondValue(getSkiPassAdult()))},
       "Adulte non étudiant de moins de " + getSecondValue(getSkiPassAdult()) + " ans"),
     '3 Domaines Étudiant': new SkiPass(
@@ -1066,8 +1079,9 @@ function nthString(value) {
 function getDoB(coords) {
   var dob = getStringAt(coords);
   if (dob != "") {
-    // Verify the format
-    dob = new Date(dob);
+    // Verify the format. The substring is making sure that whatever the time zone
+    // we're in, the date is ways ddd mmm MM YYYY 00:00:00 ...
+    dob = new Date(dob.substring(0, 15));
     if (dob != undefined) {
       // Verify the date is reasonable
       var yob = getDoBYear(dob);
