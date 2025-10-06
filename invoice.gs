@@ -1081,23 +1081,35 @@ function getDoB(coords) {
 
 // Return true if DoB happened after date
 function ageVerificationBornAfterDateIncluded(dob, date) {
-  // Apparently, the date formating in a cell sets the date to the first
-  // hours of the day: 31/12/2008 will in fact be 31/12/2008, 1:00am. So we
-  // remove one hour to get the exact date.
-  var dob_valueof = dob.valueOf() - 3600000
-  return dob_valueof >= date.valueOf()
+  if (date.toString() == dob.toString()) {
+    return true
+  }
+  var dob_valueof = dob.valueOf()
+  var date_valueof = date.valueOf()  
+  var to_return = dob_valueof >= date_valueof
+  return to_return
 }
 
 // Return true if DoB happened before date
 function ageVerificationBornBeforeDateIncluded(dob, date) {
-  var dob_valueof = dob.valueOf() - 3600000
-  return dob_valueof <= date.valueOf()
+  if (date.toString() == dob.toString()) {
+    return true
+  }
+  var dob_valueof = dob.valueOf()
+  var date_valueof = date.valueOf()
+  var to_return = dob_valueof <= date_valueof
+  return to_return
 }
 
 // Return true if DoB happened between first and last date included.
 function ageVerificationBornBetweenDatesIncluded(dob, first, last) {
-  var dob_valueof = dob.valueOf() - 3600000
-  return (dob_valueof >= first.valueOf() && dob_valueof <= last.valueOf())
+  if (dob.toString() == first.toString() || dob.toString() == last.toString()) {
+    return true
+  }
+  var dob_valueof = dob.valueOf()
+  var first_valueof = first.valueOf()
+  var last_valueof = last.valueOf()
+  return (dob_valueof >= first_valueof && dob_valueof <= last_valueof)
 }
 
 function ageVerificationBornBetweenYearsIncluded(dob, first, last) {

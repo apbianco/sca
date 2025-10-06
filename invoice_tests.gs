@@ -966,10 +966,66 @@ function testPhoneNumberValidation() {
   return true  
 }
 
+function testAgeVerification() {
+  var test_values_1 = {
+    //         DoB                    | To Test Against       | Method                               | Expected results
+    'Test 1a': [new Date("12/31/2006"), new Date("12/31/2006"), ageVerificationBornBeforeDateIncluded, true           ],
+    'Test 1b': [new Date("01/01/2006"), new Date("12/31/2006"), ageVerificationBornBeforeDateIncluded, true           ],
+    'Test 1c': [new Date("01/01/2007"), new Date("12/31/2006"), ageVerificationBornBeforeDateIncluded, false          ],
+
+    'Test 2a': [new Date("01/01/2020"), new Date("01/01/2020"), ageVerificationBornAfterDateIncluded,  true           ],
+    'Test 2b': [new Date("01/01/2021"), new Date("01/01/2020"), ageVerificationBornAfterDateIncluded,  true           ],
+    'Test 2c': [new Date("12/31/2019"), new Date("01/01/2020"), ageVerificationBornAfterDateIncluded,  false          ],
+
+    'Test 3a': [new Date("12/31/2015"), "2016",                 ageVerificationBornBeforeYearIncluded, true           ],
+    'Test 3b': [new Date("12/31/2016"), "2016",                 ageVerificationBornBeforeYearIncluded, true           ],
+    'Test 3c': [new Date("1/1/2017"),   "2016",                 ageVerificationBornBeforeYearIncluded, false          ],
+  }
+  for (const [key, values] of Object.entries(test_values_1)) {
+    var dob = values[0]
+    var date = values[1]
+    var method = values[2]
+    var result = values[3]
+    if (method(dob, date) != result) {
+      Logger.log('FAILURE: ' + key + ": " + dob + " and " + date)
+    }
+  }
+
+  var test_values_2 = {
+    //         DoB                    | Date 1                | Date 2                | method                                 | Expected results
+    'Test 1a': [new Date("1/1/2005"),   new Date("1/1/2005"),   new Date("12/31/2005"), ageVerificationBornBetweenDatesIncluded, true            ],
+    'Test 1b': [new Date("12/31/2005"), new Date("1/1/2005"),   new Date("12/31/2005"), ageVerificationBornBetweenDatesIncluded, true            ],
+    'Test 1c': [new Date("1/1/2006"),   new Date("1/1/2005"),   new Date("12/31/2005"), ageVerificationBornBetweenDatesIncluded, false           ],
+    'Test 1d': [new Date("12/31/2004"), new Date("1/1/2005"),   new Date("12/31/2005"), ageVerificationBornBetweenDatesIncluded, false           ],
+    //         Dob                    | Year 1                | Year 2                | Method                                 | Expected results
+    'Test 2a': [new Date("1/1/2005"),   2005,                   2006,                   ageVerificationBornBetweenYearsIncluded, true            ],
+    'Test 2b': [new Date("12/31/2005"), 2005,                   2006,                   ageVerificationBornBetweenYearsIncluded, true            ],
+    'Test 2c': [new Date("12/31/2004"), 2005,                   2006,                   ageVerificationBornBetweenYearsIncluded, false           ],
+    'Test 2d': [new Date("1/1/2007"),   2005,                   2006,                   ageVerificationBornBetweenYearsIncluded, false           ],
+  }
+  for (const [key, values] of Object.entries(test_values_2)) {
+    var dob = values[0]
+    var date1 = values[1]
+    var date2 = values[2]
+    var method = values[3]
+    var result = values[4]
+    if (method(dob, date1, date2) != result) {
+      Logger.log('FAILURE: ' + key + ": " + dob + " and " + date1 + ", " + date2)
+    }
+  }
+
+  Logger.log("Finished testAgeVerification")
+  return true
+}
+
 function RUN_ALL_TESTS() {
   Logger.log("Starting all invoice tests...");
   var failedSuites = [];
 
+  if (!testAgeVerification()) {
+    failedSuites.push('testAgeVerification')
+  }
+  
   if (!testPhoneNumberValidation()) {
     failedSuites.push('testPhoneNumberValidation')
   }
