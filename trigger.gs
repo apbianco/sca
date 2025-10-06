@@ -1,5 +1,4 @@
-// Version: 2024-10-10 - Competitors registration.
-// Commit 0088cf1ac1a9c7a6b58a9fa756ab5a4ef17c4b2f
+// Version: 2025-10-6 - Competitors registration.
 //
 // Code implementing the trigger for the 2024/2025 seasons
 //
