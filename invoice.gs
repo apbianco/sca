@@ -1579,7 +1579,8 @@ function autoFillSkiPassPurchases() {
       continue
     }
     for (var ski_pass in ski_pass_map) {
-      if (!isSkipPassLocalizedCollet(ski_pass)) {
+      // Always prioritize non 3D. Never automatically fill students
+      if (!isSkipPassLocalizedCollet(ski_pass) || ski_pass_map[ski_pass].IsStudent()) {
         continue
       }
       ski_pass_map[ski_pass].IncrementAttributedSkiPassCountIfDoB(dob)
@@ -2400,6 +2401,18 @@ function SignalProblem() {
 
 // This is what the [magic wand] button runs
 function magicWand() {
+  function getTotalPossibleStudents() {
+    var student_ski_pass = createSkipassMap(SpreadsheetApp.getActiveSheet())[localizeSkiPassCollet(getSkiPassStudent())]
+    var total_students = 0
+    for (var index in coords_identity_rows) {
+      var row = coords_identity_rows[index];
+      var dob = getDoB([row, coord_dob_column])
+      if (dob != undefined && student_ski_pass.ValidateDoB(dob)) {
+        total_students += 1
+      }
+    }
+    return total_students
+  }
   updateStatusBar("")
   if (!displayYesNoPanel("Le remplissage automatique va replacer certains choix que vous " +
                          "avez déjà fait (attribution automatique des licences, achats des " +
@@ -2415,6 +2428,11 @@ function magicWand() {
         if (autoFillCompSubscriptions()) {
           if (autoFillSkiPassPurchases()) {
             var status_bar_text = "✅ Remplissage automatique terminé..."
+            total_students = getTotalPossibleStudents()
+            if (total_students > 0) {
+              status_bar_text += ("\n⚠️ Réduction étudiant applicable: " +
+                                  total_students + Plural(total_students, " étudiant"))
+            }
             if (getTotalSkiPasses() >= 4) {
               status_bar_text += "\n⚠️ Réduction famille? Validez la facture"
             }

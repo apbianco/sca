@@ -266,7 +266,7 @@ function doUpdateAccountingTrix(data) {
     // others as 'Family' and we're done.
     var ski_pass_rebate_amount = getSkiPassesRebateAmount()
     if (ski_pass_rebate_amount) {
-      var final_amount = getTotakSkiPassesAmountBeforeRebate() - ski_pass_rebate_amount;
+      var final_amount = getTotalSkiPassesAmountBeforeRebate() - ski_pass_rebate_amount;
       for (var entry of data) {
         if (ski_pass_rebate_amount) {
           entry.skipass_fee = final_amount

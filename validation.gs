@@ -490,7 +490,7 @@ function getTotalSkiPasses() {
   return getNumberAt(coord_total_ski_pass)
 }
 
-function getTotakSkiPassesAmountBeforeRebate() {
+function getTotalSkiPassesAmountBeforeRebate() {
   return getNumberAt(coord_total_ski_pass_amount)
 }
 
