@@ -52,6 +52,10 @@ function SearchEntry(sheet, data, positions, label) {
   return index
 }
 
+function getAggregationTrix() {
+  return isProd() ? license_trix : license_test_trix
+}
+
 function doUpdateAggregationTrix(data) {
   // Update the row at range in sheet with data
   function UpdateRow(sheet, row, data) {
@@ -67,7 +71,7 @@ function doUpdateAggregationTrix(data) {
 
   // Open the spread sheet, insert the name if the operation is possible. Sync
   // the spreadsheet.
-  var sheet = SpreadsheetApp.openById(license_trix).getSheetByName(license_trix_ffs_sheet);
+  var sheet = SpreadsheetApp.openById(getAggregationTrix()).getSheetByName(license_trix_ffs_sheet);
   var entire_range = sheet.getRange(license_trix_ffs_all_range)
 
   for (var index in data) {
@@ -106,6 +110,10 @@ function updateAggregationTrix() {
     }
   }
   doUpdateAggregationTrix(family)
+}
+
+function getAccountingTrix() {
+  return isProd() ? accounting_trix : accounting_test_trix
 }
 
 function doUpdateAccountingTrix(data) {
@@ -298,7 +306,7 @@ function doUpdateAccountingTrix(data) {
     }
   }
 
-  var sheet = SpreadsheetApp.openById(accounting_trix).getSheetByName(accounting_trix_sheet)
+  var sheet = SpreadsheetApp.openById(getAccountingTrix()).getSheetByName(accounting_trix_sheet)
   // Dispatch all the data
   dispatchNonCompSubscriptions()
   dispatchCompSubscriptions()
