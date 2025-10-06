@@ -941,12 +941,38 @@ function testIsLicense() {
     }
   }
   Logger.log("Finished testIsLicense().");
+  return true
+}
+
+function testPhoneNumberValidation() {
+  const good_phone_number = "01 01 01 01 01"
+  if (!validatePhoneNumber(good_phone_number) == true) {
+    Logger.log('FAILURE: failling good phone number validation: ' + good_phone_number)
+    return false
+  }
+  const bad_phone_number = [
+   "06 87 52 23",
+   "06 87 52 23 73 ",
+   "06 87 52 23 733",
+   "A6 87 52 23 73",
+  ]
+  for (const phone of bad_phone_number) {
+    if (validatePhoneNumber(phone)) {
+      Logger.log('FAILURE: failling bad phone number validation: ' + phone)
+      return false
+    }
+  }
+  Logger.log("Finished testPhoneNumberValidation().");
   return true  
 }
 
 function RUN_ALL_TESTS() {
   Logger.log("Starting all invoice tests...");
   var failedSuites = [];
+
+  if (!testPhoneNumberValidation()) {
+    failedSuites.push('testPhoneNumberValidation')
+  }
 
   if (!testIsLicense()) {
     failedSuites.push('testIsLicense')

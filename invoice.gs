@@ -1737,6 +1737,11 @@ function validateEmailAddress(email_address, mandatory=true) {
   return true
 }
 
+function validatePhoneNumber(phone_number) {
+  const pattern = /^\d{2}( \d{2}){4}$/
+  return pattern.test(phone_number);
+}
+
 function TESTValidateInvoice() {
   function test(f) {
     var result = f()
@@ -1813,9 +1818,23 @@ function validateInvoice() {
   var phone_number = getStringAt(coord_family_phone1)
   if (phone_number == '') {
     displayErrorPanel(
-      "Vous n'avez pas renseigné de nom de numéro de telephone ou " +
+      "Vous n'avez pas renseigné de numéro de telephone ou " +
       "vous avez oublié \n" +
       "de valider le numéro de téléphone par [return] ou [enter]...")
+    return validatationDataError()   
+  }
+  if (!validatePhoneNumber(phone_number)) {
+    displayErrorPanel(
+      "Le numéro de telephone principal n'est pas au format 01 01 01 01 01.\nVotre saisie " +
+      "est incorrecte ou vous avez oublié de valider le numéro de téléphone par [return] ou [enter]...")
+    return validatationDataError()   
+  }
+  // Validation: second phone number correct formatted if present
+  var phone_number_2 = getStringAt(coord_family_phone2)
+  if (phone_number_2 != "" && !validatePhoneNumber(phone_number_2)) {
+    displayErrorPanel(
+      "Le numéro de telephone secondaire (facultatif) n'est pas au format 01 01 01 01 01.\nVotre saisie " +
+      "est incorrecte ou vous avez oublié de valider le numéro de téléphone par [return] ou [enter]...")
     return validatationDataError()   
   }
 
@@ -1833,7 +1852,7 @@ function validateInvoice() {
   if (mail_cc != '' ) {
     if (!validateEmailAddress(mail_cc, mandatory=false)) {
      displayErrorPanel(
-      "Addresse email secondaire incorrecte")
+      "Addresse email secondaire (facultative) incorrecte")
     return validatationDataError()     
     }
   }
