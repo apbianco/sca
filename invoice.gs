@@ -2138,7 +2138,7 @@ function generatePDFAndMaybeSendEmail(config) {
   // that's the case, we generate additional attachment content.
   if (email_folder) {
     switch (legal_disclaimer_validation) {
-      case 'À fournire signée':
+      case 'À fournir signée':
         attachments.push(
           DriveApp.getFileById(legal_disclaimer_pdf).getAs(MimeType.PDF))
         legal_disclaimer_text = (
