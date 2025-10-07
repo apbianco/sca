@@ -1169,13 +1169,6 @@ function isAdult(dob) {
   return ageFromDoB(dob) >= 18;
 }
 
-// Determine whether is someone is an adult by year of birth only. For 2023/2024 season, someone is
-// adult if they were born in 2005.
-function isAdultByYoB(dob) {
-  var yob = getDoBYear(dob)
-  return yob <= 2005
-}
-
 function isMinor(dob) {
   return ! isAdult(dob)
 }
