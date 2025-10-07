@@ -610,15 +610,21 @@ function validateSkiPasses() {
 
   // FIXME: Validation of the students. Also: this should be in the magic wand
   if (number_of_non_student_adults == 2) {
+    var rebate_applied = false
     if (family_size == 4) {
       var rebate = -(total_paid_skipass * 0.1)
       setStringAt(coord_rebate_family_of_4_count , "1")
       setStringAt(coord_rebate_family_of_4_amount, rebate)
+      rebate_applied = true
     }
     if (family_size >= 5) {
       var rebate = -(total_paid_skipass * 0.15)
       setStringAt(coord_rebate_family_of_5_count , "1")
       setStringAt(coord_rebate_family_of_5_amount, rebate)    
+      rebate_applied = true
+    }
+    if (rebate_applied) {
+      updateStatusBar("💰 Réduction appliquée", "grey", add=true)
     }
     SpreadsheetApp.flush();
   }
