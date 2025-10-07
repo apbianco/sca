@@ -557,7 +557,10 @@ function validateSkiPasses() {
       if (skipass.IsAdult()) {
         number_of_non_student_adults += purchased_amount
       }
-      family_size += purchased_amount
+      // Toddler ski pass doesn't count toward a familly rebate...
+      if (!skipass.IsToddler()) {
+        family_size += purchased_amount
+      }
       total_paid_skipass += skipass.GetTotalPrice() 
     }
   }

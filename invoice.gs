@@ -622,6 +622,7 @@ class SkiPass {
     this.occurence_count = 0
     this.student = isSkipassStudent(name)
     this.adult = isSkipassAdult(name)
+    this.toddler = isSkiPassToddler(name)
   }
 
   Name() { return this.name }
@@ -679,6 +680,7 @@ class SkiPass {
 
   IsStudent() { return this.student}
   IsAdult() { return this.adult }
+  IsToddler() { return this.toddler }
 }
 
 function createSkipassMap(sheet) {
@@ -821,6 +823,11 @@ function isSkipassStudent(ski_pass) {
 function isSkipassAdult(ski_pass) {
   return (ski_pass == localizeSkiPass3D(getSkiPassAdult()) ||
           ski_pass == localizeSkiPassCollet(getSkiPassAdult()))
+}
+
+function isSkiPassToddler(ski_pass) {
+  return (ski_pass == localizeSkiPass3D(getSkiPassToddler()) ||
+          ski_pass == localizeSkiPassCollet(getSkiPassToddler()))  
 }
 
 function getSkiPassesPairs() {
@@ -2440,7 +2447,7 @@ function magicWand() {
                                   total_students + Plural(total_students, " étudiant"))
             }
             if (getTotalSkiPasses() >= 4) {
-              status_bar_text += "\n⚠️ Réduction famille? Validez la facture"
+              status_bar_text += "\n⚠️ Réduction famille possible. Validez la facture..."
             }
             updateStatusBar(status_bar_text, "green")
             return
