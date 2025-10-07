@@ -544,7 +544,7 @@ function validateSkiPasses() {
     }
     // This count_adults update hinges on the fact that a student is necessarily an adult.
     if (purchased_amount > 0 && (skipass.IsStudent() || skipass.IsAdult())) {
-      count_adults += 1
+      count_adults += purchased_amount
     }
     if (skipass.IsStudent()) {
       total_student_skipasses += purchased_amount
