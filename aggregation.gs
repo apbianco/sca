@@ -316,6 +316,7 @@ function doUpdateAccountingTrix(data) {
   // Update all entries, sort the spreadsheet and sync it.
   var entire_range = sheet.getRange(accounting_trix_all_range)
   var max_row = 0
+  var inserted_items = 0
   for (var index in data) {
     var row = SearchEntry(sheet, data[index],
                           {row_start: accounting_trix_row_start,
@@ -325,14 +326,17 @@ function doUpdateAccountingTrix(data) {
     if (row == -1) {
       continue
     }
+    inserted_items += 1
     max_row = Math.max(max_row, row)
     UpdateRow(sheet, row, data[index])
   }
   // Sort the spread sheet by last name and then first name and sync the spreadsheet.
   entire_range.sort([{column: entire_range.getColumn()}, {column: entire_range.getColumn()+5}])
-  // ...
-  var entireRowRange = sheet.getRange(max_row, 1, 1, sheet.getMaxColumns());
-  entireRowRange.setBorder(null, null, true, null, null, null, '#000000', SpreadsheetApp.BorderStyle.DASHED);
+  // If we have inserted items, change the last cell line with a dash to define a region...
+  if (inserted_items > 0) {
+    var entireRowRange = sheet.getRange(max_row, 1, 1, sheet.getMaxColumns());
+    entireRowRange.setBorder(null, null, true, null, null, null, '#000000', SpreadsheetApp.BorderStyle.DASHED);
+  }
   SpreadsheetApp.flush()
 }
 
