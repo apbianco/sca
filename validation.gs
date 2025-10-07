@@ -594,9 +594,9 @@ function validateSkiPasses() {
     // or return indicating that the entered value must be checked. This can happen for
     // instance when one adult purchases a license but doesn't purchase a ski pass...
     if (zone1_count != total_purchased) {
-      var message = (total_purchased + Plural(total_purchased, ' forfait') + ' ' +
-                     zone1 + '/' + zone2 + Plural(total_purchased, ' acheté') + ' pour ' +
-                     zone1_count + Plural(zone1_count, ' personne') +
+      var message = ("["+ total_purchased + "]" + Plural(total_purchased, ' forfait') + ' ' +
+                     zone1 + '/' + zone2 + Plural(total_purchased, ' acheté') + ' pour [' +
+                     zone1_count + "] " + Plural(zone1_count, ' personne') +
                      ' dans cette tranche d\'âge (' + ski_passes_map[zone1].ValidDoBRangeMessage() + ")")
       message += ("\n\nIl ce peut que ce choix de forfait soit valide mais pas " +
                   "automatiquement vérifiable. C'est le cas lorsque plusieurs options  " +
