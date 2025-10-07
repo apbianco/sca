@@ -1776,12 +1776,12 @@ function TESTValidateInvoice() {
       displayErrorPanel("Error during test")
     }
   }
-  test(validateInvoice)
+  test(validateInvoice(true))
 }
 
 // Validate the invoice and return a dictionary of values
 // to use during invoice generation.
-function validateInvoice() {
+function validateInvoice(update_timestamp) {
   function validatationDataError() {
     return new InvoiceValidationData(true, '', '', '', '', '')
   }
@@ -2012,14 +2012,15 @@ function validateInvoice() {
     }
   }
 
-  // Update the timestamp. 
-  updateStatusBar("Mise à jour de la version...", "grey", add=true)
-  setStringAt(coord_timestamp,
-              'Dernière MAJ le ' +
-              Utilities.formatDate(new Date(),
-                                   Session.getScriptTimeZone(),
-                                   "dd-MM-YY, HH:mm") + (is_yolo ? "\n#yolo" : ""), 'black')
-
+  // Update the timestamp if asked to do so
+  if (update_timestamp) {
+    updateStatusBar("Mise à jour de la version...", "grey", add=true)
+    setStringAt(coord_timestamp,
+                'Dernière MAJ le ' +
+                Utilities.formatDate(new Date(),
+                                     Session.getScriptTimeZone(),
+                                     "dd-MM-YY, HH:mm") + (is_yolo ? "\n#yolo" : ""), 'black')
+  }
 
   return new InvoiceValidationData(false, civility, family_name, checkEmail(mail_to),
                                    legal_disclaimer_validation, ffs_medical_form_validation)    
@@ -2035,6 +2036,7 @@ var invoiceActions = {
   JUST_GENERATE_INVOICE: 1 << 0,
   LICENSE_REQUEST: 1 << 1,
   EMAIL_FOLDER: 1 << 2,
+  JUST_VALIDATE: 1 << 3,
 };
 
 // Verify that a license can be asked - this just requires some payment
@@ -2132,11 +2134,18 @@ function updateStatusBar(message, color, add=false) {
 }
 
 function generatePDFAndMaybeSendEmail(config) {
+  var just_validate = config & invoiceActions.JUST_VALIDATE
   updateStatusBar("⏳ Validation de la facture...", "orange")      
-  var validation = validateInvoice();
+  // When not just validating, pass true to indicate we want to update the version
+  // number.
+  var validation = validateInvoice(!just_validate);
   if (validation.error) {
     updateStatusBar("❌ La validation de la facture a échouée", "red")      
-    return;
+    return
+  }
+  if (just_validate) {
+    updateStatusBar("✅ La validation de la facture est terminée", "green")      
+    return
   }
   // Generate and prepare attaching the PDF to the email
   updateStatusBar("⏳ Préparation de la facture...", "orange")
@@ -2374,6 +2383,10 @@ function generatePDFAndMaybeSendEmail(config) {
 // Runs when the [secure authorization] button is pressed.
 function GetAuthorization() {
   ScriptApp.getAuthorizationInfo(ScriptApp.AuthMode.FULL)
+}
+
+function JustValidate() {
+  generatePDFAndMaybeSendEmail(invoiceActions.JUST_VALIDATE)
 }
 
 // This is what the [generate invoice] button runs.
