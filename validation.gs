@@ -505,7 +505,7 @@ function getSkiPassesRebateAmount() {
 }
 
 function validateSkiPasses() {
-  updateStatusBar("Validation des forfaits loisir...", "grey", add=true)
+  updateStatusBar("Validation des forfaits...", "grey", add=true)
   // Always clear the rebate section before eventually recomputing it at the end
   clearSkiPassesRebates()
   var ski_passes_map = createSkipassMap(SpreadsheetApp.getActiveSheet())
