@@ -222,7 +222,7 @@ function doUpdateAccountingTrix(data) {
         // We pick the first one match as the recipient
         if (family.IsA(entry.license_type)) {
           if (number_charges > 0) {
-            entry.license_fee = familly.LicenseAmount()
+            entry.license_fee = family.LicenseAmount()
             number_charges -= 1
           } else {
             entry.license_fee = 'Famille'
@@ -261,8 +261,8 @@ function doUpdateAccountingTrix(data) {
   }
 
   function dispatchSkiPasses() {
-    // If there's a rebate, we have a familly ski pass. Compute and assign the total amoun
-    // amount paid in ski passes (rebate included) to the first familly member, mark the
+    // If there's a rebate, we have a family ski pass. Compute and assign the total amoun
+    // amount paid in ski passes (rebate included) to the first family member, mark the
     // others as 'Family' and we're done.
     var ski_pass_rebate_amount = getSkiPassesRebateAmount()
     if (ski_pass_rebate_amount) {
