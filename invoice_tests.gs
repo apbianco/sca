@@ -966,6 +966,16 @@ function testPhoneNumberValidation() {
   return true  
 }
 
+const originalDateNow = Date.now
+function startMockDate(date) {
+  Date.now = function() {
+    return new Date(date)
+  }
+}
+function stopMockDate() {
+  Date.now = originalDateNow
+}
+
 function testAgeVerification() {
   var test_values_1 = {
     //         DoB                    | To Test Against       | Method                               | Expected results
@@ -1016,10 +1026,6 @@ function testAgeVerification() {
     }
   }
 
-  const originalDateNow = Date.now
-  Date.now = function() {
-    return new Date("10/8/2025")
-  }
   var test_values_3 = {
     //         Dob                   | Age
     'Test 1a': [new Date("10/8/2011"), 14 ], // 14 today
@@ -1038,7 +1044,45 @@ function testAgeVerification() {
       return false
     }
   }
-  Date.now = originalDateNow
+
+  var test_values_4 = {
+    //         DoB                   | Age | method                           | expected              
+    'Test 1a': [new Date("10/8/2011"), 14,   ageVerificationStrictlyOldOrOlder, true    ],
+    'Test 1b': [new Date("10/9/2011"), 13,   ageVerificationStrictlyOldOrOlder, true    ],
+    'Test 1c': [new Date("10/9/2011"), 14,   ageVerificationStrictlyOldOrOlder, false   ],
+    'Test 1d': [new Date("10/9/2011"), 14,   ageVerificationStrictlyYounger,    true    ],
+    'Test 1e': [new Date("10/8/2011"), 13,   ageVerificationStrictlyYounger,    false   ],
+    'Test 1e': [new Date("10/9/2011"), 14,   ageVerificationStrictlyYounger,    true    ]
+
+  }
+  for (const [key, values] of Object.entries(test_values_4)) {
+    var dob = values[0]
+    var age = values[1]
+    var method = values[2]
+    var expected = values[3]
+    var res = method(dob, age)
+    if (res != expected) {
+      Logger.log('FAILURE: ' + key + ": " + dob + " and " + age + " res=" + res)
+      return false
+    }
+  }
+
+  var test_values_5 = {
+    'Test 1a': [new Date("10/8/2043"), true],
+    'Test 1a': [new Date("10/7/2043"), false],
+    'Test 1a': [new Date("10/9/2043"), true]
+
+  }
+  for (const [key, values] of Object.entries(test_values_5)) {
+    var dob = values[0]
+    var expected = values[1]
+    var res = isAdult(dob)
+    if (res == expected) {
+      Logger.log('FAILURE: ' + key + ": " + dob + " expected=" + expected + " res=" + res)
+      return false      
+    }
+  }
+
   Logger.log("Finished testAgeVerification")
   return true
 }
@@ -1127,9 +1171,11 @@ function RUN_ALL_TESTS() {
     failedSuites.push('testSkipassProperties')
   }
 
+  startMockDate("10/8/2025")
   if (!testAgeVerification()) {
     failedSuites.push('testAgeVerification')
   }
+  stopMockDate()
   
   if (!testPhoneNumberValidation()) {
     failedSuites.push('testPhoneNumberValidation')
