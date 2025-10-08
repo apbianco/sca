@@ -988,6 +988,7 @@ function testAgeVerification() {
     var result = values[3]
     if (method(dob, date) != result) {
       Logger.log('FAILURE: ' + key + ": " + dob + " and " + date)
+      return false
     }
   }
 
@@ -1011,6 +1012,7 @@ function testAgeVerification() {
     var result = values[4]
     if (method(dob, date1, date2) != result) {
       Logger.log('FAILURE: ' + key + ": " + dob + " and " + date1 + ", " + date2)
+      return false
     }
   }
 
@@ -1018,9 +1020,63 @@ function testAgeVerification() {
   return true
 }
 
+function testSkipassProperties() {
+  var test_values = {
+    //         Input                | Method under test | Expected result
+    'Test a': ["Collet Senior",       isSkipassStudent,   false          ],
+    'Test b': ["Collet Étudiant",     isSkipassStudent,   true           ],
+    'Test c': ["3 Domaines Étudiant", isSkipassStudent,   true           ],
+    'Test d': ["2 Alpes Étudiant",    isSkipassStudent,   false          ],
+
+    'Test e': ["Collet Senior",       isSkipassAdult,     false          ],
+    'Test f': ["Collet Adulte",       isSkipassAdult,     true           ],
+    'Test g': ["3 Domaines Adulte",   isSkipassAdult,     true           ],
+    'Test h': ["2 Alpes Adulte",      isSkipassAdult,     false          ], 
+
+    'Test i': ["Collet Senior",       isSkiPassToddler,   false          ],
+    'Test j': ["Collet Bambin",       isSkiPassToddler,   true           ],
+    'Test k': ["3 Domaines Bambin",   isSkiPassToddler,   true           ],
+    'Test l': ["2 Alpes Bambin",      isSkiPassToddler,   false          ]
+  }
+  for (const [key, values] of Object.entries(test_values)) {
+    var input = values[0]
+    var method = values[1]
+    var result = values[2]
+    if (method(input) != result) {
+      Logger.log('FAILURE: ' + key + ": " + input + ": " + result)
+      return false
+    }
+  }
+
+  var pairs = getSkiPassesPairs()
+  var expected = [["Collet Senior","3 Domaines Senior"],
+                  ["Collet Vermeil","3 Domaines Vermeil"],
+                  ["Collet Adulte","3 Domaines Adulte"],
+                  ["Collet Étudiant","3 Domaines Étudiant"],
+                  ["Collet Junior","3 Domaines Junior"],
+                  ["Collet Enfant","3 Domaines Enfant"],
+                  ["Collet Bambin","3 Domaines Bambin"]]
+  if (pairs.length != expected.length) {
+      Logger.log('FAILURE: ' + pairs.length + ": " + expected.length)
+      return false
+  }
+  for (let i = 0; i < pairs.length; i++) {
+    if (pairs[i][0] != expected[i][0] || pairs[i][1] != expected[i][1]) {
+      Logger.log('FAILURE: ' + pairs[i] + ": " + expected[i])
+      return false
+    }
+  }
+  Logger.log("Finished testSkiPassProperties")
+  return true
+}
+
 function RUN_ALL_TESTS() {
   Logger.log("Starting all invoice tests...");
   var failedSuites = [];
+
+  if (!testSkipassProperties()) {
+    failedSuites.push('testSkipassProperties')
+  }
 
   if (!testAgeVerification()) {
     failedSuites.push('testAgeVerification')
