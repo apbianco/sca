@@ -1142,8 +1142,32 @@ function ageVerificationBornBeforeYearIncluded(dob, year) {
   return getDoBYear(dob) <= year
 }
 
-// Return and age from DoB with respect to now
 function ageFromDoB(dob) {
+  if (!(dob instanceof Date) || isNaN(dob.getTime())) {
+    return -1
+  }
+  const today = new Date();
+  // Calculate the difference in years
+  let age = today.getFullYear() - dob.getFullYear();
+  // Check if the current month is BEFORE the birth month.
+  var tm = today.getMonth()
+  var dm = dob.getMonth()
+  if (today.getMonth() < dob.getMonth()) {
+    age--;
+  } 
+  // If the current month is the same as the birth month, 
+  // check if the current day is BEFORE the birth day.
+  else if (today.getMonth() === dob.getMonth()) {
+    if (today.getDate() < dob.getDate()) {
+      age--;
+    }
+  }
+  return age;
+}
+
+// Return and age from DoB with respect to now.
+// FIXME: Remove this implementation in 2026/2027
+function ageFromDoB2(dob) {
   // Calculate month difference from current date in time
   var month_diff = Date.now() - dob.getTime();
   // Convert the calculated difference in date format

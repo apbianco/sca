@@ -365,7 +365,7 @@ function testAgeFromDoB() {
   testCases.push({
     description: "1 year in the future",
     input: futureDate,
-    expected: Math.abs(year_future - 1970)
+    expected: -1
   });
 
   var failures = 0;
@@ -1016,6 +1016,29 @@ function testAgeVerification() {
     }
   }
 
+  const originalDateNow = Date.now
+  Date.now = function() {
+    return new Date("10/8/2025")
+  }
+  var test_values_3 = {
+    //         Dob                   | Age
+    'Test 1a': [new Date("10/8/2011"), 14 ], // 14 today
+    'Test 1d': [new Date("10/7/2011"), 14 ], // 14 yesterday
+    'Test 1b': [new Date("09/8/2011"), 14 ], // 14 for a month
+    'Test 1c': [new Date("11/8/2011"), 13 ], // 14 in one month
+    'Test 1e': [new Date("10/9/2011"), 13 ]  // 14 in one day
+  }
+
+  for (const [key, values] of Object.entries(test_values_3)) {
+    var dob = values[0]
+    var age = values[1]
+    var res = ageFromDoB(dob)
+    if (res != age) {
+      Logger.log('FAILURE: ' + key + ": " + dob + " and " + age)
+      return false
+    }
+  }
+  Date.now = originalDateNow
   Logger.log("Finished testAgeVerification")
   return true
 }
