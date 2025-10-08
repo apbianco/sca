@@ -2136,8 +2136,7 @@ function updateStatusBar(message, color, add=false) {
 function generatePDFAndMaybeSendEmail(config) {
   var just_validate = config & invoiceActions.JUST_VALIDATE
   updateStatusBar("⏳ Validation de la facture...", "orange")      
-  // When not just validating, pass true to indicate we want to update the version
-  // number.
+  // When not just validating, pass true to indicate we want to update the version number.
   var validation = validateInvoice(!just_validate);
   if (validation.error) {
     updateStatusBar("❌ La validation de la facture a échouée", "red")      
