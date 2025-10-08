@@ -1070,7 +1070,7 @@ function getNumberAt(coord) {
 
 function nthString(value) {
   var nth_strings = ["??ème", "1er", "2ème", "3ème", "4ème", "5ème"]
-  if (value < 0 || value >= 5) {
+  if (value < 0 || value > 5 || !Number.isInteger(value)) {
     return "??ème"
   } else {
     return nth_strings[value]

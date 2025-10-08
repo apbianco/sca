@@ -1070,9 +1070,35 @@ function testSkipassProperties() {
   return true
 }
 
+function testMiscUtility() {
+  var test_values_nth_string = {
+    'Test 1': [-1,  "??ème"],
+    'Test 2': [0,   "??ème"],
+    'Test 3': [1,   "1er"  ],
+    'Test 4': [2,   "2ème" ],
+    'Test 5': [3,   "3ème" ],
+    'Test 6': [4,   "4ème" ],
+    'Test 7': [5,   "5ème" ],
+    'Test 8': [6,   "??ème"],
+    'Test 9': ["a", "??ème"]
+  }
+  for (const [key, values] of Object.entries(test_values_nth_string)) {
+    if (nthString(values[0]) != values[1]) {
+      Logger.log('FAILURE: ' + key + ": " + nthString(values[0]) + ", " + values[1])
+      return false
+    }
+  }
+  Logger.log("Finished testMiscUtility")
+  return true
+}
+
 function RUN_ALL_TESTS() {
   Logger.log("Starting all invoice tests...");
   var failedSuites = [];
+
+  if(!testMiscUtility()) {
+    failedSuites.push('testMiscUtility')
+  }
 
   if (!testSkipassProperties()) {
     failedSuites.push('testSkipassProperties')
