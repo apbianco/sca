@@ -1,6 +1,6 @@
 // Version: 2025-10-6 - Competitors registration.
 //
-// Code implementing the trigger for the 2024/2025 seasons
+// Code implementing the trigger for the current season
 //
 // The goal of the trigger is to generate a new fresh sheet from
 // template, performing some minimal validation of the input.
