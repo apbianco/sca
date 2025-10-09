@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// Version: 2025-10-09T10:48 - Competitors registration.
+// Version: 2025-10-09T14:31 - Competitors registration.
 //
 // Validation routines table. They must be running in a specific order defined here after.
 // For some, failing is a  show stopper. For others, it's possible to decline accepting
@@ -220,18 +220,19 @@ function validateLicenses() {
     // A least three declared participants
     if (family_license_attributed_count < 3) {
       return (
-        "Il faut attribuer une licence famille à au moins 3 membres " +
-        "d'une même famille - 2 adultes parents et un ou plusiers enfants de moins. " +
-        "de 25 ans tous vivant sous le même toit. Seulement " + 
+        "Il faut attribuer une licence famille à au moins [3] membres " +
+        "d'une même famille - [2] adultes parents et un ou plusieurs enfants de moins " +
+        "de 25 ans vivant tous sous le même toit. Seulement [" + 
         family_license_attributed_count +
-        "] ont été " + Plural(family_license_attributed_count, "attribué") + ".")
+        "] " + Plural(family_license_attributed_count, "licence") +
+        " famille " + Plural(family_license_attributed_count, "attribué") + ".")
     }
     // Check that one family license was purchased.
     var family_license_purchased = license_map[getNonCompFamilyLicenseString()].PurchasedLicenseAmount()
     if (family_license_purchased != 1) {
       return (
-        "Vous devez acheter une licence loisir famille, vous en avez " +
-        "acheté pour l'instant " + family_license_purchased);
+        "Vos choix indiquent que vous devez acheter [1] licence loisir famille, vous en avez " +
+        "acheté pour l'instant " + family_license_purchased) + "]"
     }
     // Now verify all folks that have a familly license attributed to them to see whether
     // the criteria are met
@@ -254,6 +255,22 @@ function validateLicenses() {
           num_younger_25 += 1
         }
       }
+    }
+    if (num_adults < 2) {
+      return (
+        "Il faut attribuer une licence famille à au moins 3 membres " +
+        "d'une même famille - 2 adultes parents et un ou plusiers enfants de moins " +
+        "de 25 ans vivant tous sous le même toit.\n\n" +
+        "Seulement [" + num_adults + "] " + Plural(num_adults, "licence") + " famille " + Plural(num_adults, "attribuée") +
+        " à des adultes.")
+    }
+    if (num_younger_25 < 1) {
+      return (
+        "Il faut attribuer une licence famille à au moins 3 membres " +
+        "d'une même famille - 2 adultes parents et un ou plusieurs enfants de moins " +
+        "de 25 ans vivant tous sous le même toit.\n\n" +
+        "Seulement [" + num_younger_25 + "] " + Plural(num_adults, "licence") + " famille " + Plural(num_adults, "attribuée") +
+        " à des enfants de moins de 25 ans.")
     }
   }
   
