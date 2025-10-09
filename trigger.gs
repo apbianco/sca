@@ -1,4 +1,4 @@
-// Version: 2025-10-6 - Competitors registration.
+// Version: 2025-10-09T10:48 - Competitors registration.
 //
 // Code implementing the trigger for the current season
 //
