@@ -18,83 +18,6 @@
 // unless the trigger in use is the TEST trigger.
 dev_or_prod = "prod"
 
-///////////////////////////////////////////////////////////////////////////////
-// Advanced functionality and features management
-///////////////////////////////////////////////////////////////////////////////
-
-// Enable/disable new features - first entry set to false
-// requires all following entries set to false. Note that
-// a validation of that constraint is carried out immediately
-// after these definitions.
-//
-// The coresponding truth table is:
-//
-// a     b     c     result
-// ------------------------
-// 0     0     0     1
-// 1     0     0     1
-// 1     1     0     1
-// 1     1     1     1
-// *     *     *     0
-//
-// result = !b!c + ab
-class AdvancedFeatures {
-  constructor() {
-    // a
-    this.verification_family_licenses = false
-    // b
-    this.verification_subscriptions = false
-    // c
-    this.verification_skipass = false
-  }
-
-  Validate() {
-    // !b!c
-    var not_b_not_c = ! this.verification_subscriptions && ! this.verification_skipass
-    // ab
-    var ab = this.verification_family_licenses && this.verification_subscriptions
-    // !b!c + ab
-    var result = not_b_not_c || ab
-    if (!result) {
-      displayErrorPanel(
-        "verification_family_licenses: " + this.verification_family_licenses +
-        "\nverification_subscriptions: " + this.verification_subscriptions +
-        "\nverification_skipass: " + this.verification_skipass)
-    }
-  }
-
-  SetAdvancedVerificationFamilyLicenses() {
-    this.verification_family_licenses = true
-    this.Validate()
-  }
-  AdvancedVerificationFamilyLicenses() {
-    return this.verification_family_licenses
-  }
-
-  SetAdvancedVerificationSubscriptions() {
-    this.verification_subscriptions = true
-    this.Validate()
-  }
-  AdvancedVerificationSubscription() {
-    return this.verification_subscriptions
-  }
-
-  SetAdvancedVerificationSkipass() {
-    this.verification_skipass = true
-    this.Validate()
-  }
-  AdvancedVerificationSkipass() {
-    return this.verification_skipass
-  }
-}
-
-// Create the advanced validation global instance and turn on the advanced
-// validation features. The verification happens as soon as the feature is set.
-var advanced_validation = new AdvancedFeatures()
-advanced_validation.SetAdvancedVerificationFamilyLicenses()
-advanced_validation.SetAdvancedVerificationSubscriptions()
-advanced_validation.SetAdvancedVerificationSkipass()
-
 // Validation method use when creating license, skipasses and subscription
 // maps.
 // FIXME: Move this somewhere else
@@ -1921,13 +1844,11 @@ function validateInvoice(update_timestamp) {
       return validatationDataError()
     }
 
-    // Now performing the optional/advanced validations.
-    if (advanced_validation.AdvancedVerificationFamilyLicenses()) {
-      validation_error = validateLicenses();
-      if (validation_error) {
-        displayErrorPanel(validation_error);
-        return validatationDataError()
-      }
+    // Now performing the advanced validations.
+    validation_error = validateLicenses();
+    if (validation_error) {
+      displayErrorPanel(validation_error);
+      return validatationDataError()
     }
 
     // Perform the validation of the level that says license only
@@ -1947,25 +1868,21 @@ function validateInvoice(update_timestamp) {
 
     // 2- Verify the subscriptions. The operator may choose to continue
     //    as some situation are un-verifiable automatically.
-    if (advanced_validation.AdvancedVerificationSubscription()) {
-      // Validate requested licenses and subscriptions
-      validation_error = validateNonCompSubscriptions()
-      if (validation_error) {
-        if (! displayYesNoPanel(augmentEscapeHatch(validation_error))) {
-          return validatationDataError()
-        }
+    // Validate requested licenses and subscriptions
+    validation_error = validateNonCompSubscriptions()
+    if (validation_error) {
+      if (! displayYesNoPanel(augmentEscapeHatch(validation_error))) {
+        return validatationDataError()
       }
     }
 
     // 3- Verify the ski pass purchases. The operator may choose to continue
     //    as some situation are un-verifiable automatically.
-    if (advanced_validation.AdvancedVerificationSkipass()) {
-      validation_error = validateSkiPasses()
-      if (validation_error) {
-        if (! displayYesNoPanel(augmentEscapeHatch(validation_error))) {
-          return validatationDataError()
-        }    
-      }
+    validation_error = validateSkiPasses()
+    if (validation_error) {
+      if (! displayYesNoPanel(augmentEscapeHatch(validation_error))) {
+        return validatationDataError()
+      }    
     }
  
     // Validate the legal disclaimer.
