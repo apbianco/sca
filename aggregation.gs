@@ -1,4 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////////
+//
+// Version: 2025-10-09T10:48 - Competitors registration.
+//
 // Update various aggregation trix:
 //  - There is one that is used to project future level groups
 //  - There is one used by accounting

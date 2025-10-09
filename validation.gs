@@ -1,3 +1,7 @@
+///////////////////////////////////////////////////////////////////////////////
+//
+// Version: 2025-10-09T10:48 - Competitors registration.
+//
 // Validation routines table. They must be running in a specific order defined here after.
 // For some, failing is a  show stopper. For others, it's possible to decline accepting
 // there's an error and continue (escape hatch). Most can be skipped when #yolo is active.

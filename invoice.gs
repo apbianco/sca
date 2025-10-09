@@ -1,5 +1,5 @@
-// Version: 2025-06-04 - Preparing 2025/2026
-// https://github.com/apbianco/sca/commit/<FIXME>
+///////////////////////////////////////////////////////////////////////////////
+// Version: 2025-10-09T10:48 - Competitors registration.
 //
 // This validates the invoice sheet (more could be done BTW) and
 // sends an email with the required attached pieces.
@@ -11,8 +11,9 @@
 //   the only account that is connected. Once an invoice has been generated,
 //   it's possible to debug its code in Safari.
 // - Automated tests exists in invoice_test.gs
-// - Seasonal configuration points are in the file config.ps
-//
+// - Seasonal configuration points are in the file config.gs
+///////////////////////////////////////////////////////////////////////////////
+
 // Dev or prod? "dev" sends all email to email_dev. Prod is the
 // real thing: family will receive invoices, and so will email_license,
 // unless the trigger in use is the TEST trigger.
