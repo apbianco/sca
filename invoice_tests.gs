@@ -1093,6 +1093,51 @@ function testAgeVerification() {
   }
   stopMockDate()
 
+  var test_values_6 = {
+    //         dob                   | expected
+    'Test 6a': [new Date("10/8/2025"), Number(2025)    ],
+    'Test 6b': ["1/1/1901",            Number(1901)    ],
+    // NaN is the only value that isn't equal to itself.
+    // 'Test 6c': ["",                    NaN             ]
+  }
+  for (const [key, values] of Object.entries(test_values_6)) {
+    var dob = values[0]
+    var expected = values[1]
+    var res = getDoBYear(dob)
+    if (res != expected) {
+      Logger.log('FAILURE: ' + key + ": " + dob + " expected=" + expected + " res=" + res)
+      return false
+    }
+  }
+
+  var test_values_7 = {
+    //          DoB                   | Age1 | Age2 | method                      | expected
+    'Test 7a': [new Date("10/9/2015"),  10,    11,    ageVerificationRangeIncluded, true    ],
+    'Test 7b': [new Date("10/9/2015"),  09,    10,    ageVerificationRangeIncluded, true    ],
+    'Test 7c': [new Date("10/9/2015"),  10,    10,    ageVerificationRangeIncluded, true    ],
+    'Test 7d': [new Date("10/9/2015"),  11,    10,    ageVerificationRangeIncluded, false   ],
+    'Test 7e': [new Date("10/9/2015"),  11,    15,    ageVerificationRangeIncluded, false   ],
+    'Test 7f': [new Date("10/10/2015"), 10,    11,    ageVerificationRangeIncluded, false   ],
+    'Test 7g': [new Date("10/9/2014"),  11,    11,    ageVerificationRangeIncluded, true    ],
+    'Test 7h': [new Date("10/9/2014"),  10,    12,    ageVerificationRangeIncluded, true    ],
+    'Test 7i': [new Date("10/9/2015"),  11,    12,    ageVerificationRangeIncluded, false   ],
+  }
+  startMockDate("10/9/2025")
+  for (const [key, values] of Object.entries(test_values_7)) {
+    var dob = values[0]
+    var age1 = values[1]
+    var age2 = values[2]
+    var method = values[3]
+    var expected = values[4]
+    var res = method(dob, age1, age2)
+    if (res != expected) {
+      Logger.log('FAILURE: ' + key + ": " + dob + " age1=" + age1 + " age2=" + age2 + " expected=" + expected)
+      stopMockDate()
+      return false      
+    }
+  }
+  stopMockDate()
+
   Logger.log("Finished testAgeVerification")
   return true
 }
