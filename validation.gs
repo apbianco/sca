@@ -217,13 +217,14 @@ function validateLicenses() {
   //    valid or not even with a family license purchased.
   var family_license_attributed_count = license_map[getNonCompFamilyLicenseString()].AttributedLicenseCount()
   if (family_license_attributed_count != 0) {
-    // A least four declared participants
-    if (family_license_attributed_count < 4) {
+    // A least three declared participants
+    if (family_license_attributed_count < 3) {
       return (
-        "Il faut attribuer une licence famille à au moins 4 membres " +
-        "d'une même famille. Seulement " + 
+        "Il faut attribuer une licence famille à au moins 3 membres " +
+        "d'une même famille - 2 adultes parents et un ou plusiers enfants de moins. " +
+        "de 25 ans tous vivant sous le même toit. Seulement " + 
         family_license_attributed_count +
-        " ont été attribuées.");
+        "] ont été " + Plural(family_license_attributed_count, "attribué") + ".")
     }
     // Check that one family license was purchased.
     var family_license_purchased = license_map[getNonCompFamilyLicenseString()].PurchasedLicenseAmount()
@@ -231,6 +232,28 @@ function validateLicenses() {
       return (
         "Vous devez acheter une licence loisir famille, vous en avez " +
         "acheté pour l'instant " + family_license_purchased);
+    }
+    // Now verify all folks that have a familly license attributed to them to see whether
+    // the criteria are met
+    var num_adults = 0
+    var num_younger_25 = 0
+    for (var index in coords_identity_rows) {
+      var license = getLicenseAt([coords_identity_rows[index], coord_license_column]);
+      if (isLicenseNonCompFamily(license)) {
+        var dob = getDoB([coords_identity_rows[index], coord_dob_column]);
+        if (isAdult(dob)) { 
+          if (ageVerificationStrictlyYounger(dob, 26)) {
+            num_younger_25 += 1
+          } else {
+            num_adults += 1
+          }
+          continue
+        }
+        // We only have strict age verification so set the comparison threshold at 26
+        if (ageVerificationStrictlyYounger(dob, 26)) {
+          num_younger_25 += 1
+        }
+      }
     }
   }
   
