@@ -20,7 +20,6 @@ dev_or_prod = "prod"
 
 // Validation method use when creating license, skipasses and subscription
 // maps.
-// FIXME: Move this somewhere else
 function validateClassInstancesMap(map, map_name) {
   for (var key in map) {
     if (map[key].Name() != key) {
@@ -1066,8 +1065,8 @@ function ageVerificationBornBeforeYearIncluded(dob, year) {
 }
 
 function ageFromDoB(dob) {
-  if (!(dob instanceof Date) || isNaN(dob.getTime())) {
-    return -1
+  if (isNaN(dob.getTime())) {
+    return -99
   }
   const today = new Date();
   // Calculate the difference in years

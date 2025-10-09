@@ -966,14 +966,15 @@ function testPhoneNumberValidation() {
   return true  
 }
 
-const originalDateNow = Date.now
+const originalDateNow = Date
 function startMockDate(date) {
-  Date.now = function() {
-    return new Date(date)
+  date_object = new Date(date)
+  Date = function() {
+    return date_object
   }
 }
 function stopMockDate() {
-  Date.now = originalDateNow
+  Date = originalDateNow
 }
 
 function testAgeVerification() {
@@ -983,13 +984,13 @@ function testAgeVerification() {
     'Test 1b': [new Date("01/01/2006"), new Date("12/31/2006"), ageVerificationBornBeforeDateIncluded, true           ],
     'Test 1c': [new Date("01/01/2007"), new Date("12/31/2006"), ageVerificationBornBeforeDateIncluded, false          ],
 
-    'Test 2a': [new Date("01/01/2020"), new Date("01/01/2020"), ageVerificationBornAfterDateIncluded,  true           ],
-    'Test 2b': [new Date("01/01/2021"), new Date("01/01/2020"), ageVerificationBornAfterDateIncluded,  true           ],
-    'Test 2c': [new Date("12/31/2019"), new Date("01/01/2020"), ageVerificationBornAfterDateIncluded,  false          ],
+    'Test 1d': [new Date("01/01/2020"), new Date("01/01/2020"), ageVerificationBornAfterDateIncluded,  true           ],
+    'Test 1e': [new Date("01/01/2021"), new Date("01/01/2020"), ageVerificationBornAfterDateIncluded,  true           ],
+    'Test 1f': [new Date("12/31/2019"), new Date("01/01/2020"), ageVerificationBornAfterDateIncluded,  false          ],
 
-    'Test 3a': [new Date("12/31/2015"), "2016",                 ageVerificationBornBeforeYearIncluded, true           ],
-    'Test 3b': [new Date("12/31/2016"), "2016",                 ageVerificationBornBeforeYearIncluded, true           ],
-    'Test 3c': [new Date("1/1/2017"),   "2016",                 ageVerificationBornBeforeYearIncluded, false          ],
+    'Test 1g': [new Date("12/31/2015"), "2016",                 ageVerificationBornBeforeYearIncluded, true           ],
+    'Test 1h': [new Date("12/31/2016"), "2016",                 ageVerificationBornBeforeYearIncluded, true           ],
+    'Test 1i': [new Date("1/1/2017"),   "2016",                 ageVerificationBornBeforeYearIncluded, false          ],
   }
   for (const [key, values] of Object.entries(test_values_1)) {
     var dob = values[0]
@@ -1004,15 +1005,15 @@ function testAgeVerification() {
 
   var test_values_2 = {
     //         DoB                    | Date 1                | Date 2                | method                                 | Expected results
-    'Test 1a': [new Date("1/1/2005"),   new Date("1/1/2005"),   new Date("12/31/2005"), ageVerificationBornBetweenDatesIncluded, true            ],
-    'Test 1b': [new Date("12/31/2005"), new Date("1/1/2005"),   new Date("12/31/2005"), ageVerificationBornBetweenDatesIncluded, true            ],
-    'Test 1c': [new Date("1/1/2006"),   new Date("1/1/2005"),   new Date("12/31/2005"), ageVerificationBornBetweenDatesIncluded, false           ],
-    'Test 1d': [new Date("12/31/2004"), new Date("1/1/2005"),   new Date("12/31/2005"), ageVerificationBornBetweenDatesIncluded, false           ],
+    'Test 2a': [new Date("1/1/2005"),   new Date("1/1/2005"),   new Date("12/31/2005"), ageVerificationBornBetweenDatesIncluded, true            ],
+    'Test 2b': [new Date("12/31/2005"), new Date("1/1/2005"),   new Date("12/31/2005"), ageVerificationBornBetweenDatesIncluded, true            ],
+    'Test 2c': [new Date("1/1/2006"),   new Date("1/1/2005"),   new Date("12/31/2005"), ageVerificationBornBetweenDatesIncluded, false           ],
+    'Test 2d': [new Date("12/31/2004"), new Date("1/1/2005"),   new Date("12/31/2005"), ageVerificationBornBetweenDatesIncluded, false           ],
     //         Dob                    | Year 1                | Year 2                | Method                                 | Expected results
-    'Test 2a': [new Date("1/1/2005"),   2005,                   2006,                   ageVerificationBornBetweenYearsIncluded, true            ],
-    'Test 2b': [new Date("12/31/2005"), 2005,                   2006,                   ageVerificationBornBetweenYearsIncluded, true            ],
-    'Test 2c': [new Date("12/31/2004"), 2005,                   2006,                   ageVerificationBornBetweenYearsIncluded, false           ],
-    'Test 2d': [new Date("1/1/2007"),   2005,                   2006,                   ageVerificationBornBetweenYearsIncluded, false           ],
+    'Test 2e': [new Date("1/1/2005"),   2005,                   2006,                   ageVerificationBornBetweenYearsIncluded, true            ],
+    'Test 2f': [new Date("12/31/2005"), 2005,                   2006,                   ageVerificationBornBetweenYearsIncluded, true            ],
+    'Test 2g': [new Date("12/31/2004"), 2005,                   2006,                   ageVerificationBornBetweenYearsIncluded, false           ],
+    'Test 2h': [new Date("1/1/2007"),   2005,                   2006,                   ageVerificationBornBetweenYearsIncluded, false           ],
   }
   for (const [key, values] of Object.entries(test_values_2)) {
     var dob = values[0]
@@ -1028,33 +1029,37 @@ function testAgeVerification() {
 
   var test_values_3 = {
     //         Dob                   | Age
-    'Test 1a': [new Date("10/8/2011"), 14 ], // 14 today
-    'Test 1d': [new Date("10/7/2011"), 14 ], // 14 yesterday
-    'Test 1b': [new Date("09/8/2011"), 14 ], // 14 for a month
-    'Test 1c': [new Date("11/8/2011"), 13 ], // 14 in one month
-    'Test 1e': [new Date("10/9/2011"), 13 ]  // 14 in one day
+    'Test 3a': [new Date("10/8/2011"), 14 ], // 14 today
+    'Test 3b': [new Date("10/7/2011"), 14 ], // 14 yesterday
+    'Test 3c': [new Date("09/8/2011"), 14 ], // 14 for a month
+    'Test 3d': [new Date("11/8/2011"), 13 ], // 14 in one month
+    'Test 3e': [new Date("10/9/2011"), 13 ]  // 14 in one day
   }
 
+  startMockDate("10/8/2025")
   for (const [key, values] of Object.entries(test_values_3)) {
     var dob = values[0]
     var age = values[1]
     var res = ageFromDoB(dob)
     if (res != age) {
-      Logger.log('FAILURE: ' + key + ": " + dob + " and " + age)
+      Logger.log('FAILURE: ' + key + ": " + dob + " and " + age + ", res:" + res)
+      stopMockDate()
       return false
     }
   }
+  stopMockDate()
 
   var test_values_4 = {
     //         DoB                   | Age | method                           | expected              
-    'Test 1a': [new Date("10/8/2011"), 14,   ageVerificationStrictlyOldOrOlder, true    ],
-    'Test 1b': [new Date("10/9/2011"), 13,   ageVerificationStrictlyOldOrOlder, true    ],
-    'Test 1c': [new Date("10/9/2011"), 14,   ageVerificationStrictlyOldOrOlder, false   ],
-    'Test 1d': [new Date("10/9/2011"), 14,   ageVerificationStrictlyYounger,    true    ],
-    'Test 1e': [new Date("10/8/2011"), 13,   ageVerificationStrictlyYounger,    false   ],
-    'Test 1e': [new Date("10/9/2011"), 14,   ageVerificationStrictlyYounger,    true    ]
+    'Test 4a': [new Date("10/8/2011"), 14,   ageVerificationStrictlyOldOrOlder, true    ],
+    'Test 4b': [new Date("10/9/2011"), 13,   ageVerificationStrictlyOldOrOlder, true    ],
+    'Test 4c': [new Date("10/9/2011"), 14,   ageVerificationStrictlyOldOrOlder, false   ],
+    'Test 4d': [new Date("10/9/2011"), 14,   ageVerificationStrictlyYounger,    true    ],
+    'Test 4e': [new Date("10/8/2011"), 13,   ageVerificationStrictlyYounger,    false   ],
+    'Test 4f': [new Date("10/9/2011"), 14,   ageVerificationStrictlyYounger,    true    ]
 
   }
+  startMockDate("10/8/2025")
   for (const [key, values] of Object.entries(test_values_4)) {
     var dob = values[0]
     var age = values[1]
@@ -1063,25 +1068,30 @@ function testAgeVerification() {
     var res = method(dob, age)
     if (res != expected) {
       Logger.log('FAILURE: ' + key + ": " + dob + " and " + age + " res=" + res)
+      stopMockDate()
       return false
     }
   }
+  stopMockDate()
 
   var test_values_5 = {
-    'Test 1a': [new Date("10/8/2043"), true],
-    'Test 1a': [new Date("10/7/2043"), false],
-    'Test 1a': [new Date("10/9/2043"), true]
+    'Test 5a': [new Date("10/8/2025"), true ],
+    'Test 5b': [new Date("10/7/2025"), true ],
+    'Test 5c': [new Date("10/9/2025"), false]
 
   }
+  startMockDate("10/8/2043")
   for (const [key, values] of Object.entries(test_values_5)) {
     var dob = values[0]
     var expected = values[1]
     var res = isAdult(dob)
-    if (res == expected) {
+    if (res != expected) {
       Logger.log('FAILURE: ' + key + ": " + dob + " expected=" + expected + " res=" + res)
+      stopMockDate()
       return false      
     }
   }
+  stopMockDate()
 
   Logger.log("Finished testAgeVerification")
   return true
@@ -1155,6 +1165,15 @@ function testMiscUtility() {
       return false
     }
   }
+
+  if (comp_subscription_categories[0] != 'U6' ||
+      comp_subscription_categories[1] != 'U8' ||
+      comp_subscription_categories[2] != 'U10' ||
+      comp_subscription_categories[3] != 'U12+') {
+      Logger.log('FAILURE: ' + comp_subscription_categories)
+      return false
+  }
+
   Logger.log("Finished testMiscUtility")
   return true
 }
@@ -1166,28 +1185,21 @@ function RUN_ALL_TESTS() {
   if(!testMiscUtility()) {
     failedSuites.push('testMiscUtility')
   }
-
   if (!testSkipassProperties()) {
     failedSuites.push('testSkipassProperties')
   }
-
-  startMockDate("10/8/2025")
   if (!testAgeVerification()) {
     failedSuites.push('testAgeVerification')
   }
-  stopMockDate()
-  
   if (!testPhoneNumberValidation()) {
     failedSuites.push('testPhoneNumberValidation')
   }
-
   if (!testIsLicense()) {
     failedSuites.push('testIsLicense')
   }
   if (!testIsLevel()) {
     failedSuites.push("testIsLevel");
   }
-
   if (!testCategoryOrders()) {
     failedSuites.push("testCategoryOrders");
   }
