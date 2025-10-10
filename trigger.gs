@@ -408,7 +408,7 @@ function createNewFamilySheetFromOld(sheet, family_name) {
         normalized_last_name = normalizeName(source_cell.getValue().toString().trim().toUpperCase(), true)
         dest_cell.setValue(normalized_last_name);
       }
-      // Fourth column is city of birth. Copy it only of the license is an
+      // Fourth column is city of birth. Copy it only if the license is an
       // executive license.
       else if (column == 4) {
         if (old_license_range.getCell(row, 1).getValue().toString() == 'CN Dirigeant') {
@@ -429,6 +429,17 @@ function createNewFamilySheetFromOld(sheet, family_name) {
           new_level = '⚠️ ' + new_level
         }
         dest_cell.setValue(new_level)
+      }
+      // Seventh colum is the license. Reset if the license is a kids license. A
+      // kid license is one that's likely to change from one year to an other. If
+      // not, just copy it.
+      else if (column == 7) {
+        if (old_license_range.getCell(row, 1).getValue().toString().includes('CN Jeune')) {
+          dest_cell.setValue("")
+        }
+        else {
+          dest_cell.setValue(source_cell.getValue())
+        }
       }
       // Other columns are copied as is: there's no conversion of
       // the cell to a string because it might not be a string.
