@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// Version: 2025-10-09T14:31 - Competitors registration.
+// Version: 2025-10-09T14:36 - Competitors registration.
 //
 // Validation routines table. They must be running in a specific order defined here after.
 // For some, failing is a  show stopper. For others, it's possible to decline accepting
@@ -316,7 +316,9 @@ function validateOnlyLicensesLevel() {
             Plural(basic_subscription_number, "souscrite") + " [" + basic_subscription_number + "] " +
             "ne correspond pas au nombre de " + Plural(subscribed_basic_subscription_number, "licence") +
             " sans enseignement de ski " + Plural(subscribed_basic_subscription_number, "renseignée") +
-	    " [" + subscribed_basic_subscription_number + "]")        
+	    " [" + subscribed_basic_subscription_number + "]\n\n" +
+      "Cela arrive quand une license compétiteur est prise avec un niveau de pratique positionné à " +
+      "(licence seule). Si ce choix est délibéré, se rapprocher d'Alex")        
   }
   return ''
 }
