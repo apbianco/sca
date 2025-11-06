@@ -440,7 +440,7 @@ function validateNonCompSubscriptions() {
       // Here we need to make a difference between a kid and an adult:
       //   - License is NonCompAdult or Familly, person is an adult.
       var dob = getDoB([row, coord_dob_column])
-      if (isLicenseNonCompAdult(license) || (isLicenseNonCompFamily(license) && isAdult(dob))) {
+      if ((isLicenseNonCompAdult(license) || isLicenseNonCompFamily(license)) && isAdult(dob)) {
         non_rider_adult_number += 1
       } else {
         non_rider_kid_number += 1
