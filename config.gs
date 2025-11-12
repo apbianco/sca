@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// Version: 2025-10-09T10:48 - Competitors registration.
+// Version: 2025-11-12T11:28 - BAS 2025
 //
 // Seasonal parameters - change for each season or change when the trix
 // is changing (adding new rows/columns, etc...)
