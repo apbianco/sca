@@ -4,7 +4,7 @@ dofile('./interface/device.lua');
 
 -- Information : Numéro de Version, Nom, Interface
 function device.GetInformation()
-	return { version = 3.5, name = 'TV Liste Alpin', class = 'display', interface = {} };
+	return { version = 3.5, name = 'Ordre Arrivee Simple SCA', class = 'display', interface = {} };
 end	
 
 -- Configuration du Device
@@ -639,6 +639,7 @@ function OnModeRanking()
 	local rc, data = app.SendNotify('<ranking_load>', { filter = filter } );
 	assert(rc and data.ranking ~= nil and app.GetNameSpace(data.ranking) == 'sqlTableGC');
 	device.ranking = data.ranking;
+	device.ranking:OrderBy('Heure_arrivee_reelle Desc');
 	
 	-- Prise Information Coureur ayant le meilleur 
 	local rc, best_time = app.SendNotify('<best_time_load>');
@@ -658,16 +659,7 @@ function RefreshMode()
 		end
 		TvSynchroStartlist();
 	elseif device.mode == 'ranking' then
-		-- Liste de Résultat
-		if device.raceInfo.Code_manche == 1 then
-			if device.mode_last == false then
-				device.ranking:OrderBy('Clt1, Dossard');
-			end
-		else
-			if device.mode_last == false then
-				device.ranking:OrderBy('Clt, Dossard');
-			end
-		end
+		device.ranking:OrderBy('Heure_arrivee_reelle Desc');
 		TvSynchroRanking();
 	end
 end
@@ -684,7 +676,8 @@ function TvSynchroStartlist()
 	columnInfoStartlist = columnInfoStartlist or 'Club';
 
 	tvStartlist:RemoveAllRows();
-	for i=0,tRanking:GetNbRows()-1 do
+	local nbRows = math.min(tRanking:GetNbRows(), 12);
+	for i=0,nbRows do
 
 		tvStartlist:GetRecord():Set('ID', i+1);
 		tvStartlist:GetRecord():Set('Bib', tRanking:GetCell('Dossard', i));
@@ -728,7 +721,8 @@ function TvSynchroRanking()
 	columnInfoRanking = columnInfoRanking or 'Club';
 
 	tvRanking:RemoveAllRows();
-	for i=0,tRanking:GetNbRows()-1 do
+	local nbRows = math.min(tRanking:GetNbRows(), 12);
+	for i=0,nbRows do
 
 		tvRanking:GetRecord():Set('ID', i+1);
 		tvRanking:GetRecord():Set('Bib', tRanking:GetCell('Dossard', i));
