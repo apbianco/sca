@@ -1,25 +1,26 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// Version: 2025-11-12T11:28 - BAS 2025
+// Version: 2026-09-04T19:02+02:00 - WIP 2026
 //
 // Seasonal parameters - change for each season or change when the trix
 // is changing (adding new rows/columns, etc...)
 ///////////////////////////////////////////////////////////////////////////////
 //
 // - Name of the season
-var season = "2025/2026"
+var season = "2026/2027"
 //
 // - A map of available licenses and validation dates. This map is used
 //   to create a map of properly configured license objects. Edit this
 //   map when the year of validity is changing.
 //
 var licenses_configuration_map = {
-  'CN Jeune (Loisir)':        [2011,  42,   5],
-  'CN Adulte (Loisir)':       [2010,  43,   5],
+// What                     |  Dob/Y| Row | Col
+  'CN Jeune (Loisir)':        [2012,  42,   5],
+  'CN Adulte (Loisir)':       [2011,  43,   5],
   'CN Famille (Loisir)':      [-1,    44,   5],
-  'CN Dirigeant':             [2010,  45,   5],
-  'CN Jeune (Compétition)':   [2011,  53,   5],
-  'CN Adulte (Compétition)':  [2010,  54,   5],
+  'CN Dirigeant':             [2011,  45,   5],
+  'CN Jeune (Compétition)':   [2012,  53,   5],
+  'CN Adulte (Compétition)':  [2011,  54,   5],
 }
 var basic_subscription_coord = [41, 5]
 //
@@ -29,11 +30,11 @@ var basic_subscription_coord = [41, 5]
 //
 var comp_subscription_map = {
 // What | Dob/Y | Dob/Y | Row | Col
-  'U6':   [2020,  2021,   55,   5],
-  'U8':   [2018,  2019,   56,   5],
-  'U10':  [2016,  2017,   57,   5],
+  'U6':   [2021,  2022,   55,   5],
+  'U8':   [2019,  2020,   56,   5],
+  'U10':  [2017,  2018,   57,   5],
   // U12+ The first listed year is the LAST year of the category
-  'U12+': [2015, -1,      58,   5],
+  'U12+': [2016, -1,      58,   5],
 }
 // Number of kids per competitor families
 var comp_kids_per_family = 4
@@ -50,13 +51,13 @@ var skipass_configuration_map = {
   'Vermeil':  [76,    -1,       26,   5],
   // ageVerificationBornBeforeDateIncluded (Jan 1st Y1) + 
   // ageVerificationStrictlyYounger
-  'Adulte':   [2006,   70,      27,   5],
+  'Adulte':   [2007,   70,      27,   5],
   // ageVerificationBornBetweenDatesIncluded (Jan 1st Y1, Dec 31 Y2)
-  'Étudiant': [1995,   2006,    28,   5],
-  'Junior':   [2007,   2014,    29,   5],
-  'Enfant':   [2015,   2019,    30,   5],
+  'Étudiant': [1996,   2007,    28,   5],
+  'Junior':   [2008,   2015,    29,   5],
+  'Enfant':   [2016,   2020,    30,   5],
   // ageVerificationBornAfterDateIncluded (Jan 1st Y1)
-  'Bambin':   [2020,   -1,      31,   5],
+  'Bambin':   [2021,   -1,      31,   5],
 }
 // The row offset to add to an entry in skipass_configuration_map to
 // obtain the corresponding row in the 3 domains offer. (25+8=33)
