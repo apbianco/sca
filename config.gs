@@ -65,13 +65,13 @@ var skipass_configuration_map_3d_row_offset = 8
 //
 // - Storage for the current season's database.
 //
-var db_folder =                            '1dLImiBFObJDxSS1XJOmSSq2aiIVLKqai'
+var db_folder =                            '1NMfcsjBUimrM3YOrSaXP-GrrOlY4JOqO'
 //
 //
 // Level aggregation trix to update when a new entry is added and the row at which
 // data starts
 //
-var license_trix =                         '1TJrV0x_y387WZ4wKYqVp1wnWd-lph4CmUGxe0MtfhYk'
+var license_trix =                         '1Df9hP6LO9XD03YTIxMcmbzEmBZAMTgv3xwovRYECxM4'
 var license_test_trix =                    '1HSwZP7fqzcj187fyLoIfh1Fix0scFFK2BbkT7pUTEu4'
 var license_trix_pb_sheet =                'Dossiers problématiques'
 var license_trix_pb_sheet_search_range =   'A2:A'
@@ -82,7 +82,7 @@ var license_trix_ffs_all_range =           'B10:H'
 //
 // Accounting aggregation trix to update when a new entry is added
 //
-var accounting_trix =                      '1_X6bL8HiDabmbyZdC0N3oQ11rlJ_IxWAo0i9uJiWv34'
+var accounting_trix =                      '1CSpBMqIji8HuhNzT4L1FT6vEmP-AcsoAL3dyYSNpssg'
 var accounting_test_trix =                 '1YJ9qLLiyf32noiES1PthLzF55U_-eWiwlHvDe5bpMd8'
 var accounting_trix_sheet =                'Pointage tréso'
 var accounting_trix_row_start =            3
@@ -91,6 +91,7 @@ var accounting_trix_all_range =            'A3:Q'
 // - ID of attachements to be sent with the invoice - some may change
 //   from one season to an other when they are refreshed. These documents
 //   are also part of the registration bundle sent to parents.
+// TODO: 2026/2027: Change
 //
 var legal_disclaimer_pdf =                  '1BcbIL1LUaL49OI8BGbLQQA-lxlijt_0m'
 var rules_pdf =                             '1aTtQ4Hx3JJPgek_d1_NV4WRSBOfVT_yr'
