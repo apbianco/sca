@@ -119,20 +119,20 @@ var coord_family_phone2 =             [10, 5]
 // - Locations of various status line and collected input, located
 //   a the bottom of the invoice.
 // 
-var coord_total =                     [71, 7]
-var coord_rebate =                    [82, 4]
-var coord_charge =                    [83, 4]
-var coord_owed =                      [84, 7]
-var coord_payment_validation_form =   [85, 7]
-var coord_personal_message =          [91, 3]
-var coord_timestamp =                 [92, 2]
-var coord_version =                   [92, 3]
-var coord_legal_disclaimer =          [92, 5]
-var coord_ffs_medical_form =          [92, 7]
-var coord_callme_phone =              [92, 9]
-var coord_yolo =                      [93, 3]
-var coord_status =                    [94, 4]
-var coord_generated_pdf =             [94, 6]
+var coord_total =                     [74, 7];
+var coord_rebate =                    [85, 4];
+var coord_charge =                    [86, 4];
+var coord_owed =                      [87, 7];
+var coord_payment_validation_form =   [88, 7];
+var coord_personal_message =          [94, 3];
+var coord_timestamp =                 [95, 2];
+var coord_version =                   [95, 3];
+var coord_legal_disclaimer =          [95, 5];
+var coord_ffs_medical_form =          [95, 7];
+var coord_callme_phone =              [95, 9];
+var coord_yolo =                      [96, 3];
+var coord_status =                    [97, 4];
+var coord_generated_pdf =             [97, 6];
 //
 // - Rows where the family names are entered
 // 
@@ -170,5 +170,5 @@ var coord_total_ski_pass_amount    =  [40, 9]
 //
 var coords_pdf_row_column_ranges = {
     'start':                          [1, 0],
-    'end':                            [92, 9]
+    'end':                            [94, 9]
 }
