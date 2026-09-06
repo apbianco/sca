@@ -1,6 +1,6 @@
-// Version: 2025-10-10T13:28 - Competitors registration.
+// Version: 2026-09-06T22:31+02:00 - Development
 //
-// Code implementing the trigger for the current season
+// Code implementing the trigger for the 2026/2027 seasons
 //
 // The goal of the trigger is to generate a new fresh sheet from
 // template, performing some minimal validation of the input.
@@ -26,10 +26,10 @@
 //
 // 2.a- The ID of the empty invoice to use to create content. Adjust
 //      this ID for the new season
-var empty_invoice = '1dDUuq39XMehYejLLDtGL2vJZaTG383mQ2KvyD7NqVUU';
+var empty_invoice = '1rCvvA1uwJUL38b5yJW68PzbOUX2wHvvV_07G-U_ug50';
 
 // 2.b- The DB folder for the PREVIOUS season
-var previous_db_folder = '1L0NaifkQbytc67qsM2frxKmteHtAlkED'
+var previous_db_folder = '1dLImiBFObJDxSS1XJOmSSq2aiIVLKqai'
 // 2.c- Ranges to copy from/adjust an entry filed LAST season:
 var ranges_previous_season = {
   'Civility': 'C6:G10',
@@ -40,7 +40,7 @@ var ranges_previous_season = {
 };
 
 // 2.d- The DB folder for the CURRENT season
-var db_folder = '1dLImiBFObJDxSS1XJOmSSq2aiIVLKqai';
+var db_folder = '1NMfcsjBUimrM3YOrSaXP-GrrOlY4JOqO';
 // 2.e- Ranges to copy from/adjust to for an entry filed this season.
 var ranges_current_season = {
   'Civility': 'C6:G10',
@@ -60,11 +60,11 @@ var ranges_current_season = {
 //      This is achieved using the Télécharger/Download option accessible
 //      via a right click on the folder name. This will download a zip file in
 //      Downloads/
-// 3.2- Extract the list of registered families - change the value for LAST_YEAR
-//      and use the correct value for the db-... filed placed in Downloads/.
-//      export LAST_YEAR=2025 ; LC_CTYPE=C && LANG=C &&  \
+// 3.2- Extract the list of registered families - use the correct value for 
+//      the db-... filed placed in Downloads/.
+//      LAST_YEAR=$(($(date +%Y) - 1)) ; LC_CTYPE=C && LANG=C &&  \
 //      unzip -l ~/Downloads/db-<...>.zip  | \
-//      egrep db- | sed 's@^.*${LAST_YEAR}/@@g'  | sort -u | sed 's/\/.*$//g' | \
+//      egrep db- | sed "s@^.*${LAST_YEAR}/@@g"  | sort -u | sed 's/\/.*$//g' | \
 //      sed 's/.*_//g' | sort -u > /tmp/LIST
 //
 // 3.3- Edit /tmp/LIST to remove undesirable entries
