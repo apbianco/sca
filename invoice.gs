@@ -1398,21 +1398,22 @@ function adjustSubscriptionSlots(subscription_slots, number_of_adults) {
   // This adjustment can not happen as we built  subscrition_slots because a rider
   // can happen at any time in the list of registered familly members.
 
-  // Compute and save the number of rider, use it as an iteration counter
-  var number_of_riders = subscription_slots.shift() + subscription_slots.shift()
-  var operation_count = number_of_riders
-  // Insert as many zeros at the beginning of the array as there are riders
-  while (operation_count != 0) {
-    // Insert a zero
-    subscription_slots.splice(0, 0, 0)
-    operation_count -= 1
+  var rider = subscription_slots[0] || 0;
+  var rider_plus = subscription_slots[1] || 0;
+  var total_riders = rider + rider_plus;
+  var kids = subscription_slots.slice(2);
+  var shifted_kids = [0, 0, 0, 0];
+  for (var i = 0; i < kids.length && i < 4; i++) {
+    if (i + total_riders < 4) {
+      shifted_kids[i + total_riders] = kids[i];
+    }
   }
-  // Insert the number of riders back
-  subscription_slots.splice(0, 0, number_of_riders)
-  // Truncate the array by as many 0s we initially inserted
-  subscription_slots.splice(-number_of_riders, number_of_riders)
-  // Insert the number of adults 
-  subscription_slots.splice(0, 0, number_of_adults)  
+
+  subscription_slots.length = 0;
+  subscription_slots.push(number_of_adults, rider, rider_plus);
+  for (var j = 0; j < shifted_kids.length; j++) {
+    subscription_slots.push(shifted_kids[j]);
+  }
 }
 
 function autoFillNonCompSubscriptions() {
