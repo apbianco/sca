@@ -17,7 +17,7 @@
 // Dev or prod? "dev" sends all email to email_dev. Prod is the
 // real thing: family will receive invoices, and so will email_license,
 // unless the trigger in use is the TEST trigger.
-dev_or_prod = "prod"
+dev_or_prod = "dev"
 
 // Validation method use when creating license, skipasses and subscription
 // maps.
