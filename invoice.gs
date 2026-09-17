@@ -1381,19 +1381,47 @@ function autoFillLicensePurchases() {
   return true
 }
 
+function adjustSubscriptionSlots(subscription_slots, number_of_adults) {
+  // A rider or a rider+ subscription counts as an occupied non-rider subscription slot:
+  //    R  R+ 1st 2nd 3rd 4th         R  R+ 1st 2nd 3rd 4th
+  // - [1, 0, 1,  0,  0,  0] becomes [1, 0, 0,  1,  0,  0]
+  // - [2, 0, 1,  1,  0,  0] becomes [2, 0, 0,  0,  1,  1]
+  // - [0, 1, 1,  0,  0,  0] becomes [0, 1, 0,  1,  0,  0]
+  // - [1, 1, 1,  0,  0,  0] becomes [1, 1, 0,  0,  1,  0]
+  // - [1, 2, 1,  0,  0,  0] becomes [1, 2, 0,  0,  0,  1]
+  //
+  // This adjustment can not happen as we built  subscrition_slots because a rider
+  // can happen at any time in the list of registered familly members.
+
+  // Compute and save the number of rider, use it as an iteration counter
+  var number_of_riders = subscription_slots.shift() + subscription_slots.shift()
+  var operation_count = number_of_riders
+  // Insert as many zeros at the beginning of the array as there are riders
+  while (operation_count != 0) {
+    // Insert a zero
+    subscription_slots.splice(0, 0, 0)
+    operation_count -= 1
+  }
+  // Insert the number of riders back
+  subscription_slots.splice(0, 0, number_of_riders)
+  // Truncate the array by as many 0s we initially inserted
+  subscription_slots.splice(-number_of_riders, number_of_riders)
+  // Insert the number of adults 
+  subscription_slots.splice(0, 0, number_of_adults)  
+}
+
 function autoFillNonCompSubscriptions() {
   updateStatusBar("Achat automatique des adhésions loisir...", "grey", add=true)
   var subscription_map = createNonCompSubscriptionMap(SpreadsheetApp.getActiveSheet())
-  // FIXME: Introduce and handle a slot for Rider+
-  //       current_non_rider_slot
-  //           rider_index       \
-  //                       \      \
-  //                        V      V
-  //                        Rider, 1st Kid, 2nd Kid, 3rd Kid, 4th Kid
-  var subscription_slots = [0,     0,       0,       0,       0]
-  // FIXME: rider_plus_index needs to be introduced
+  //               current_non_rider_index
+  //           rider_index  rider+ index  \
+  //                       \       |       \
+  //                        V      V        V
+  //                        Rider, Rider+,  1st Kid, 2nd Kid, 3rd Kid, 4th Kid
+  var subscription_slots = [0,     0,       0,       0,       0,       0]
   var rider_index = 0
-  var current_non_rider_slot = 1
+  var rider_plus_index = 1
+  var current_non_rider_index = 2
   var number_of_adults = 0
   var basic_subscriptions_number = 0
   // Collect the licenses and the levels. We assume someone wants 
@@ -1425,6 +1453,10 @@ function autoFillNonCompSubscriptions() {
     if (isLevelRider(level)) {
       subscription_slots[rider_index] += 1
       continue
+    }
+    else if (isLevelRiderPlus(level)) {
+      subscription_slots[rider_plus_index] += 1
+      continue
     } else {
       // If we have an adult by DOB, we fill in the adult section. Again, an
       // adult getting a executive license is excluded.
@@ -1433,9 +1465,9 @@ function autoFillNonCompSubscriptions() {
       } else {
         // Non riders are dispatched. We stop filling things past 4
         // FIXME: Issue a warning?
-        if (current_non_rider_slot < 5) {
-          subscription_slots[current_non_rider_slot] = 1
-          current_non_rider_slot += 1
+        if (current_non_rider_index < 5) {
+          subscription_slots[current_non_rider_index] = 1
+          current_non_rider_index += 1
         }
       }
       continue
@@ -1446,26 +1478,7 @@ function autoFillNonCompSubscriptions() {
   // Rider+ + non rider
   // Rider + Rider+
   // Rider + Rider+ + non rider
-  // A rider subscription counts as an occupied non-rider subscription slot:
-  // [1, 1, 0, 0, 0] becomes [1, 0, 1, 0, 0] and [2, 1, 1, 0, 0] becomes
-  // [1, 0, 0, 1, 1]. This adjustment can not happen as we built 
-  // subscrition_slots because a rider can happen at any time in the list of
-  // registered familly members.
-  // Save the number of rider, use it as an iteration counter
-  var number_of_riders = subscription_slots.shift()
-  var operation_count = number_of_riders
-  // Insert as many zeros at the beginning of the array as there are riders
-  while (operation_count != 0) {
-    // Insert a zero
-    subscription_slots.splice(0, 0, 0)
-    operation_count -= 1
-  }
-  // Insert the number of riders back
-  subscription_slots.splice(0, 0, number_of_riders)
-  // Truncate the array by as many 0s we initially inserted
-  subscription_slots.splice(-number_of_riders, number_of_riders)
-  // Insert the number of adults 
-  subscription_slots.splice(0, 0, number_of_adults)
+  adjustSubscriptionSlots(subscription_slots, number_of_adults)
 
   for (var index in noncomp_subscription_categories) {
     var subscription = noncomp_subscription_categories[index]
