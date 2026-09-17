@@ -1460,8 +1460,7 @@ function autoFillNonCompSubscriptions() {
     }
     // Handle non competitor license with a level defined, indicating interest
     // in being under the supervision of an instructor, which includes adults.
-    // Riders are accumulated
-    // FIXME: handle rider+ with isLevelRiderPlus()
+    // Riders and Rider+ are accumulated.
     if (isLevelRider(level)) {
       subscription_slots[rider_index] += 1
       continue
@@ -1498,7 +1497,7 @@ function autoFillNonCompSubscriptions() {
                         "automatiquement. Ajuster et procéder de manière manuelle " +
                         "après ce remplissage automatique")    
   }
-  subscription_slots.splice(3, 0, getNumberAt(coord_tourning_counte))
+  subscription_slots.splice(3, 0, getNumberAt(coord_touring_count))
 
   for (var index in noncomp_subscription_categories) {
     var subscription = noncomp_subscription_categories[index]
