@@ -1300,6 +1300,82 @@ function testIsSubscriptionAdult() {
   return true
 }
 
+function testAdjustSubscriptionSlots() {
+  var testCases = [
+    {
+      description: "1 Rider, 1 kid in 1st kid slot, 2 adults",
+      inputSlots: [1, 0, 1, 0, 0, 0],
+      adults: 2,
+      expected: [2, 1, 0, 0, 1, 0, 0]
+    },
+    {
+      description: "2 Riders, 2 kids in 1st & 2nd kid slots, 1 adult",
+      inputSlots: [2, 0, 1, 1, 0, 0],
+      adults: 1,
+      expected: [1, 2, 0, 0, 0, 1, 1]
+    },
+    {
+      description: "0 Rider, 1 Rider+, 1 kid in 1st kid slot, 0 adults",
+      inputSlots: [0, 1, 1, 0, 0, 0],
+      adults: 0,
+      expected: [0, 0, 1, 0, 1, 0, 0]
+    },
+    {
+      description: "1 Rider, 1 Rider+, 1 kid in 1st kid slot, 3 adults",
+      inputSlots: [1, 1, 1, 0, 0, 0],
+      adults: 3,
+      expected: [3, 1, 1, 0, 0, 1, 0]
+    },
+    {
+      description: "1 Rider, 2 Rider+, 1 kid in 1st kid slot, 1 adult",
+      inputSlots: [1, 2, 1, 0, 0, 0],
+      adults: 1,
+      expected: [1, 1, 2, 0, 0, 0, 1]
+    },
+    {
+      description: "No riders, 2 kids, 2 adults",
+      inputSlots: [0, 0, 1, 1, 0, 0],
+      adults: 2,
+      expected: [2, 0, 0, 1, 1, 0, 0]
+    },
+    {
+      description: "1 Rider, no kids, 1 adult",
+      inputSlots: [1, 0, 0, 0, 0, 0],
+      adults: 1,
+      expected: [1, 1, 0, 0, 0, 0, 0]
+    },
+    {
+      description: "4 Riders (2 Rider, 2 Rider+), 2 kids (overflow), 0 adults",
+      inputSlots: [2, 2, 1, 1, 0, 0],
+      adults: 0,
+      expected: [0, 2, 2, 0, 0, 0, 0]
+    }
+  ];
+
+  var failures = 0;
+
+  for (var i = 0; i < testCases.length; i++) {
+    var tc = testCases[i];
+    var slots = tc.inputSlots.slice();
+    adjustSubscriptionSlots(slots, tc.adults);
+    if (!areArraysEqual(slots, tc.expected)) {
+      failures++;
+      Logger.log("--------------------------------------------------");
+      Logger.log("FAIL: testAdjustSubscriptionSlots - " + tc.description);
+      Logger.log("Input Slots: " + JSON.stringify(tc.inputSlots) + ", Adults: " + tc.adults);
+      Logger.log("Expected: " + JSON.stringify(tc.expected));
+      Logger.log("Got: " + JSON.stringify(slots));
+    }
+  }
+
+  if (failures > 0) {
+    Logger.log("--------------------------------------------------");
+    Logger.log("testAdjustSubscriptionSlots: " + failures + " test(s) failed.");
+  }
+  Logger.log("Finished testAdjustSubscriptionSlots().");
+  return failures === 0;
+}
+
 function RUN_ALL_TESTS() {
   Logger.log("Starting all invoice tests...");
   var failedSuites = [];
@@ -1369,6 +1445,9 @@ function RUN_ALL_TESTS() {
   }
   if (!testIsSubscriptionAdult()) {
     failedSuites.push("testIsSubscriptionAdult");
+  }  
+  if (!testAdjustSubscriptionSlots()) {
+    failedSuites.push("testAdjustSubscriptionSlots");
   }  
   if (failedSuites.length === 0) {
     Logger.log("Summary: ✅✅✅ All test suites passed successfully!");

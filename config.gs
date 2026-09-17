@@ -142,6 +142,7 @@ var coords_identity_rows = [14, 15, 16, 17, 18, 19];
 //   the column at which data exists
 var coord_noncomp_start_row =         46
 var coord_noncomp_column =            5
+var coord_tourning_count =            [coord_noncomp_start_row+3, coord_noncomp_column]
 //
 // - Columns where information about family members can be found
 //

@@ -314,6 +314,7 @@ function getSecondKidString() { return '2ème enfant' }
 function getThirdKidString() { return '3ème enfant' }
 function getFourthKidString() { return '4ème enfant' }
 
+// FIXME: Should this list follow the order of things row 46? I don't think so.
 var noncomp_subscription_categories = [
   getAdultString(),
   getRiderLevelString(),
@@ -1397,22 +1398,22 @@ function adjustSubscriptionSlots(subscription_slots, number_of_adults) {
   // [N, 2, 0, 0,  0,  1,  1]
   // This adjustment can not happen as we built  subscrition_slots because a rider
   // can happen at any time in the list of registered familly members.
-
-  // Compute and save the number of rider, use it as an iteration counter
-  var number_of_riders = subscription_slots.shift() + subscription_slots.shift()
-  var operation_count = number_of_riders
-  // Insert as many zeros at the beginning of the array as there are riders
-  while (operation_count != 0) {
-    // Insert a zero
-    subscription_slots.splice(0, 0, 0)
-    operation_count -= 1
+  var rider = subscription_slots[0] || 0;
+  var rider_plus = subscription_slots[1] || 0;
+  var total_riders = rider + rider_plus;
+  var kids = subscription_slots.slice(2);
+  var shifted_kids = [0, 0, 0, 0];
+  for (var i = 0; i < kids.length && i < 4; i++) {
+    if (i + total_riders < 4) {
+      shifted_kids[i + total_riders] = kids[i];
+    }
   }
-  // Insert the number of riders back
-  subscription_slots.splice(0, 0, number_of_riders)
-  // Truncate the array by as many 0s we initially inserted
-  subscription_slots.splice(-number_of_riders, number_of_riders)
-  // Insert the number of adults 
-  subscription_slots.splice(0, 0, number_of_adults)  
+
+  subscription_slots.length = 0;
+  subscription_slots.push(number_of_adults, rider, rider_plus);
+  for (var j = 0; j < shifted_kids.length; j++) {
+    subscription_slots.push(shifted_kids[j]);
+  }
 }
 
 function autoFillNonCompSubscriptions() {
@@ -1469,10 +1470,13 @@ function autoFillNonCompSubscriptions() {
         number_of_adults += 1
       } else {
         // Non riders are dispatched. We stop filling things past 4
-        // FIXME: Issue a warning?
         if (current_non_rider_index < 5) {
           subscription_slots[current_non_rider_index] = 1
           current_non_rider_index += 1
+        } else {
+          displayWarningPanel("Il n'y a plus de place pour inscrire des non-riders " +
+                              "automatiquement. Ajuster et procéder de manière manuelle " +
+                              "après ce remplissage automatique")
         }
       }
       continue
@@ -1484,6 +1488,7 @@ function autoFillNonCompSubscriptions() {
   // Rider + Rider+
   // Rider + Rider+ + non rider
   adjustSubscriptionSlots(subscription_slots, number_of_adults)
+  subscription_slots.splice(3, 0, getNumberAt(coord_tourning_counte))
 
   for (var index in noncomp_subscription_categories) {
     var subscription = noncomp_subscription_categories[index]
