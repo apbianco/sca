@@ -1306,49 +1306,71 @@ function testAdjustSubscriptionSlots() {
       description: "1 Rider, 1 kid in 1st kid slot, 2 adults",
       inputSlots: [1, 0, 1, 0, 0, 0],
       adults: 2,
-      expected: [2, 1, 0, 0, 1, 0, 0]
+      expected: [2, 1, 0, 0, 1, 0, 0],
+      expectedOverflow: false
     },
     {
       description: "2 Riders, 2 kids in 1st & 2nd kid slots, 1 adult",
       inputSlots: [2, 0, 1, 1, 0, 0],
       adults: 1,
-      expected: [1, 2, 0, 0, 0, 1, 1]
+      expected: [1, 2, 0, 0, 0, 1, 1],
+      expectedOverflow: false
     },
     {
       description: "0 Rider, 1 Rider+, 1 kid in 1st kid slot, 0 adults",
       inputSlots: [0, 1, 1, 0, 0, 0],
       adults: 0,
-      expected: [0, 0, 1, 0, 1, 0, 0]
+      expected: [0, 0, 1, 0, 1, 0, 0],
+      expectedOverflow: false
     },
     {
       description: "1 Rider, 1 Rider+, 1 kid in 1st kid slot, 3 adults",
       inputSlots: [1, 1, 1, 0, 0, 0],
       adults: 3,
-      expected: [3, 1, 1, 0, 0, 1, 0]
+      expected: [3, 1, 1, 0, 0, 1, 0],
+      expectedOverflow: false
     },
     {
       description: "1 Rider, 2 Rider+, 1 kid in 1st kid slot, 1 adult",
       inputSlots: [1, 2, 1, 0, 0, 0],
       adults: 1,
-      expected: [1, 1, 2, 0, 0, 0, 1]
+      expected: [1, 1, 2, 0, 0, 0, 1],
+      expectedOverflow: false
     },
     {
       description: "No riders, 2 kids, 2 adults",
       inputSlots: [0, 0, 1, 1, 0, 0],
       adults: 2,
-      expected: [2, 0, 0, 1, 1, 0, 0]
+      expected: [2, 0, 0, 1, 1, 0, 0],
+      expectedOverflow: false
     },
     {
       description: "1 Rider, no kids, 1 adult",
       inputSlots: [1, 0, 0, 0, 0, 0],
       adults: 1,
-      expected: [1, 1, 0, 0, 0, 0, 0]
+      expected: [1, 1, 0, 0, 0, 0, 0],
+      expectedOverflow: false
     },
     {
       description: "4 Riders (2 Rider, 2 Rider+), 2 kids (overflow), 0 adults",
       inputSlots: [2, 2, 1, 1, 0, 0],
       adults: 0,
-      expected: [0, 2, 2, 0, 0, 0, 0]
+      expected: [0, 2, 2, 0, 0, 0, 0],
+      expectedOverflow: true
+    },
+    {
+      description: "3 Riders, 2 kids (1 shifted to 4th slot, 1 overflow)",
+      inputSlots: [3, 0, 1, 1, 0, 0],
+      adults: 1,
+      expected: [1, 3, 0, 0, 0, 0, 1],
+      expectedOverflow: true
+    },
+    {
+      description: "No riders, 5 kids (5th kid in input array overflows)",
+      inputSlots: [0, 0, 1, 1, 1, 1, 1],
+      adults: 0,
+      expected: [0, 0, 0, 1, 1, 1, 1],
+      expectedOverflow: true
     }
   ];
 
@@ -1357,14 +1379,14 @@ function testAdjustSubscriptionSlots() {
   for (var i = 0; i < testCases.length; i++) {
     var tc = testCases[i];
     var slots = tc.inputSlots.slice();
-    adjustSubscriptionSlots(slots, tc.adults);
-    if (!areArraysEqual(slots, tc.expected)) {
+    var overflow = adjustSubscriptionSlots(slots, tc.adults);
+    if (!areArraysEqual(slots, tc.expected) || overflow !== tc.expectedOverflow) {
       failures++;
       Logger.log("--------------------------------------------------");
       Logger.log("FAIL: testAdjustSubscriptionSlots - " + tc.description);
       Logger.log("Input Slots: " + JSON.stringify(tc.inputSlots) + ", Adults: " + tc.adults);
-      Logger.log("Expected: " + JSON.stringify(tc.expected));
-      Logger.log("Got: " + JSON.stringify(slots));
+      Logger.log("Expected Slots: " + JSON.stringify(tc.expected) + ", Expected Overflow: " + tc.expectedOverflow);
+      Logger.log("Got Slots: " + JSON.stringify(slots) + ", Got Overflow: " + overflow);
     }
   }
 
