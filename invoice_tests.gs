@@ -1241,12 +1241,46 @@ function testMiscUtility() {
   return true
 }
 
+function testNonCompSubscriptionCategories() {
+  var expected = [
+    'Adulte',
+    'Rider',
+    'Rider+',
+    'Rando',
+    '1er enfant',
+    '2ème enfant',
+    '3ème enfant',
+    '4ème enfant'
+  ];
+
+  if (!noncomp_subscription_categories || noncomp_subscription_categories.length !== expected.length) {
+    Logger.log('FAILURE: testNonCompSubscriptionCategories - Array length mismatch or undefined. Got: ' +
+               (noncomp_subscription_categories ? noncomp_subscription_categories.length : 'undefined') +
+               ', Expected: ' + expected.length);
+    return false;
+  }
+
+  for (var i = 0; i < expected.length; i++) {
+    if (noncomp_subscription_categories[i] !== expected[i]) {
+      Logger.log('FAILURE: testNonCompSubscriptionCategories - Value mismatch at index ' + i +
+                 '. Got: "' + noncomp_subscription_categories[i] + '", Expected: "' + expected[i] + '"');
+      return false;
+    }
+  }
+
+  Logger.log("Finished testNonCompSubscriptionCategories().");
+  return true;
+}
+
 function RUN_ALL_TESTS() {
   Logger.log("Starting all invoice tests...");
   var failedSuites = [];
 
   if(!testMiscUtility()) {
     failedSuites.push('testMiscUtility')
+  }
+  if (!testNonCompSubscriptionCategories()) {
+    failedSuites.push('testNonCompSubscriptionCategories')
   }
   if (!testSkipassProperties()) {
     failedSuites.push('testSkipassProperties')
