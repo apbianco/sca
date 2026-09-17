@@ -1403,9 +1403,14 @@ function adjustSubscriptionSlots(subscription_slots, number_of_adults) {
   var total_riders = rider + rider_plus;
   var kids = subscription_slots.slice(2);
   var shifted_kids = [0, 0, 0, 0];
-  for (var i = 0; i < kids.length && i < 4; i++) {
-    if (i + total_riders < 4) {
-      shifted_kids[i + total_riders] = kids[i];
+  var overflow = false;
+  for (var i = 0; i < kids.length; i++) {
+    if (kids[i] > 0) {
+      if (i + total_riders < 4) {
+        shifted_kids[i + total_riders] = kids[i];
+      } else {
+        overflow = true;
+      }
     }
   }
 
@@ -1414,6 +1419,7 @@ function adjustSubscriptionSlots(subscription_slots, number_of_adults) {
   for (var j = 0; j < shifted_kids.length; j++) {
     subscription_slots.push(shifted_kids[j]);
   }
+  return overflow;
 }
 
 function autoFillNonCompSubscriptions() {
