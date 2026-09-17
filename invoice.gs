@@ -1493,7 +1493,11 @@ function autoFillNonCompSubscriptions() {
   // Rider+ + non rider
   // Rider + Rider+
   // Rider + Rider+ + non rider
-  adjustSubscriptionSlots(subscription_slots, number_of_adults)
+  if (adjustSubscriptionSlots(subscription_slots, number_of_adults)) {
+    displayWarningPanel("Il n'y a plus de place pour inscrire des non-riders " +
+                        "automatiquement. Ajuster et procéder de manière manuelle " +
+                        "après ce remplissage automatique")    
+  }
   subscription_slots.splice(3, 0, getNumberAt(coord_tourning_counte))
 
   for (var index in noncomp_subscription_categories) {
