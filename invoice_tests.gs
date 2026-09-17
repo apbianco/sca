@@ -863,7 +863,6 @@ function compareBooleanArrays(arr1, arr2) {
     .join('\n');
 }
 
-// FIXME: isLevelRiderPlus() and isLevelEitherRider()
 function testIsLevel() {
   var existing_levels = {
     //                  NotAdjusted | NotDefined | Defined | Comp |  NotComp | Rider | Rider+ | Rider/Rider+ | Rando | RecreationalNonRider | LicenseOnly
