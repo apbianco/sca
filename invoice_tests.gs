@@ -1300,6 +1300,75 @@ function testIsSubscriptionAdult() {
   return true
 }
 
+function testAdjustSubscriptionSlots() {
+  var testCases = [
+    {
+      description: "Comment Example 1: [1, 0, 1, 0, 0, 0], adults = 0",
+      slots: [1, 0, 1, 0, 0, 0],
+      adults: 0,
+      expected: [0, 1, 0, 1, 0, 0]
+    },
+    {
+      description: "Comment Example 2: [2, 0, 1, 1, 0, 0], adults = 0",
+      slots: [2, 0, 1, 1, 0, 0],
+      adults: 0,
+      expected: [0, 2, 0, 0, 1, 1]
+    },
+    {
+      description: "Comment Example 3: [0, 1, 1, 0, 0, 0], adults = 0",
+      slots: [0, 1, 1, 0, 0, 0],
+      adults: 0,
+      expected: [0, 1, 0, 1, 0, 0]
+    },
+    {
+      description: "Comment Example 4: [1, 1, 1, 0, 0, 0], adults = 0",
+      slots: [1, 1, 1, 0, 0, 0],
+      adults: 0,
+      expected: [0, 2, 0, 0, 1, 0]
+    },
+    {
+      description: "Comment Example 5: [1, 2, 1, 0, 0, 0], adults = 0",
+      slots: [1, 2, 1, 0, 0, 0],
+      adults: 0,
+      expected: [0, 3, 0, 0, 0, 1]
+    },
+    {
+      description: "No riders, adults = 2: [0, 0, 1, 1, 0, 0]",
+      slots: [0, 0, 1, 1, 0, 0],
+      adults: 2,
+      expected: [2, 0, 1, 1, 0, 0]
+    },
+    {
+      description: "1 rider, adults = 1: [1, 0, 1, 0, 0, 0]",
+      slots: [1, 0, 1, 0, 0, 0],
+      adults: 1,
+      expected: [1, 1, 0, 1, 0, 0]
+    }
+  ];
+
+  var failures = 0;
+  for (var i = 0; i < testCases.length; i++) {
+    var tc = testCases[i];
+    var actualSlots = tc.slots.slice();
+    adjustSubscriptionSlots(actualSlots, tc.adults);
+    if (!areArraysEqual(actualSlots, tc.expected)) {
+      failures++;
+      Logger.log("--------------------------------------------------");
+      Logger.log("FAIL: testAdjustSubscriptionSlots - " + tc.description);
+      Logger.log("  Input slots: " + JSON.stringify(tc.slots) + ", adults: " + tc.adults);
+      Logger.log("  Expected: " + JSON.stringify(tc.expected));
+      Logger.log("  Got:      " + JSON.stringify(actualSlots));
+    }
+  }
+
+  if (failures > 0) {
+    Logger.log("--------------------------------------------------");
+    Logger.log("testAdjustSubscriptionSlots: " + failures + " test(s) failed.");
+  }
+  Logger.log("Finished testAdjustSubscriptionSlots().");
+  return failures === 0;
+}
+
 function RUN_ALL_TESTS() {
   Logger.log("Starting all invoice tests...");
   var failedSuites = [];
@@ -1370,6 +1439,9 @@ function RUN_ALL_TESTS() {
   if (!testIsSubscriptionAdult()) {
     failedSuites.push("testIsSubscriptionAdult");
   }  
+  if (!testAdjustSubscriptionSlots()) {
+    failedSuites.push("testAdjustSubscriptionSlots");
+  }
   if (failedSuites.length === 0) {
     Logger.log("Summary: ✅✅✅ All test suites passed successfully!");
   } else {
