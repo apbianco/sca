@@ -256,90 +256,31 @@ function testGetDoBYear() {
 }
 
 function testIsSubscriptionAdult() {
-  var testCases = [
-    {
-      description: "Adult subscription string ('Adulte')",
-      input: getAdultString(),
-      expected: true
-    },
-    {
-      description: "Empty string",
-      input: "",
-      expected: false
-    },
-    {
-      description: "Non-adult subscription: Rider",
-      input: getRiderLevelString(),
-      expected: false
-    },
-    {
-      description: "Non-adult subscription: Rider+",
-      input: getRiderPlusLevelString(),
-      expected: false
-    },
-    {
-      description: "Non-adult subscription: Rando",
-      input: getTouringString(),
-      expected: false
-    },
-    {
-      description: "Non-adult subscription: 1er enfant",
-      input: getFirstKidString(),
-      expected: false
-    },
-    {
-      description: "Non-adult subscription: 2ème enfant",
-      input: getSecondKidString(),
-      expected: false
-    },
-    {
-      description: "Non-adult subscription: 3ème enfant",
-      input: getThirdKidString(),
-      expected: false
-    },
-    {
-      description: "Non-adult subscription: 4ème enfant",
-      input: getFourthKidString(),
-      expected: false
-    },
-    {
-      description: "Other level: Compétiteur",
-      input: getLevelCompString(),
-      expected: false
-    },
-    {
-      description: "Other level: Licence seule",
-      input: getOnlyLicense(),
-      expected: false
-    },
-    {
-      description: "Arbitrary string",
-      input: "RandomString",
-      expected: false
-    }
-  ];
-
-  var failures = 0;
-
-  for (var i = 0; i < testCases.length; i++) {
-    var tc = testCases[i];
-    var actual = isSubscriptionAdult(tc.input);
-    if (actual !== tc.expected) {
-      failures++;
-      Logger.log("--------------------------------------------------");
-      Logger.log("FAIL: testIsSubscriptionAdult - " + tc.description);
-      Logger.log("Input: '" + tc.input + "'");
-      Logger.log("Expected: " + tc.expected);
-      Logger.log("Got: " + actual);
-    }
+  var testCases = {
+    //                  IsSubscriptionAdult
+    "Adulte":           true,
+    "":                 false,
+    "Rider":            false,
+    "Rider+":           false,
+    "Rando":            false,
+    "1er enfant":       false,
+    "2ème enfant":      false,
+    "3ème enfant":      false,
+    "4ème enfant":      false,
+    "Compétiteur":      false,
+    "Licence seule":    false,
+    "RandomString":     false,
   }
 
-  if (failures > 0) {
-    Logger.log("--------------------------------------------------");
-    Logger.log("testIsSubscriptionAdult: " + failures + " test(s) failed.");
+  for (const [key, value] of Object.entries(testCases)) {
+    var result = isSubscriptionAdult(key)
+    if (result != value) {
+      Logger.log('FAILURE: for testCases[' + key + ']. Got:' + result + ', expected: ' + value)
+      return false
+    }
   }
   Logger.log("Finished testIsSubscriptionAdult().");
-  return failures === 0;
+  return true
 }
 
 function testIsLicenseDefined() {
