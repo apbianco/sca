@@ -307,6 +307,8 @@ function getLevelCompString() {return "Compétiteur" }
 // Subscription categories
 function getAdultString() { return 'Adulte' }
 function getRiderLevelString() { return 'Rider' }
+function getRiderPlusLevelString() { return 'Rider+' }
+function getTouringString() { return 'Rando' }
 function getFirstKidString() { return '1er enfant' }
 function getSecondKidString() { return '2ème enfant' }
 function getThirdKidString() { return '3ème enfant' }
@@ -315,6 +317,8 @@ function getFourthKidString() { return '4ème enfant' }
 var noncomp_subscription_categories = [
   getAdultString(),
   getRiderLevelString(),
+  getRiderPlusLevelString(),
+  getTouringString(),
   getFirstKidString(),
   getSecondKidString(),
   getThirdKidString(),
@@ -356,10 +360,22 @@ function isLevelRider(level) {
   return level == getRiderLevelString()
 }
 
+function isLevelRiderPlus(level) {
+  return level == getRiderPlusLevelString()
+}
+
+function isLevelEitherRider(level) {
+  return isLevelRider(level) || isLevelRiderPlus(level)
+}
+
+function isLevelTouring(level) {
+  return level == getTouringString()
+}
+
 function isLevelRecreationalNonRider(level) {
   return (isLevelLicenseOnly(level) ?
           false : (! isLevelDefined(level) ?
-                   false : (isLevelRider(level) ?
+                   false : (isLevelEitherRider(level) ?
                             false : isLevelNotComp(level))))
 }
 
@@ -1381,12 +1397,14 @@ function autoFillLicensePurchases() {
 function autoFillNonCompSubscriptions() {
   updateStatusBar("Achat automatique des adhésions loisir...", "grey", add=true)
   var subscription_map = createNonCompSubscriptionMap(SpreadsheetApp.getActiveSheet())
+  // FIXME: Introduce and handle a slot for Rider+
   //       current_non_rider_slot
   //           rider_index       \
   //                       \      \
   //                        V      V
   //                        Rider, 1st Kid, 2nd Kid, 3rd Kid, 4th Kid
   var subscription_slots = [0,     0,       0,       0,       0]
+  // FIXME: rider_plus_index needs to be introduced
   var rider_index = 0
   var current_non_rider_slot = 1
   var number_of_adults = 0
@@ -1416,6 +1434,7 @@ function autoFillNonCompSubscriptions() {
     // Handle non competitor license with a level defined, indicating interest
     // in being under the supervision of an instructor, which includes adults.
     // Riders are accumulated
+    // FIXME: handle rider+ with isLevelRiderPlus()
     if (isLevelRider(level)) {
       subscription_slots[rider_index] += 1
       continue
@@ -1435,6 +1454,11 @@ function autoFillNonCompSubscriptions() {
       continue
     }
   }
+  // FIXME: Handle rider+. In tests matrix, test for:
+  // Rider + non rider (already done)
+  // Rider+ + non rider
+  // Rider + Rider+
+  // Rider + Rider+ + non rider
   // A rider subscription counts as an occupied non-rider subscription slot:
   // [1, 1, 0, 0, 0] becomes [1, 0, 1, 0, 0] and [2, 1, 1, 0, 0] becomes
   // [1, 0, 0, 1, 1]. This adjustment can not happen as we built 
