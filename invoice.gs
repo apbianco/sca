@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
-// Version: 2025-11-12T11:28 - BAS 2025
+// Version: Sep 2026 - Development
 //
 // This validates the invoice sheet (more could be done BTW) and
 // sends an email with the required attached pieces.
@@ -1102,19 +1102,6 @@ function ageFromDoB(dob) {
     }
   }
   return age;
-}
-
-// Return and age from DoB with respect to now.
-// FIXME: Remove this implementation in 2026/2027
-function ageFromDoB2(dob) {
-  // Calculate month difference from current date in time
-  var month_diff = Date.now() - dob.getTime();
-  // Convert the calculated difference in date format
-  var age_dt = new Date(month_diff); 
-  // Extract year from date    
-  var year = age_dt.getUTCFullYear();
-  // Now calculate the age of the user and return it
-  return Math.abs(year - 1970);
 }
 
 // Return True if at the current time, someone with dob is strictly older than age.
