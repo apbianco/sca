@@ -1241,6 +1241,65 @@ function testMiscUtility() {
   return true
 }
 
+function testNonCompSubscriptionCategories() {
+  var expected = [
+    'Adulte',
+    'Rider',
+    'Rider+',
+    'Rando',
+    '1er enfant',
+    '2ème enfant',
+    '3ème enfant',
+    '4ème enfant'
+  ];
+
+  if (!noncomp_subscription_categories || noncomp_subscription_categories.length !== expected.length) {
+    Logger.log('FAILURE: testNonCompSubscriptionCategories - Array length mismatch or undefined. Got: ' +
+               (noncomp_subscription_categories ? noncomp_subscription_categories.length : 'undefined') +
+               ', Expected: ' + expected.length);
+    return false;
+  }
+
+  for (var i = 0; i < expected.length; i++) {
+    if (noncomp_subscription_categories[i] !== expected[i]) {
+      Logger.log('FAILURE: testNonCompSubscriptionCategories - Value mismatch at index ' + i +
+                 '. Got: "' + noncomp_subscription_categories[i] + '", Expected: "' + expected[i] + '"');
+      return false;
+    }
+  }
+
+  Logger.log("Finished testNonCompSubscriptionCategories().");
+  return true;
+}
+
+function testIsSubscriptionAdult() {
+  var testCases = {
+    //                  IsSubscriptionAdult
+    "Adulte":           true,
+    "":                 false,
+    "Rider":            false,
+    "Rider+":           false,
+    "Rando":            false,
+    "1er enfant":       false,
+    "2ème enfant":      false,
+    "3ème enfant":      false,
+    "4ème enfant":      false,
+    "Compétiteur":      false,
+    "Licence seule":    false,
+    "RandomString":     false,
+  }
+
+  for (const [key, value] of Object.entries(testCases)) {
+    var result = isSubscriptionAdult(key)
+    if (result != value) {
+      Logger.log('FAILURE: for testCases[' + key + ']. Got:' + result + ', expected: ' + value)
+      return false
+    }
+  }
+  Logger.log("Finished testIsSubscriptionAdult().");
+  return true
+}
+
 function RUN_ALL_TESTS() {
   Logger.log("Starting all invoice tests...");
   var failedSuites = [];
@@ -1305,6 +1364,12 @@ function RUN_ALL_TESTS() {
   if (!testCreateSkipassMap_UsesDynamicRanges()) {
     failedSuites.push("testCreateSkipassMap_UsesDynamicRanges");
   }
+  if (!testNonCompSubscriptionCategories()) {
+    failedSuites.push('testNonCompSubscriptionCategories')
+  }
+  if (!testIsSubscriptionAdult()) {
+    failedSuites.push("testIsSubscriptionAdult");
+  }  
   if (failedSuites.length === 0) {
     Logger.log("Summary: ✅✅✅ All test suites passed successfully!");
   } else {
