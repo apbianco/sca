@@ -255,6 +255,34 @@ function testGetDoBYear() {
   return failures === 0;
 }
 
+function testIsSubscriptionAdult() {
+  var testCases = {
+    //                  IsSubscriptionAdult
+    "Adulte":           true,
+    "":                 false,
+    "Rider":            false,
+    "Rider+":           false,
+    "Rando":            false,
+    "1er enfant":       false,
+    "2ème enfant":      false,
+    "3ème enfant":      false,
+    "4ème enfant":      false,
+    "Compétiteur":      false,
+    "Licence seule":    false,
+    "RandomString":     false,
+  }
+
+  for (const [key, value] of Object.entries(testCases)) {
+    var result = isSubscriptionAdult(key)
+    if (result != value) {
+      Logger.log('FAILURE: for testCases[' + key + ']. Got:' + result + ', expected: ' + value)
+      return false
+    }
+  }
+  Logger.log("Finished testIsSubscriptionAdult().");
+  return true
+}
+
 function testIsLicenseDefined() {
   var testCases = [
     {
@@ -1280,6 +1308,9 @@ function RUN_ALL_TESTS() {
   }
   if (!testGetDoBYear()) {
     failedSuites.push("testGetDoBYear");
+  }
+  if (!testIsSubscriptionAdult()) {
+    failedSuites.push("testIsSubscriptionAdult");
   }
   if (!testIsLicenseDefined()) {
     failedSuites.push("testIsLicenseDefined");
