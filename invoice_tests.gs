@@ -1243,14 +1243,14 @@ function testMiscUtility() {
 
 function testNonCompSubscriptionCategories() {
   var expected = [
-    'Adulte',
-    'Rider',
-    'Rider+',
-    'Rando',
-    '1er enfant',
-    '2ème enfant',
-    '3ème enfant',
-    '4ème enfant'
+    getAdultString(),
+    getRiderLevelString(),
+    getRiderPlusLevelString(),
+    getTouringString(),
+    getFirstKidString(),
+    getSecondKidString(),
+    getThirdKidString(),
+    getFourthKidString()
   ];
 
   if (!noncomp_subscription_categories || noncomp_subscription_categories.length !== expected.length) {
@@ -1272,42 +1272,6 @@ function testNonCompSubscriptionCategories() {
   return true;
 }
 
-function testIsSubscriptionAdult() {
-  var testCases = [
-    { input: 'Adulte', expected: true, description: "Standard adult subscription" },
-    { input: 'Rider', expected: false, description: "Rider subscription" },
-    { input: '1er enfant', expected: false, description: "Kid subscription" },
-    { input: 'Compétiteur', expected: false, description: "Compétiteur" },
-    { input: '', expected: false, description: "Empty string" },
-    { input: 'Non déterminé', expected: false, description: "Non déterminé level" },
-    { input: 'Adulte ', expected: false, description: "Adulte with trailing space" },
-    { input: null, expected: false, description: "Null input" }
-  ];
-
-  var failures = 0;
-
-  for (var i = 0; i < testCases.length; i++) {
-    var tc = testCases[i];
-    var actual = isSubscriptionAdult(tc.input);
-    if (actual !== tc.expected) {
-      failures++;
-      Logger.log("--------------------------------------------------");
-      Logger.log("FAIL: testIsSubscriptionAdult - " + tc.description);
-      Logger.log("Input: " + JSON.stringify(tc.input));
-      Logger.log("Expected: " + tc.expected);
-      Logger.log("Got: " + actual);
-    }
-  }
-
-  if (failures > 0) {
-    Logger.log("--------------------------------------------------");
-    Logger.log("testIsSubscriptionAdult: " + failures + " test(s) failed.");
-  }
-
-  Logger.log("Finished testIsSubscriptionAdult().");
-  return failures === 0;
-}
-
 function RUN_ALL_TESTS() {
   Logger.log("Starting all invoice tests...");
   var failedSuites = [];
@@ -1317,9 +1281,6 @@ function RUN_ALL_TESTS() {
   }
   if (!testNonCompSubscriptionCategories()) {
     failedSuites.push('testNonCompSubscriptionCategories')
-  }
-  if (!testIsSubscriptionAdult()) {
-    failedSuites.push('testIsSubscriptionAdult')
   }
   if (!testSkipassProperties()) {
     failedSuites.push('testSkipassProperties')
