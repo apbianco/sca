@@ -1382,7 +1382,8 @@ function autoFillLicensePurchases() {
 }
 
 function adjustSubscriptionSlots(subscription_slots, number_of_adults) {
-  // A rider or a rider+ subscription counts as an occupied non-rider subscription slot:
+  // A rider or a rider+ subscription counts as an occupied non-rider subscription slot.
+  // Processing BEFORE adding the adult produces this intermediary result:
   //    R  R+ 1st 2nd 3rd 4th         R  R+ 1st 2nd 3rd 4th
   // - [1, 0, 1,  0,  0,  0] becomes [1, 0, 0,  1,  0,  0]
   // - [2, 0, 1,  1,  0,  0] becomes [2, 0, 0,  0,  1,  1]
@@ -1390,6 +1391,10 @@ function adjustSubscriptionSlots(subscription_slots, number_of_adults) {
   // - [1, 1, 1,  0,  0,  0] becomes [1, 1, 0,  0,  1,  0]
   // - [1, 2, 1,  0,  0,  0] becomes [1, 2, 0,  0,  0,  1]
   //
+  // Then the number of adults gets inserted, so we end up with, for instance:
+  //  A, R  R+ 1st 2nd 3rd 4th
+  // [N, 1, 0, 0,  1,  0,  0]
+  // [N, 2, 0, 0,  0,  1,  1]
   // This adjustment can not happen as we built  subscrition_slots because a rider
   // can happen at any time in the list of registered familly members.
 
