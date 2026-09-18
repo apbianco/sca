@@ -119,20 +119,26 @@ var coord_family_phone2 =             [10, 5]
 // - Locations of various status line and collected input, located
 //   a the bottom of the invoice.
 // 
-var coord_total =                     [74, 7];
-var coord_rebate =                    [85, 4];
+var coord_total =                     [73, 7];
+var coord_rebate =                    [84, 4];
+var coord_rebate_2_label =            [85, 3];
+var coord_rebate_1 =                  [85, 4];
 var coord_charge =                    [86, 4];
-var coord_owed =                      [87, 7];
-var coord_payment_validation_form =   [88, 7];
-var coord_personal_message =          [94, 3];
-var coord_timestamp =                 [95, 2];
-var coord_version =                   [95, 3];
-var coord_legal_disclaimer =          [95, 5];
-var coord_ffs_medical_form =          [95, 7];
-var coord_callme_phone =              [95, 9];
-var coord_yolo =                      [96, 3];
-var coord_status =                    [97, 4];
-var coord_generated_pdf =             [97, 6];
+var coord_owed =                      [86, 7];
+var coord_payment_validation_form =   [87, 7];
+var coord_personal_message =          [93, 3];
+var coord_timestamp =                 [94, 2];
+var coord_version =                   [94, 3];
+var coord_legal_disclaimer =          [94, 5];
+var coord_ffs_medical_form =          [94, 7];
+var coord_callme_phone =              [94, 9];
+var coord_yolo =                      [95, 3];
+var coord_status =                    [96, 4];
+var coord_generated_pdf =             [96, 6];
+//
+// - Rebate amount for Rider+, €. I don't like this, monetary
+//   concerns should be handled directly in the trix.
+var rebate_rider_plus =               83;
 //
 // - Rows where the family names are entered
 // 

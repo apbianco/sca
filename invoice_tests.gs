@@ -93,6 +93,18 @@ function testPlural() {
       expected: "item"
     },
     {
+      description: "Plural input, space terminated",
+      number: 3,
+      message: "item ",
+      expected: "items "
+    },
+    {
+      description: "Plural input, leading/trailing space",
+      number: 3,
+      message: " item ",
+      expected: " items "
+    },    
+    {
       description: "Plural input",
       number: 2,
       message: "item",
@@ -101,6 +113,12 @@ function testPlural() {
     {
       description: "Zero input",
       number: 0,
+      message: "item",
+      expected: "item"
+    },
+    {
+      description: "Negative input",
+      number: -1,
       message: "item",
       expected: "item"
     },

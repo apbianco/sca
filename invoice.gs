@@ -938,6 +938,25 @@ function createPDF(sheet) {
   return UrlFetchApp.fetch(url, params).getBlob(); 
 }
 
+function maskRebatesCharges() {
+  if (getNumberAt(coord_rebate) == 0) {
+    setResetRebate(coord_rebate, "white")
+  }
+  if (getNumberAt(coord_rebate_1) == 0) {
+    setResetRebate(coord_rebate_1, "white")
+  }
+  if (getNumberAt(coord_charge) == 0) {
+    setResetRebate(coord_charge, "white")
+  }
+}
+
+function unmaskRebatesCharges() {
+  // Always for the rebate/charge area to be back in black 🤘.
+  setResetRebate(coord_rebate, "black")
+  setResetRebate(coord_rebate_1, "black")
+  setResetRebate(coord_charge, "black")
+}
+
 // Create the invoice as a PDF: first create a blob and then save
 // the blob as a PDF and move it to the <db>/<OPERATOR:FAMILY>
 // directory. Return the PDF file ID.  
@@ -956,22 +975,11 @@ function generatePDF() {
   }
   var spreadsheet = SpreadsheetApp.getActiveSpreadsheet()
   var pdf_number = getAndUpdateInvoiceNumber();
-  // If no rebate has been entered, mask the information entirely 
-  // before creating the PDF and revert that. Otherwise, don't change
-  // anything.
-  if (getNumberAt(coord_rebate) == 0) {
-    setResetRebate(coord_rebate, "white")
-  }
-  if (getNumberAt(coord_charge) == 0) {
-    setResetRebate(coord_charge, "white")
-  }
+  maskRebatesCharges()
   var blob = createPDF(spreadsheet) 
   var pdf_filename = spreadsheet.getName() + '-' + pdf_number + '.pdf';
   var file = savePDF(blob, pdf_filename)
-
-  // Always for the rebate/charge area to be back in black 🤘.
-  setResetRebate(coord_rebate, "black")
-  setResetRebate(coord_charge, "black")
+  unmaskRebatesCharges()
 
   var spreadsheet_folder_id =
     DriveApp.getFolderById(spreadsheet.getId()).getParents().next().getId()
@@ -1553,24 +1561,52 @@ function autoFillCompSubscriptions() {
   return true
 }
 
+function installRebate(number_of_rider_plus) {
+  if (number_of_rider_plus > 0) {
+    var amount = number_of_rider_plus * rebate_rider_plus
+    setStringAt(coord_rebate_2_label,
+                "Prise en charge " + number_of_rider_plus + 
+                Plural(number_of_rider_plus, " forfait ") + "3D Rider+")
+    setStringAt(coord_rebate_1, amount)
+
+  } else {
+    setStringAt(coord_rebate_2_label, "")
+    setStringAt(coord_rebate_1, "")
+  }
+}
+
 function autoFillSkiPassPurchases() {
   // Clear ski pass rebates as they aren't computed by the magic wand for now.
   clearSkiPassesRebates()
   updateStatusBar("Achat automatique des forfaits...", "grey", add=true)
   var ski_pass_map = createSkipassMap(SpreadsheetApp.getActiveSheet())
   // Collect the attributed licenses
+  var number_of_rider_plus = 0
   for (var index in coords_identity_rows) {
     var row = coords_identity_rows[index]
     // No name verification as this methods runs after this has been
     // done
     var dob = getDoB([row, coord_dob_column])
-
+    var level_rider_plus = isLevelRiderPlus(getStringAt([row, coord_level_column]))
+    if (level_rider_plus) {
+      number_of_rider_plus += 1
+    }
     if (dob == undefined) {
       continue
     }
     for (var ski_pass in ski_pass_map) {
-      // Always prioritize non 3D. Never automatically fill students
-      if (!isSkipPassLocalizedCollet(ski_pass) || ski_pass_map[ski_pass].IsStudent()) {
+      // Never automatically fill students
+      if (ski_pass_map[ski_pass].IsStudent()) {
+        continue
+      }
+      // Rider+ prioritizes 3D
+      if (level_rider_plus) {
+        if (isSkipPassLocalizedCollet(ski_pass)) {
+          continue
+        }
+      }
+      // Otherwise we never prioritize 3D
+      else if(!isSkipPassLocalizedCollet(ski_pass)) {
         continue
       }
       ski_pass_map[ski_pass].IncrementAttributedSkiPassCountIfDoB(dob)
@@ -1579,6 +1615,7 @@ function autoFillSkiPassPurchases() {
   for (var ski_pass in ski_pass_map) {
       ski_pass_map[ski_pass].SetPurchasedSkiPassAmount()
   }
+  installRebate(number_of_rider_plus)
   return true
 }
 
