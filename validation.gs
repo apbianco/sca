@@ -428,6 +428,8 @@ function validateNonCompSubscriptions() {
   // These are the people that need a subscription. Note that a level indicating a competitor
   // is not taken into account.
   var rider_number = 0
+  var rider_plus_number = 0
+  var rider_total = 0
   var non_rider_kid_number = 0
   var non_rider_adult_number = 0
   coords_identity_rows.forEach(function(row) {
@@ -435,6 +437,9 @@ function validateNonCompSubscriptions() {
     var license = getStringAt([row, coord_license_column])
     if (isLevelRider(level)) {
       rider_number += 1
+    }
+    if (isLevelRiderPlus(level)) {
+      rider_plus_number += 1
     }
     if (isLevelRecreationalNonRider(level)) {
       // Here we need to make a difference between a kid and an adult:
@@ -447,21 +452,42 @@ function validateNonCompSubscriptions() {
       }
     }
   })
+  rider_total = rider_number + rider_plus_number
 
-  // 1- The number of riders must be equal to the number of riders we found. First count them all
-  //    and the perform the verification
+  // 1a- The number of riders must be equal to the number of riders we found. First count them all
+  //     and the perform the verification
   var subscribed_rider_number = subscription_map[getRiderLevelString()].PurchasedSubscriptionAmount()
   if (rider_number != subscribed_rider_number) {
     return ("Le nombre d'" + Plural(subscribed_rider_number, "adhésion") + " rider " +
             Plural(subscribed_rider_number, "souscrite") + " [" + subscribed_rider_number +
-	    "] ne correspond pas au nombre de " +
-	    Plural(rider_number, "rider renseigné") + " [" + rider_number + "]")
+	          "] ne correspond pas au nombre de " +
+	          Plural(rider_number, "rider renseigné") + " [" + rider_number + "]")
+  }
+  // 1b- The number of Rider+ must be equal to the number of riders we found. First count them all
+  //     and the perform the verification  
+  var subscribed_rider_plus_number = subscription_map[getRiderPlusLevelString()].PurchasedSubscriptionAmount()
+  if (rider_plus_number != subscribed_rider_plus_number) {
+    return ("Le nombre d'" + Plural(subscribed_rider_plus_number, "adhésion") + " rider+ " +
+            Plural(subscribed_rider_number, "souscrite") + " [" + subscribed_rider_plus_number +
+	          "] ne correspond pas au nombre de " +
+	          Plural(rider_plus_number, "rider+ renseigné") + " [" + rider_plus_number + "]")
+  }
+  // 1c- Verify that the Rider+ rebate matches the number of Rider+ registered
+  var rider_plus_rebate = getNumberAt(coord_rebate_1)
+  var total_rebate_rider_plus = rider_plus_number * rebate_rider_plus
+  if (rider_plus_rebate != total_rebate_rider_plus) {
+    return ("Le nombre d'" + Plural(subscribed_rider_plus_number, "adhésion") + " rider+ " +
+            Plural(subscribed_rider_number, "souscrite") + " [" + subscribed_rider_plus_number +
+	          "] ne correspond pas au montant calculé de la participation du club au forfait 3 domaines: " +
+	          rider_plus_rebate + "€ " + Plural(rider_plus_rebate, "enregistré") + " contre " +
+            rider_plus_number + "x" + rebate_rider_plus + "€ = " + total_rebate_rider_plus + "€" +
+            Plural(total_rebate_rider_plus, " calculé"))
   }
 
   // 2- If we have N riders, the N first non Rider subscriptions can not be purchased,
   //    we jump directly to N+1
   var kids = [getFirstKidString(), getSecondKidString(), getThirdKidString(), getFourthKidString()]
-  for (var index = 0; index < rider_number; index += 1) {
+  for (var index = 0; index < rider_total; index += 1) {
     var kid = subscription_map[kids[index]].PurchasedSubscriptionAmount()
     if (kid != 0) {
     return ("Une ou plusieurs adhésions Rider comptent comme des Adhésions / Stage / Transport - " +
@@ -474,7 +500,8 @@ function validateNonCompSubscriptions() {
   //    no subscription is found, no other subscrition can exist. This is a state machine
   //    with the following allowed transitions: ? -> {1, 0}, 1 -> {1, 0}, 0 -> {0}
   var state = -1
-  var adjusted_noncomp_subscription_categories = noncomp_subscription_categories.slice(2+rider_number)
+  // FIXME: What is the meaning of the constant 2? Document
+  var adjusted_noncomp_subscription_categories = noncomp_subscription_categories.slice(2+rider_total)
   for (var index in adjusted_noncomp_subscription_categories) {
     var subscription = adjusted_noncomp_subscription_categories[index]
     var current_purchased = subscription_map[subscription].PurchasedSubscriptionAmount()

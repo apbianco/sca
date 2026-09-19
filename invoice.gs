@@ -938,25 +938,6 @@ function createPDF(sheet) {
   return UrlFetchApp.fetch(url, params).getBlob(); 
 }
 
-function maskRebatesCharges() {
-  if (getNumberAt(coord_rebate) == 0) {
-    setResetRebate(coord_rebate, "white")
-  }
-  if (getNumberAt(coord_rebate_1) == 0) {
-    setResetRebate(coord_rebate_1, "white")
-  }
-  if (getNumberAt(coord_charge) == 0) {
-    setResetRebate(coord_charge, "white")
-  }
-}
-
-function unmaskRebatesCharges() {
-  // Always for the rebate/charge area to be back in black 🤘.
-  setResetRebate(coord_rebate, "black")
-  setResetRebate(coord_rebate_1, "black")
-  setResetRebate(coord_charge, "black")
-}
-
 // Create the invoice as a PDF: first create a blob and then save
 // the blob as a PDF and move it to the <db>/<OPERATOR:FAMILY>
 // directory. Return the PDF file ID.  
@@ -973,6 +954,24 @@ function generatePDF() {
     }
     SpreadsheetApp.flush() 
   }
+  function maskRebatesCharges() {
+    if (getNumberAt(coord_rebate) == 0) {
+      setResetRebate(coord_rebate, "white")
+    }
+    if (getNumberAt(coord_rebate_1) == 0) {
+      setResetRebate(coord_rebate_1, "white")
+    }
+    if (getNumberAt(coord_charge) == 0) {
+      setResetRebate(coord_charge, "white")
+    }
+  }
+  function unmaskRebatesCharges() {
+    // Always for the rebate/charge area to be back in black 🤘.
+    setResetRebate(coord_rebate, "black")
+    setResetRebate(coord_rebate_1, "black")
+    setResetRebate(coord_charge, "black")
+  }
+
   var spreadsheet = SpreadsheetApp.getActiveSpreadsheet()
   var pdf_number = getAndUpdateInvoiceNumber();
   maskRebatesCharges()
