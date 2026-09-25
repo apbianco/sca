@@ -1318,6 +1318,57 @@ function testIsSubscriptionAdult() {
   return true
 }
 
+function testIsLevelRecreationalNonRider() {
+  var testCases = {
+    "":                 false,
+    "Licence seule":    false,
+    "Compétiteur":      false,
+    "Rider":            false,
+    "Rider+":           false,
+    "Non déterminé":    true,
+    "Débutant/Ourson":  true,
+    "Flocon":           true,
+    "Étoile 1":         true,
+    "Étoile 2":         true,
+    "Étoile 3":         true,
+    "Bronze":           true,
+    "Argent":           true,
+    "Or":               true,
+    "Ski/Fun":          true,
+    "Rando":            true,
+    "Snow Découverte":  true,
+    "Snow 1":           true,
+    "Snow 2":           true,
+    "Snow 3":           true,
+    "Snow Expert":      true,
+    "⚠️ Flocon":        true,
+    "RandomString":      true,
+  };
+
+  var failures = 0;
+
+  for (var key in testCases) {
+    if (testCases.hasOwnProperty(key)) {
+      var expected = testCases[key];
+      var actual = isLevelRecreationalNonRider(key);
+      if (actual !== expected) {
+        failures++;
+        Logger.log("--------------------------------------------------");
+        Logger.log("FAIL: testIsLevelRecreationalNonRider - Level: '" + key + "'");
+        Logger.log("Expected: " + expected);
+        Logger.log("Got: " + actual);
+      }
+    }
+  }
+
+  if (failures > 0) {
+    Logger.log("--------------------------------------------------");
+    Logger.log("testIsLevelRecreationalNonRider: " + failures + " test(s) failed.");
+  }
+  Logger.log("Finished testIsLevelRecreationalNonRider().");
+  return failures === 0;
+}
+
 function testAdjustSubscriptionSlots() {
   var testCases = [
     {
@@ -1537,6 +1588,9 @@ function RUN_ALL_TESTS() {
   if (!testIsSubscriptionAdult()) {
     failedSuites.push("testIsSubscriptionAdult");
   }  
+  if (!testIsLevelRecreationalNonRider()) {
+    failedSuites.push("testIsLevelRecreationalNonRider");
+  }
   if (!testAdjustSubscriptionSlots()) {
     failedSuites.push("testAdjustSubscriptionSlots");
   }  
