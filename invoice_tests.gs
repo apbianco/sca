@@ -1255,6 +1255,15 @@ function testMiscUtility() {
       return false
   }
 
+  var expected_noncomp_categories = [
+    'Adulte', 'Rider', 'Rider+', 'Rando',
+    '1er enfant', '2ème enfant', '3ème enfant', '4ème enfant'
+  ];
+  if (!areArraysEqual(noncomp_subscription_categories, expected_noncomp_categories)) {
+    Logger.log('FAILURE: ' + noncomp_subscription_categories)
+    return false
+  }
+
   Logger.log("Finished testMiscUtility")
   return true
 }
