@@ -2078,10 +2078,25 @@ function askingLicenseOK() {
     }
 }
 
+function shouldWeEmailLicenseSCA(family_dict) {
+  if (!family_dict) {
+    family_dict = getListOfFamilyPurchasingALicense()
+  }
+  for (var index in family_dict) {
+    if (family_dict[index].last_name != "") {
+      return true
+    }
+  }
+  return false
+}
+
 // When just_test is true, just see if a license request should be sent, but
 // don't send any email.
 // FIXME: Split in two really.
 function maybeEmailLicenseSCA(invoice, just_test, ignore_payment) {
+  if (just_test) {
+    return shouldWeEmailLicenseSCA()
+  }
   if (! ignore_payment && just_test == false && ! askingLicenseOK()) {
     updateStatusBar("⚠️ PAS de demande de licence (voir paiement)", "orange", add=true)      
     return false
@@ -2117,9 +2132,6 @@ function maybeEmailLicenseSCA(invoice, just_test, ignore_payment) {
   // send and we return
   if (string_family_members == "") {
     return false
-  }
-  if (just_test) {
-    return true
   }
   string_family_members = (
     "<p> " + license_count + Plural(license_count, " licence nécessaire") +
@@ -2336,7 +2348,7 @@ function generatePDFAndMaybeSendEmail(config) {
   }
 
   var email_quota_threshold = 1 + (cc_to == "" || cc_to == undefined ? 0 : 1)
-  if (maybeEmailLicenseSCA([attachments[0]], just_test=true)) {
+  if (shouldWeEmailLicenseSCA()) {
     email_quota_threshold += 1
   }
   // The final status to display is captured in this variable and
