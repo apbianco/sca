@@ -314,7 +314,7 @@ function getSecondKidString() { return '2ème enfant' }
 function getThirdKidString() { return '3ème enfant' }
 function getFourthKidString() { return '4ème enfant' }
 
-// FIXME: Should this list follow the order of things row 46? I don't think so.
+// This list MUST follow the order of things starting row 46.
 var noncomp_subscription_categories = [
   getAdultString(),
   getRiderLevelString(),

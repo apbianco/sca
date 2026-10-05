@@ -104,7 +104,7 @@ function updateAggregationTrix() {
     }
     // Retain someone with a non comp license that has a ski level. Setting a ski level
     // signal the intention to be placed under the supervision of an instructor.
-    if (isLevelRecreationalNonRider(family_member.level) || isLevelRider(family_member.level)) {
+    if (isLevelRecreationalNonRider(family_member.level) || isLevelEitherRider(family_member.level)) {
       // If the member is an adult, its category is changed to "Adulte"
       if (isAdult(family_member.dob)) {
         family_member.level = 'Adulte'
@@ -147,8 +147,11 @@ function doUpdateAccountingTrix(data) {
     // entries in data
     var non_comp_subscriptions = createNonCompSubscriptionMap(sheet)
     for (const key in non_comp_subscriptions) {
+      // Next three methods test entry.level
       function levelRider(entry) { return isLevelRider(entry.level) }
+      function levelRiderPlus(entry) { return isLevelRiderPlus(entry.level) }
       function levelRecreationalNonRider(entry) { return isLevelRecreationalNonRider(entry.level)}
+      // This one tests entry.dob
       function levelAdult(entry) { return isAdult(new Date(entry.dob)) }
       var subscription = non_comp_subscriptions[key]
       subscription.UpdatePurchasedSubscriptionAmountFromTrix()
@@ -158,11 +161,12 @@ function doUpdateAccountingTrix(data) {
         continue
       }
       var fee = subscription.SubscriptionAmount()
-      // How to determine what applies - as we're going to all the entries in
+      // What method to run to determine what applies - as we're going to all the entries in
       // data, this is the last filter to select a particular entry in data.
       var determination = (isSubscriptionAdult(key) ?
                            levelAdult : isLevelRider(key) ?
-                                        levelRider : levelRecreationalNonRider)
+                                        levelRider : isLevelRiderPlus(key) ?
+                                        levelRiderPlus : levelRecreationalNonRider)
       // Go over all entries and dispatch charges as possible
       for (var entry of data) {
         // Stop when we have dispatched all existing charges
@@ -356,7 +360,7 @@ function updateAccountingTrix() {
     // instructor
     if (isLevelComp(family_member.level) ||
         isLevelRecreationalNonRider(family_member.level) ||
-        isLevelRider(family_member.level)) {
+        isLevelEitherRider(family_member.level)) {
       family.push(family_member)
     }
   }
