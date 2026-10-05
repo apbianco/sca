@@ -1467,6 +1467,52 @@ function testIsLevelRecreationalNonRider() {
   return failures === 0;
 }
 
+function testShouldWeEmailLicenseSCA() {
+  var testCases = [
+    {
+      description: "Empty family_dict array",
+      input: [],
+      expected: false
+    },
+    {
+      description: "Family member with empty last name",
+      input: [{ last_name: "" }],
+      expected: false
+    },
+    {
+      description: "Family member with non-empty last name",
+      input: [{ last_name: "DUPONT" }],
+      expected: true
+    },
+    {
+      description: "Multiple family members, one with non-empty last name",
+      input: [{ last_name: "" }, { last_name: "MARTIN" }],
+      expected: true
+    }
+  ];
+
+  var failures = 0;
+
+  for (var i = 0; i < testCases.length; i++) {
+    var tc = testCases[i];
+    var actual = shouldWeEmailLicenseSCA(tc.input);
+    if (actual !== tc.expected) {
+      failures++;
+      Logger.log("--------------------------------------------------");
+      Logger.log("FAIL: testShouldWeEmailLicenseSCA - " + tc.description);
+      Logger.log("Expected: " + tc.expected);
+      Logger.log("Got: " + actual);
+    }
+  }
+
+  if (failures > 0) {
+    Logger.log("--------------------------------------------------");
+    Logger.log("testShouldWeEmailLicenseSCA: " + failures + " test(s) failed.");
+  }
+  Logger.log("Finished testShouldWeEmailLicenseSCA().");
+  return failures === 0;
+}
+
 function RUN_ALL_TESTS() {
   Logger.log("Starting all invoice tests...");
   var failedSuites = [];
@@ -1543,6 +1589,9 @@ function RUN_ALL_TESTS() {
   if (!testIsLevelRecreationalNonRider()) {
     failedSuites.push("testIsLevelRecreationalNonRider");
   }  
+    if (!testShouldWeEmailLicenseSCA()) {
+    failedSuites.push("testShouldWeEmailLicenseSCA");
+  }
   if (failedSuites.length === 0) {
     Logger.log("Summary: ✅✅✅ All test suites passed successfully!");
   } else {

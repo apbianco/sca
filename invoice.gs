@@ -2078,11 +2078,21 @@ function askingLicenseOK() {
     }
 }
 
-// When just_test is true, just see if a license request should be sent, but
-// don't send any email.
-// FIXME: Split in two really.
-function maybeEmailLicenseSCA(invoice, just_test, ignore_payment) {
-  if (! ignore_payment && just_test == false && ! askingLicenseOK()) {
+function shouldWeEmailLicenseSCA(family_dict) {
+  // family_dict is for injecting test data.
+  if (!family_dict) {
+    family_dict = getListOfFamilyPurchasingALicense()
+  }
+  for (var index in family_dict) {
+    if (family_dict[index].last_name != "") {
+      return true
+    }
+  }
+  return false
+}
+
+function maybeEmailLicenseSCA(invoice, ignore_payment) {
+  if (! ignore_payment && ! askingLicenseOK()) {
     updateStatusBar("⚠️ PAS de demande de licence (voir paiement)", "orange", add=true)      
     return false
   }
@@ -2117,9 +2127,6 @@ function maybeEmailLicenseSCA(invoice, just_test, ignore_payment) {
   // send and we return
   if (string_family_members == "") {
     return false
-  }
-  if (just_test) {
-    return true
   }
   string_family_members = (
     "<p> " + license_count + Plural(license_count, " licence nécessaire") +
@@ -2336,7 +2343,7 @@ function generatePDFAndMaybeSendEmail(config) {
   }
 
   var email_quota_threshold = 1 + (cc_to == "" || cc_to == undefined ? 0 : 1)
-  if (maybeEmailLicenseSCA([attachments[0]], just_test=true)) {
+  if (shouldWeEmailLicenseSCA()) {
     email_quota_threshold += 1
   }
   // The final status to display is captured in this variable and
@@ -2363,7 +2370,7 @@ function generatePDFAndMaybeSendEmail(config) {
       final_status[0] = "✅ Dossier envoyé"
       // When the license wasn't sent, warn and add to the status bar so that
       // it is visible
-      if (! maybeEmailLicenseSCA([attachments[0]], just_test=false)) {
+      if (! maybeEmailLicenseSCA([attachments[0]])) {
         final_status[0] += ".\n⚠️ PAS de demande de licence (voir paiement)"
         final_status[1] = "orange";
       } else {
@@ -2371,7 +2378,7 @@ function generatePDFAndMaybeSendEmail(config) {
       }
     }
   } else if (license_request) {
-    maybeEmailLicenseSCA([attachments[0]], just_test=false, ignore_payment=true);
+    maybeEmailLicenseSCA([attachments[0]], ignore_payment=true);
     final_status[0] = "✅ Demande de licence envoyée"
   } else if (just_generate_invoice) {
       final_status[0] = "✅ Facture générée"
