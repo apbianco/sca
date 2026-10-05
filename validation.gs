@@ -32,7 +32,7 @@
 //                               | This code is complete                       | String if error
 // ------------------------------+---------------------------------------------+----------------
 //
-// Execution order (desired, not actual: FIXME)
+// Execution order
 //
 // - validateFamilyMembers()      | if error, bail
 // - validateLicenses()           | if error, bail
