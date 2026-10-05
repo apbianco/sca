@@ -500,8 +500,10 @@ function validateNonCompSubscriptions() {
   //    no subscription is found, no other subscrition can exist. This is a state machine
   //    with the following allowed transitions: ? -> {1, 0}, 1 -> {1, 0}, 0 -> {0}
   var state = -1
-  // FIXME: What is the meaning of the constant 2? Document
-  var adjusted_noncomp_subscription_categories = noncomp_subscription_categories.slice(2+rider_total)
+  // Build a list of subscription categories that starts at getFirstKidString() + the total number
+  // of riders we have found.
+  var adjusted_noncomp_subscription_categories = noncomp_subscription_categories.slice(
+    noncomp_subscription_categories.indexOf(getFirstKidString()) + rider_total)
   for (var index in adjusted_noncomp_subscription_categories) {
     var subscription = adjusted_noncomp_subscription_categories[index]
     var current_purchased = subscription_map[subscription].PurchasedSubscriptionAmount()
