@@ -500,7 +500,8 @@ function validateNonCompSubscriptions() {
   //    no subscription is found, no other subscrition can exist. This is a state machine
   //    with the following allowed transitions: ? -> {1, 0}, 1 -> {1, 0}, 0 -> {0}
   var state = -1
-  // FIXME: What is the meaning of the constant 2? Document
+  // Offset of 2 skips 'Adulte' (index 0) and 'Rider' (index 1), which are validated
+  // separately. Adding rider_total skips additional slots occupied by riders.
   var adjusted_noncomp_subscription_categories = noncomp_subscription_categories.slice(2+rider_total)
   for (var index in adjusted_noncomp_subscription_categories) {
     var subscription = adjusted_noncomp_subscription_categories[index]
