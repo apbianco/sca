@@ -44,7 +44,7 @@ var comp_kids_per_family = 4
 //   map when the year or age of validity is changing.
 //
 var skipass_configuration_map = {
-// What     | Dob/Y1n| Dob/Y2 | Row | Col
+// What     | Dob/Y1 | Dob/Y2 | Row | Col
   // ageVerificationRangeIncluded
   'Senior':   [70,     75,      25,   5],
   // ageVerificationStrictlyOldOrOlder
