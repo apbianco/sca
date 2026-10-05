@@ -1513,6 +1513,53 @@ function testShouldWeEmailLicenseSCA() {
   return failures === 0;
 }
 
+function testAdjustedNonCompSubscriptionCategories() {
+  var baseIndex = noncomp_subscription_categories.indexOf(getFirstKidString());
+  var testCases = [
+    {
+      rider_total: 0,
+      expected: ['1er enfant', '2ème enfant', '3ème enfant', '4ème enfant']
+    },
+    {
+      rider_total: 1,
+      expected: ['2ème enfant', '3ème enfant', '4ème enfant']
+    },
+    {
+      rider_total: 2,
+      expected: ['3ème enfant', '4ème enfant']
+    },
+    {
+      rider_total: 3,
+      expected: ['4ème enfant']
+    },
+    {
+      rider_total: 4,
+      expected: []
+    }
+  ];
+
+  var failures = 0;
+
+  for (var i = 0; i < testCases.length; i++) {
+    var tc = testCases[i];
+    var actual = noncomp_subscription_categories.slice(baseIndex + tc.rider_total);
+    if (!areArraysEqual(actual, tc.expected)) {
+      failures++;
+      Logger.log("--------------------------------------------------");
+      Logger.log("FAIL: testAdjustedNonCompSubscriptionCategories - rider_total: " + tc.rider_total);
+      Logger.log("Expected: " + JSON.stringify(tc.expected));
+      Logger.log("Got: " + JSON.stringify(actual));
+    }
+  }
+
+  if (failures > 0) {
+    Logger.log("--------------------------------------------------");
+    Logger.log("testAdjustedNonCompSubscriptionCategories: " + failures + " test(s) failed.");
+  }
+  Logger.log("Finished testAdjustedNonCompSubscriptionCategories().");
+  return failures === 0;
+}
+
 function RUN_ALL_TESTS() {
   Logger.log("Starting all invoice tests...");
   var failedSuites = [];
@@ -1591,6 +1638,9 @@ function RUN_ALL_TESTS() {
   }  
     if (!testShouldWeEmailLicenseSCA()) {
     failedSuites.push("testShouldWeEmailLicenseSCA");
+  }
+  if (!testAdjustedNonCompSubscriptionCategories()) {
+    failedSuites.push("testAdjustedNonCompSubscriptionCategories");
   }
   if (failedSuites.length === 0) {
     Logger.log("Summary: ✅✅✅ All test suites passed successfully!");
