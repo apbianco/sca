@@ -1178,14 +1178,14 @@ function testAgeVerification() {
   // Test isAdult() at the boundary.
   var today =                 "10/6/2026"
   var right_before_boundary = "10/6/2007"
-  var oldest_above_18 =       "10/7/2007"
-  var youngest_above_18 =     "10/6/2008"
+  var oldest_18 =             "10/7/2007"
+  var youngest_18 =           "10/6/2008"
   var oldest_below_18 =       "10/7/2008"
   var test_values_8 = {
     'Test 8a: born before boundary':       [new Date("1/1/2005"), true],
     'Test 8b: born right before boundary': [new Date(right_before_boundary), true],
-    'Test 8c: oldest >18':                 [new Date(oldest_above_18), true],
-    'Test 8d: youngest >18':               [new Date(youngest_above_18), true],
+    'Test 8c: oldest >18':                 [new Date(oldest_18), true],
+    'Test 8d: youngest >18':               [new Date(youngest_18), true],
     'Test 8e: oldest <18':                 [new Date(oldest_below_18), false],
     'Test 8f: random <18':                 [new Date("1/1/2020"), false],
   }
@@ -1207,6 +1207,38 @@ function testAgeVerification() {
     }
   }
   stopMockDate()
+
+  // test 70-75 interval at boundaries
+  var youngest_70 =     "10/6/1956"
+  var oldest_70 =       "10/7/1955"
+  var youngest_75 =     "10/6/1956"
+  var oldest_75 =       "10/7/1950"
+  var test_values_9 = {
+    'Test 9a: ': [new Date(10/5/1956), false],
+    'Test 9b: ': [new Date(youngest_70), true],
+    'Test 9c: ': [new Date(oldest_70), true],
+    'Test 9d: ': [new Date(youngest_75), true],
+    'Test 9e: ': [new Date(oldest_75), true],
+    'Test 9f: ': [new Date("10/6/1950"), false],
+  }
+  startMockDate(today)
+  for (const [key, values] of Object.entries(test_values_9)) {
+    var dob = values[0]
+    // Test date validity
+    if(Number.isNaN(dob.getTime())) {
+      Logger.log('FAILURE: ' + key + ": Invalid dob")
+      stopMockDate()
+      return false;
+    }
+    var expected = values[1]
+    var got = ageVerificationRangeIncluded(dob, 70, 75)
+    if (got != expected) {
+      Logger.log('FAILURE: ' + key + "(" + today +"): " + dob + " expected=" + expected + ", got=" + got)
+      stopMockDate()
+      return false
+    }
+  }
+  stopMockDate()  
 
   Logger.log("Finished testAgeVerification")
   return true
