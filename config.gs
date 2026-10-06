@@ -19,8 +19,8 @@ var licenses_configuration_map = {
   'CN Adulte (Loisir)':       [2011,  43,   5],
   'CN Famille (Loisir)':      [-1,    44,   5],
   'CN Dirigeant':             [2011,  45,   5],
-  'CN Jeune (Compétition)':   [2012,  53,   5],
-  'CN Adulte (Compétition)':  [2011,  54,   5],
+  'CN Jeune (Compétition)':   [2012,  55,   5],
+  'CN Adulte (Compétition)':  [2011,  56,   5],
 }
 var basic_subscription_coord = [41, 5]
 //
@@ -29,12 +29,12 @@ var basic_subscription_coord = [41, 5]
 //   subscription objects. Edit this map when the year of validity is changing.
 //
 var comp_subscription_map = {
-// What | Dob/Y | Dob/Y | Row | Col
-  'U6':   [2021,  2022,   55,   5],
-  'U8':   [2019,  2020,   56,   5],
-  'U10':  [2017,  2018,   57,   5],
+// What                     | Dob/Y | Dob/Y | Row | Col
+  'U6':                      [2021,   2022,   57,   5],
+  'U8':                      [2019,   2020,   58,   5],
+  'U10':                     [2017,   2018,   59,   5],
   // U12+ The first listed year is the LAST year of the category
-  'U12+': [2016, -1,      58,   5],
+  'U12+':                    [2016,   -1,     60,   5],
 }
 // Number of kids per competitor families
 var comp_kids_per_family = 4
@@ -142,7 +142,7 @@ var rebate_rider_plus =               83;
 //
 // - Rows where the family names are entered
 // 
-var coords_identity_rows = [14, 15, 16, 17, 18, 19];
+var coords_identity_rows =           [14, 15, 16, 17, 18, 19];
 //
 // - Row where the non competitor subscriptions start and
 //   the column at which data exists
