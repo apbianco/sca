@@ -1208,7 +1208,7 @@ function testAgeVerification() {
   }
   stopMockDate()
 
-  // test 70-75 interval at boundaries
+  // test 70yo - 75yo interval at boundaries
   var youngest_70 =     "10/6/1956"
   var oldest_70 =       "10/7/1955"
   var youngest_75 =     "10/6/1956"
@@ -1232,6 +1232,30 @@ function testAgeVerification() {
     }
     var expected = values[1]
     var got = ageVerificationRangeIncluded(dob, 70, 75)
+    if (got != expected) {
+      Logger.log('FAILURE: ' + key + "(" + today +"): " + dob + " expected=" + expected + ", got=" + got)
+      stopMockDate()
+      return false
+    }
+  }
+  stopMockDate()  
+
+  // test above 75yo at boundaries
+  var test_values_10 = {
+    'Test 10a: ': [new Date(oldest_75), false],
+    'Test 10b: ': [new Date("10/7/1949"), true],
+  }
+  startMockDate(today)
+  for (const [key, values] of Object.entries(test_values_10)) {
+    var dob = values[0]
+    // Test date validity
+    if(Number.isNaN(dob.getTime())) {
+      Logger.log('FAILURE: ' + key + ": Invalid dob")
+      stopMockDate()
+      return false;
+    }
+    var expected = values[1]
+    var got = ageVerificationStrictlyOldOrOlder(dob, 76)
     if (got != expected) {
       Logger.log('FAILURE: ' + key + "(" + today +"): " + dob + " expected=" + expected + ", got=" + got)
       stopMockDate()
