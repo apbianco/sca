@@ -1014,6 +1014,7 @@ function stopMockDate() {
 }
 
 function testAgeVerification() {
+  // Always create the test values especially when using new Date() before the mock for Date() is introduced.
   var test_values_1 = {
     //         DoB                    | To Test Against       | Method                               | Expected results
     'Test 1a': [new Date("12/31/2006"), new Date("12/31/2006"), ageVerificationBornBeforeDateIncluded, true           ],
@@ -1170,6 +1171,39 @@ function testAgeVerification() {
       Logger.log('FAILURE: ' + key + ": " + dob + " age1=" + age1 + " age2=" + age2 + " expected=" + expected)
       stopMockDate()
       return false      
+    }
+  }
+  stopMockDate()
+
+  // Test isAdult() at the boundary.
+  var today =                 "10/6/2026"
+  var right_before_boundary = "10/6/2007"
+  var oldest_above_18 =       "10/7/2007"
+  var youngest_above_18 =     "10/6/2008"
+  var oldest_below_18 =       "10/7/2008"
+  var test_values_8 = {
+    'Test 8a: born before boundary':       [new Date("1/1/2005"), true],
+    'Test 8b: born right before boundary': [new Date(right_before_boundary), true],
+    'Test 8c: oldest >18':                 [new Date(oldest_above_18), true],
+    'Test 8d: youngest >18':               [new Date(youngest_above_18), true],
+    'Test 8e: oldest <18':                 [new Date(oldest_below_18), false],
+    'Test 8f: random <18':                 [new Date("1/1/2020"), false],
+  }
+  startMockDate(today)
+  for (const [key, values] of Object.entries(test_values_8)) {
+    var dob = values[0]
+    // Test date validity
+    if(Number.isNaN(dob.getTime())) {
+      Logger.log('FAILURE: ' + key + ": Invalid dob")
+      stopMockDate()
+      return false;
+    }
+    var expected = values[1]
+    var got = isAdult(dob)
+    if (got != expected) {
+      Logger.log('FAILURE: ' + key + "(" + today +"): " + dob + " expected=" + expected + ", got=" + got)
+      stopMockDate()
+      return false
     }
   }
   stopMockDate()
