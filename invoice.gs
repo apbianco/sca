@@ -1494,11 +1494,6 @@ function autoFillNonCompSubscriptions() {
       continue
     }
   }
-  // FIXME: Handle rider+. In tests matrix, test for:
-  // Rider + non rider (already done)
-  // Rider+ + non rider
-  // Rider + Rider+
-  // Rider + Rider+ + non rider
   if (adjustSubscriptionSlots(subscription_slots, number_of_adults)) {
     displayWarningPanel("Il n'y a plus de place pour inscrire des non-riders " +
                         "automatiquement. Ajuster et procéder de manière manuelle " +
