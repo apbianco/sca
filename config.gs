@@ -91,15 +91,14 @@ var accounting_trix_all_range =            'A3:Q'
 // - ID of attachements to be sent with the invoice - some may change
 //   from one season to an other when they are refreshed. These documents
 //   are also part of the registration bundle sent to parents.
-// TODO: 2026/2027: Change
 //
-var legal_disclaimer_pdf =                  '1BcbIL1LUaL49OI8BGbLQQA-lxlijt_0m'
-var rules_pdf =                             '1aTtQ4Hx3JJPgek_d1_NV4WRSBOfVT_yr'
-var parents_note_pdf =                      '1IYzKukze9O7-ZFUiRI5x12iZAQmr0fIF'
-var ffs_information_leaflet_pdf =           '12DH7chhB-Ye8S29VuGu0lkuCHl5SRJVO'
+var legal_disclaimer_pdf =                  '1sagraUvy3rHSSCfjBk2FtuTjLT2VWdjg'
+var rules_pdf =                             '1aTtQ4Hx3JJPgek_d1_NV4WRSBOfVT_yr' // FIXME 2026/2027
+var parents_note_pdf =                      '1IYzKukze9O7-ZFUiRI5x12iZAQmr0fIF' // FIXME 2026/2027
+var ffs_information_leaflet_pdf =           '15KyhoXZOr5WcQkuHPF20tdbAboSlgB9s'
 var ffs_information_leaflet_pages_to_sign = 'les pages 15 et 16'
-var autocertification_non_adult =           '1rFAJghPwE-6xHzSWdRrMjP8gQKUldX6W'
-var autocertification_adult =               '1UrAbl7mKxJG7jdya8P32kvSJ5Mn1BQqZ'
+var autocertification_non_adult =           '1yu6q5c-Ei4kychzWsaOg7LAviCwVvJPE'
+var autocertification_adult =               '1li9HynjXFB28J9bLDX8FnCLKa5Efo9C2'
 //
 // - Spreadsheet parameters (row, columns, etc...). Adjust as necessary
 //   when the master invoice is modified.
