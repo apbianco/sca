@@ -505,6 +505,20 @@ function createCompSubscriptionMap(sheet) {
   return to_return
 }
 
+// Count the number of U12+ we have. This method is accurate when the form has been
+// manually or automatically filled.
+function countNumberOfU12Plus() {
+  var comp_subscription_map = createCompSubscriptionMap(SpreadsheetApp.getActiveSheet())
+  for (var subscription in comp_subscription_map) {
+    comp_subscription_map[subscription].UpdatePurchasedSubscriptionAmountFromTrix()
+  }
+  var number_of_U12_plus = 0
+  for (var index = 1; index <= comp_kids_per_family; index++) {
+    number_of_U12_plus += comp_subscription_map[String(index) + getU12PlusString()].PurchasedSubscriptionAmount()
+  }
+  return number_of_U12_plus
+}
+
 function createNonCompSubscriptionMap(sheet) {
   var to_return = {}
   var row = coord_noncomp_start_row
@@ -1552,6 +1566,14 @@ function autoFillCompSubscriptions() {
       break
     }
   }
+
+  // Count how many U12+ we have and flip the pull-down menu 
+  // requesting that the cut-resistant pants agreement has been signed
+  if (countNumberOfU12Plus() >= 1) {
+    setStringAt(coord_cut_resistant_form, 'Engagement non signé')
+  } else {
+    setStringAt(coord_cut_resistant_form, 'Non nécessaire')
+  }
   return true
 }
 
@@ -1984,6 +2006,19 @@ function validateInvoice(update_timestamp) {
       return validatationDataError()
     }
 
+    // Validate cut resistant pants form
+    updateStatusBar("Validation collant anti-coupure...", "grey", add=true)
+    var cut_resistant_pants = validateAndReturnDropDownValue(
+      coord_cut_resistant_form,
+      "Vous n'avez pas renseigné de réponse à la question concernant l'engagement sur le port du collant anti-coupure."
+    )
+    if (cut_resistant_pants == '') {
+      return validationDataError()
+    }
+    if (!validateCutResistantChoice(cut_resistant_pants)) {
+      return validatationDataError()
+    }
+
     // Validate the invoice payment
     var invoice_payment_validation = validateAndReturnDropDownValue(
       coord_payment_validation_form,
@@ -2287,14 +2322,6 @@ function generatePDFAndMaybeSendEmail(config) {
                                personal_message_text + '</p>')
   }
   
-  // Fetch a possible phone number
-  var phone = getStringAt(coord_callme_phone)
-  if (phone != 'Aucun') {
-    phone = '<p>Merci de contacter ' + phone + '</p>'
-  } else {
-    phone = ''
-  }
-
   var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
   var email_options = {
     name: 'Ski Club Allevardin, gestion des inscriptions',
@@ -2306,7 +2333,6 @@ function generatePDFAndMaybeSendEmail(config) {
       "<h3>Bonjour " + civility + " " + family_name + "</h3>" +
     
       personal_message_text + 
-      phone +
 
       "<p>Votre facture pour la saison " + season + " " +
       "est disponible en attachement. Veuillez contrôler " +

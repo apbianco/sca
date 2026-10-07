@@ -26,20 +26,24 @@
 //                               |                                             | string if error
 // ------------------------------+---------------------------------------------+----------------
 // validateSkiPasses             | Validation of ski pass purchases.           | YES.
-//                               |                                             | String if error
+//                               |                                             | string if error
 // ------------------------------+---------------------------------------------+----------------
 // validateCompSubscriptions     | Competitor subscription validation          | NO
-//                               | This code is complete                       | String if error
+//                               | This code is complete                       | string if error
+// ------------------------------+---------------------------------------------+----------------
+// validateCutResistantChoice    | Validation of cut-resistant pant form       | NO
+//                               |                                             | false if error
 // ------------------------------+---------------------------------------------+----------------
 //
 // Execution order
 //
-// - validateFamilyMembers()      | if error, bail
-// - validateLicenses()           | if error, bail
-// - validateOnlyLicensesLevel(). | if error, bail
-// - validateCompSubscriptions    | if error, Yes/No
-// - validateNonCompSubscriptions | if error, Yes/No
-// - validateSkiPasses            | if error, Yes/No.
+// - validateFamilyMembers()        | if error, bail
+// - validateLicenses()             | if error, bail
+// - validateOnlyLicensesLevel().   | if error, bail
+// - validateCompSubscriptions()    | if error, Yes/No
+// - validateNonCompSubscriptions() | if error, Yes/No
+// - validateSkiPasses()            | if error, Yes/No.
+// - validateCutResistantChoice()   | if error, bail
 
 function TESTValidation() {
   function test(f) {
@@ -54,6 +58,7 @@ function TESTValidation() {
   test(validateCompSubscriptions)
   test(validateNonCompSubscriptions)
   test(validateSkiPasses)
+  test(validateCutResistantChoice)
 }
 
 // Verify that family members are properly defined, especially with regard to
@@ -707,4 +712,23 @@ function validateSkiPasses() {
     SpreadsheetApp.flush();
   }
   return ''
+}
+
+function validateCutResistantChoice(choice) {
+  var number_of_U12_plus = countNumberOfU12Plus()
+  if (number_of_U12_plus >= 1) {
+    if (choice != 'Engagement à retourner signé' && choice != 'Engagement signé') {
+      displayErrorPanel("Cette incription comporte " + number_of_U12_plus + Plural(number_of_U12_plus, " coureur") + " U12+.\n\n" +
+                        "Il faut soit faire signer l'engagement sur le port du collant anti-coupure pour les coureurs U12+, soit demander à " +
+                        "ce que celui-ci soit retourné signé.")
+      return false
+    }
+    return true
+  }
+  if (choice != 'Non nécessaire') {
+    displayErrorPanel("Cette incription comporte aucun coureur U12+.\n\n" +
+                      "L'engagement sur le port du collant anti-coupure doit être positioné sur 'Non nécessaire'")
+    return false                      
+  } 
+  return true
 }
