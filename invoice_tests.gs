@@ -1513,7 +1513,7 @@ function testIsLevelRecreationalNonRider() {
     "Compétiteur":      false,
     "Rider":            false,
     "Rider+":           false,
-    "Non déterminé":    true,          // Should it be false? FIXME
+    "Non déterminé":    true,
     "Débutant/Ourson":  true,
     "Flocon":           true,
     "Étoile 1":         true,
@@ -1530,7 +1530,7 @@ function testIsLevelRecreationalNonRider() {
     "Snow 3":           true,
     "Snow Expert":      true,
     "⚠️ Flocon":        true,
-    "RandomString":      true,          // Should it be false? FIXME
+    "RandomString":     true,
   };
 
   var failures = 0;
