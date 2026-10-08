@@ -2299,7 +2299,7 @@ function generatePDFAndMaybeSendEmail(config) {
 
       case 'À fournir signée, questionaire médical à évaluer':
         ffs_medical_form_text = ('<p><b><font color="red">' +
-                                 'Vous devez évaluer le <b>Questionnaire Santé Sportif MINEUR - ' + season + '</b> ou <b>' +
+                                 'Vous devez évaluer le Questionnaire Santé Sportif MINEUR - ' + season + '</b> ou <b>' +
                                  'le Questionnaire Santé Sportif MAJEUR - ' + season + '</b> fournis en attachement et ' +
                                  'si une des réponses aux questions est OUI, vous devez transmettre au SCA ' +
                                  '(inscriptions.sca@gmail.com) dans les plus brefs délais <u>un certificat médical en cours ' +
@@ -2328,6 +2328,11 @@ function generatePDFAndMaybeSendEmail(config) {
 
     switch(cut_resistant_pants_validation) {
       case 'Engagement à retourner signé':
+        cut_resistant_pants_text = ('<p><b><font color="red">' +
+                                    "Vous devez remplir et signer l'Engagement du port du collant anti-coupure U12+ - " + season +
+                                    "fournis en attachement et le transmettre au SCA " +
+                                    "(inscriptions.sca@gmail.com) dans les plus brefs délais.")
+        attachments.push(DriveApp.getFileById(cut_resistant_pants_pdf).getAs(MimeType.PDF))
         break
       case 'Engagement signé':
         break
