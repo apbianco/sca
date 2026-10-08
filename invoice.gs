@@ -1784,14 +1784,14 @@ function augmentEscapeHatch(source) {
 // Invoice validation data returned by validateInvoice() after a successful
 // invoice validation.
 class InvoiceValidationData {
-  constructor(error, civility, family_name, mail_to, legal_disclaimer, ffs_medical_form, cut_resistant_pants) {
+  constructor(error, civility, family_name, mail_to, legal_disclaimer, ffs_medical_form, cut_resistant_pants_form) {
     this.error = error
     this.civility = civility
     this.family_name = family_name
     this.mail_to = mail_to
     this.legal_disclaimer = legal_disclaimer
     this.ffs_medical_form = ffs_medical_form
-    this.cut_resistant_pants_form_ = cut_resistant_pants
+    this.cut_resistant_pants_form = cut_resistant_pants_form
   }
 }
 
@@ -2193,6 +2193,7 @@ function updateStatusBar(message, color, add=false) {
 
 function generatePDFAndMaybeSendEmail(config) {
   var just_validate = config & invoiceActions.JUST_VALIDATE
+  var adjusted_season = season.replace("/", " - ")
   updateStatusBar("⏳ Validation de la facture...", "orange")      
   // When not just validating, pass true to indicate we want to update the version number.
   var validation = validateInvoice(!just_validate);
@@ -2235,7 +2236,7 @@ function generatePDFAndMaybeSendEmail(config) {
   var legal_disclaimer_text = ''
   var ffs_medical_form_validation = validation.ffs_medical_form
   var ffs_medical_form_text = ''
-  var cut_resistant_pants_validation = validation.cut_resistant_pants
+  var cut_resistant_pants_validation = validation.cut_resistant_pants_form
   var cut_resistant_pants_text = ''
   
   function insertNotesAndRules() {
@@ -2262,7 +2263,8 @@ function generatePDFAndMaybeSendEmail(config) {
         attachments.push(
           DriveApp.getFileById(legal_disclaimer_pdf).getAs(MimeType.PDF))
         legal_disclaimer_text = (
-          "<p>Il vous faut compléter, signer et nous retourner la mention " +
+          '<p><b><font color="red">Il vous faut compléter, signer</font></b> ' +
+          'et transmettre au SCA (inscriptions.sca@gmail.com) la mention ' +
           "légale fournie en attachment, couvrant le droit à l'image, le " +
           "règlement intérieur, les interventions médicales et la RGPD.</p>")
         insertNotesAndRules()
@@ -2299,13 +2301,12 @@ function generatePDFAndMaybeSendEmail(config) {
 
       case 'À fournir signée, questionaire médical à évaluer':
         ffs_medical_form_text = ('<p><b><font color="red">' +
-                                 'Vous devez évaluer le Questionnaire Santé Sportif MINEUR - ' + season + '</b> ou <b>' +
-                                 'le Questionnaire Santé Sportif MAJEUR - ' + season + '</b> fournis en attachement et ' +
-                                 'si une des réponses aux questions est OUI, vous devez transmettre au SCA ' +
+                                 'Vous devez évaluer</font></b> le <b>Questionnaire Santé Sportif MINEUR - ' + adjusted_season + '</b> ou le ' +
+                                 '<b>Questionnaire Santé Sportif MAJEUR - ' + adjusted_season + '</b> fournis en attachement et ' +
+                                 '<b><font color="red">si une des réponses aux questions est OUI</font></b>, vous devez transmettre au SCA ' +
                                  '(inscriptions.sca@gmail.com) dans les plus brefs délais <u>un certificat médical en cours ' +
                                  'de validité</u>. Il faut également <u>signer ' + ffs_information_leaflet_pages_to_sign +
-                                 ' de la notice d\'informations FFS ' + season + '</u> fournie en attachement.' +   
-                                 '</font></b>')
+                                 ' de la notice d\'informations FFS ' + adjusted_season + '</u> fournie en attachement.')
         attachments.push(DriveApp.getFileById(ffs_information_leaflet_pdf).getAs(MimeType.PDF))
         attachments.push(DriveApp.getFileById(autocertification_non_adult).getAs(MimeType.PDF))
         attachments.push(DriveApp.getFileById(autocertification_adult).getAs(MimeType.PDF))
@@ -2313,9 +2314,8 @@ function generatePDFAndMaybeSendEmail(config) {
 
       case 'À fournir signée':
         ffs_medical_form_text = ('<p><b><font color="red">' +
-                                 'Il faut <u>signer ' + ffs_information_leaflet_pages_to_sign +
-                                 ' de la notice d\'informations FFS ' + season + '</u> fournie en attachement.' +   
-                                 '</font></b>')
+                                 'Il faut signer</font></b> <u>' + ffs_information_leaflet_pages_to_sign +
+                                 ' de la notice d\'informations FFS ' + adjusted_season + '</u> fournie en attachement.')
         attachments.push(DriveApp.getFileById(ffs_information_leaflet_pdf).getAs(MimeType.PDF))
       
       case 'Non nécessaire':
@@ -2329,8 +2329,8 @@ function generatePDFAndMaybeSendEmail(config) {
     switch(cut_resistant_pants_validation) {
       case 'Engagement à retourner signé':
         cut_resistant_pants_text = ('<p><b><font color="red">' +
-                                    "Vous devez remplir et signer l'Engagement du port du collant anti-coupure U12+ - " + season +
-                                    "fournis en attachement et le transmettre au SCA " +
+                                    "Vous devez remplir et signer</font></b> l'<b>Engagement du port du collant anti-coupure U12+ - " + adjusted_season +
+                                    "</b> fournis en attachement et le transmettre au SCA " +
                                     "(inscriptions.sca@gmail.com) dans les plus brefs délais.")
         attachments.push(DriveApp.getFileById(cut_resistant_pants_pdf).getAs(MimeType.PDF))
         break
