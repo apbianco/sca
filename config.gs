@@ -94,7 +94,7 @@ var accounting_trix_all_range =            'A3:Q'
 //
 var legal_disclaimer_pdf =                  '1sagraUvy3rHSSCfjBk2FtuTjLT2VWdjg'
 var rules_pdf =                             '1oDHm2S6j2vF4UD4lfdiqUUOh_6MWGPPi'
-var parents_note_pdf =                      '1IYzKukze9O7-ZFUiRI5x12iZAQmr0fIF' // FIXME 2026/2027
+var parents_note_pdf =                      '1dnXr1tiomUcfjCuiGAvwGGUVqw41KPpZ'
 var ffs_information_leaflet_pdf =           '15KyhoXZOr5WcQkuHPF20tdbAboSlgB9s'
 var ffs_information_leaflet_pages_to_sign = 'les pages 15 et 16'
 var autocertification_non_adult =           '1yu6q5c-Ei4kychzWsaOg7LAviCwVvJPE'
