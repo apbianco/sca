@@ -1784,13 +1784,14 @@ function augmentEscapeHatch(source) {
 // Invoice validation data returned by validateInvoice() after a successful
 // invoice validation.
 class InvoiceValidationData {
-  constructor(error, civility, family_name, mail_to, legal_disclaimer, ffs_medical_form) {
+  constructor(error, civility, family_name, mail_to, legal_disclaimer, ffs_medical_form, cut_resistant_pants) {
     this.error = error
     this.civility = civility
     this.family_name = family_name
     this.mail_to = mail_to
     this.legal_disclaimer = legal_disclaimer
     this.ffs_medical_form = ffs_medical_form
+    this.cut_resistant_pants_form_ = cut_resistant_pants
   }
 }
 
@@ -1826,7 +1827,7 @@ function TESTValidateInvoice() {
 // to use during invoice generation.
 function validateInvoice(update_timestamp) {
   function validatationDataError() {
-    return new InvoiceValidationData(true, '', '', '', '', '')
+    return new InvoiceValidationData(true, '', '', '', '', '', '')
   }
   if (! isProd()) {
     Debug("Cette facture est en mode developpement. " +
@@ -2008,14 +2009,14 @@ function validateInvoice(update_timestamp) {
 
     // Validate cut resistant pants form
     updateStatusBar("Validation collant anti-coupure...", "grey", add=true)
-    var cut_resistant_pants = validateAndReturnDropDownValue(
+    var cut_resistant_pants_validation = validateAndReturnDropDownValue(
       coord_cut_resistant_form,
       "Vous n'avez pas renseigné de réponse à la question concernant l'engagement sur le port du collant anti-coupure."
     )
-    if (cut_resistant_pants == '') {
+    if (cut_resistant_pants_validation == '') {
       return validationDataError()
     }
-    if (!validateCutResistantChoice(cut_resistant_pants)) {
+    if (!validateCutResistantChoice(cut_resistant_pants_validation)) {
       return validatationDataError()
     }
 
@@ -2073,7 +2074,7 @@ function validateInvoice(update_timestamp) {
   }
 
   return new InvoiceValidationData(false, civility, family_name, checkEmail(mail_to),
-                                   legal_disclaimer_validation, ffs_medical_form_validation)    
+                                   legal_disclaimer_validation, ffs_medical_form_validation, cut_resistant_pants_validation)    
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -2234,6 +2235,8 @@ function generatePDFAndMaybeSendEmail(config) {
   var legal_disclaimer_text = ''
   var ffs_medical_form_validation = validation.ffs_medical_form
   var ffs_medical_form_text = ''
+  var cut_resistant_pants_validation = validation.cut_resistant_pants
+  var cut_resistant_pants_text = ''
   
   function insertNotesAndRules() {
     // Insert the note and rules for the parents anyways
@@ -2309,6 +2312,10 @@ function generatePDFAndMaybeSendEmail(config) {
       case 'Non nécessaire':
         break
     }
+
+    switch(cut_resistant_pants_validation) {
+
+    }
   }
   
   var subject = ("❄️ [Incription Ski Club Allevardin] " +
@@ -2340,6 +2347,7 @@ function generatePDFAndMaybeSendEmail(config) {
     
       legal_disclaimer_text +
       ffs_medical_form_text +
+      cut_resistant_pants_text +
 
       "<p>Des questions concernant cette facture? Contacter Anne-So Marchand: " +
       "annesophie.marchand6857@gmail.com (06-26-26-27-97) pour le ski loisir ou " +
