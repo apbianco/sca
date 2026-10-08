@@ -99,6 +99,7 @@ var ffs_information_leaflet_pdf =           '15KyhoXZOr5WcQkuHPF20tdbAboSlgB9s'
 var ffs_information_leaflet_pages_to_sign = 'les pages 15 et 16'
 var autocertification_non_adult =           '1yu6q5c-Ei4kychzWsaOg7LAviCwVvJPE'
 var autocertification_adult =               '1li9HynjXFB28J9bLDX8FnCLKa5Efo9C2'
+var cut_resistant_pants =                   '1o5GILvZGrkC5kparJ4BOk7GZwj2yW0pd'
 //
 // - Spreadsheet parameters (row, columns, etc...). Adjust as necessary
 //   when the master invoice is modified.
