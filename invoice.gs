@@ -2248,6 +2248,12 @@ function generatePDFAndMaybeSendEmail(config) {
       "documents attentivement.</p>");
   }
 
+  function handleUnexpectedValue(symbol) {
+    var symbol_name = Object.keys(symbol)[0]
+    displayErrorPanel(symbol_name + ': ' + symbol[symbol_name])
+    updateStatusBar("❌ Instruction non traitée", "red")
+  }
+
   // Determine whether parental consent needs to be generated. If
   // that's the case, we generate additional attachment content.
   if (email_folder) {
@@ -2265,6 +2271,9 @@ function generatePDFAndMaybeSendEmail(config) {
         insertNotesAndRules()
         break
       case 'Non nécessaire':
+        break
+      default:
+        return handleUnexpectedValue({legal_disclaimer_validation})
         break
     }
 
@@ -2311,10 +2320,21 @@ function generatePDFAndMaybeSendEmail(config) {
       
       case 'Non nécessaire':
         break
+
+      default:
+        return handleUnexpectedValue({ffs_medical_form_validation})
+        break
     }
 
     switch(cut_resistant_pants_validation) {
-
+      case 'Engagement à retourner signé':
+        break
+      case 'Engagement signé':
+        break
+      case 'Non nécessaire':
+        break
+      default:
+        return handleUnexpectedValue({cut_resistant_pants_validation})
     }
   }
   
