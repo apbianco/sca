@@ -2505,6 +2505,7 @@ function magicWand() {
     }
     return total_students
   }
+  setStringAt(coord_cut_resistant_form, '⚠️ Choix non renseigné')  
   updateStatusBar("")
   if (!displayYesNoPanel("Le remplissage automatique va replacer certains choix que vous " +
                          "avez déjà fait (attribution automatique des licences, achats des " +
