@@ -120,9 +120,10 @@ var coord_family_phone2 =             [10, 5]
 //   a the bottom of the invoice.
 // 
 var coord_total =                     [73, 7];
-var coord_rebate =                    [84, 4];
+var coord_revate_1_label =            [84, 3]
+var coord_rebate_1_amount =           [84, 4];
 var coord_rebate_2_label =            [85, 3];
-var coord_rebate_1 =                  [85, 4];
+var coord_rebate_2_amount =           [85, 4];
 var coord_charge =                    [86, 4];
 var coord_owed =                      [86, 7];
 var coord_payment_validation_form =   [87, 7];

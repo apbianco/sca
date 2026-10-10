@@ -478,7 +478,7 @@ function validateNonCompSubscriptions() {
 	          Plural(rider_plus_number, "rider+ renseigné") + " [" + rider_plus_number + "]")
   }
   // 1c- Verify that the Rider+ rebate matches the number of Rider+ registered
-  var rider_plus_rebate = getNumberAt(coord_rebate_1)
+  var rider_plus_rebate = getNumberAt(coord_rebate_2_amount)
   var total_rebate_rider_plus = rider_plus_number * rebate_rider_plus
   if (rider_plus_rebate != total_rebate_rider_plus) {
     return ("Le nombre d'" + Plural(subscribed_rider_plus_number, "adhésion") + " rider+ " +

@@ -969,11 +969,11 @@ function generatePDF() {
     SpreadsheetApp.flush() 
   }
   function maskRebatesCharges() {
-    if (getNumberAt(coord_rebate) == 0) {
-      setResetRebate(coord_rebate, "white")
+    if (getNumberAt(coord_rebate_1_amount) == 0) {
+      setResetRebate(coord_rebate_1_amount, "white")
     }
-    if (getNumberAt(coord_rebate_1) == 0) {
-      setResetRebate(coord_rebate_1, "white")
+    if (getNumberAt(coord_rebate_2_amount) == 0) {
+      setResetRebate(coord_rebate_2_amount, "white")
     }
     if (getNumberAt(coord_charge) == 0) {
       setResetRebate(coord_charge, "white")
@@ -981,8 +981,8 @@ function generatePDF() {
   }
   function unmaskRebatesCharges() {
     // Always for the rebate/charge area to be back in black 🤘.
-    setResetRebate(coord_rebate, "black")
-    setResetRebate(coord_rebate_1, "black")
+    setResetRebate(coord_rebate_1_amount, "black")
+    setResetRebate(coord_rebate_2_amount, "black")
     setResetRebate(coord_charge, "black")
   }
 
@@ -1583,11 +1583,11 @@ function installRebate(number_of_rider_plus) {
     setStringAt(coord_rebate_2_label,
                 "Prise en charge " + number_of_rider_plus + 
                 Plural(number_of_rider_plus, " forfait ") + "3D Rider+")
-    setStringAt(coord_rebate_1, amount)
+    setStringAt(coord_rebate_2_amount, amount)
 
   } else {
     setStringAt(coord_rebate_2_label, "")
-    setStringAt(coord_rebate_1, "")
+    setStringAt(coord_rebate_2_amount, "")
   }
 }
 
