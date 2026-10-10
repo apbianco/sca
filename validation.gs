@@ -711,6 +711,10 @@ function validateSkiPasses() {
     }
     SpreadsheetApp.flush();
   }
+  if (number_of_non_student_adults != 2) {  
+    updateStatusBar("💰 Pas de réduction applicable", "grey", add=true)
+    SpreadsheetApp.flush();
+  }  
   return ''
 }
 
