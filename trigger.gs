@@ -1,4 +1,4 @@
-// Version: 2026-09-06T22:31+02:00 - Development
+// Version: 2026-10-11T11:03+02:00 - Comp registration
 //
 // Code implementing the trigger for the 2026/2027 seasons
 //
