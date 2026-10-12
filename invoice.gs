@@ -543,6 +543,14 @@ function GetBasicSubscriptionNumber() {
   return getNumberAt(basic_subscription_coord)
 }
 
+function UpdateTouringSubscriptionNumber(touring_subscriptions_number) {
+  setStringAt(touring_subscription_coord, touring_subscriptions_number <= 0 ? '' : touring_subscriptions_number)
+}
+
+function GetTouringSubscriptionNumber() {
+  return getNumberAt(touring_subscription_coord)
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 // Skipass management code
 ///////////////////////////////////////////////////////////////////////////////
@@ -1457,6 +1465,7 @@ function autoFillNonCompSubscriptions() {
   var current_non_rider_index = 2
   var number_of_adults = 0
   var basic_subscriptions_number = 0
+  var touring_subscriptions_number = 0
   // Collect the licenses and the levels. We assume someone wants 
   // a subscription when they have a adult/kid non comp license and that
   // their level has a value that isn't "not in scope" (non concernée)
@@ -1477,6 +1486,10 @@ function autoFillNonCompSubscriptions() {
     // that a basic subscription has to be registred. Executive licenses are exclused.
     if (isLevelLicenseOnly(level)) {
       basic_subscriptions_number += 1
+      continue
+    }
+    if (isLevelTouring(level)) {
+      touring_subscriptions_number += 1
       continue
     }
     // Handle non competitor license with a level defined, indicating interest
@@ -1520,6 +1533,7 @@ function autoFillNonCompSubscriptions() {
     subscription_map[subscription].SetPurchasedSubscriptionAmount(subscription_slots[index])
   }
   UpdateBasicSubscriptionNumber(basic_subscriptions_number)
+  UpdateTouringSubscriptionNumber(touring_subscriptions_number)
   return true
 }
 
@@ -1603,12 +1617,17 @@ function autoFillSkiPassPurchases() {
     // No name verification as this methods runs after this has been
     // done
     var dob = getDoB([row, coord_dob_column])
+    if (dob == undefined) {
+      continue
+    }
+    var level = getStringAt([coords_identity_rows[index], coord_level_column])
+    // No ski pass purchase suggested for touring only.
+    if (isLevelTouring(level)) {
+      continue
+    }
     var level_rider_plus = isLevelRiderPlus(getStringAt([row, coord_level_column]))
     if (level_rider_plus) {
       number_of_rider_plus += 1
-    }
-    if (dob == undefined) {
-      continue
     }
     for (var ski_pass in ski_pass_map) {
       // Never automatically fill students
