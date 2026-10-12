@@ -1160,6 +1160,10 @@ function isMinor(dob) {
   return ! isAdult(dob)
 }
 
+function isU18Plus(dob) {
+  return ageVerificationBornBeforeYearIncluded(dob, first_year_u18plus)
+}
+
 // Given a dd/MM/YYYY dob or a Date object, return the YoB.
 function getDoBYear(dob) {
   if (typeof dob === 'string') {

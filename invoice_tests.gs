@@ -1262,7 +1262,32 @@ function testAgeVerification() {
       return false
     }
   }
-  stopMockDate()  
+  stopMockDate()
+
+  // test that someone is a U18 plus
+  var test_values_11 = {
+    'Test 11a': [new Date("1/1/2020"), false],
+    'Test 11b': [new Date("1/1/2011"), false],
+    'Test 11c': [new Date("1/1/2009"), true],
+    'Test 11d': [new Date("1/3/2010"), true],
+    'Test 11e': [new Date("3/9/1967"), true],
+  }
+  for (const [key, values] of Object.entries(test_values_11)) {
+    var dob = values[0]
+    // Test date validity
+    if(Number.isNaN(dob.getTime())) {
+      Logger.log('FAILURE: ' + key + ": Invalid dob")
+      stopMockDate()
+      return false;
+    }
+    var expected = values[1]
+    var got = isU18Plus(dob)
+    if (got != expected) {
+      Logger.log('FAILURE: ' + key + "(" + today +"): " + dob + " expected=" + expected + ", got=" + got)
+      stopMockDate()
+      return false
+    }        
+  }
 
   Logger.log("Finished testAgeVerification")
   return true
