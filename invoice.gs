@@ -1490,6 +1490,7 @@ function autoFillNonCompSubscriptions() {
     }
     if (isLevelTouring(level)) {
       touring_subscriptions_number += 1
+      basic_subscriptions_number += 1
       continue
     }
     // Handle non competitor license with a level defined, indicating interest
