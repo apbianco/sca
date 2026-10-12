@@ -157,18 +157,20 @@ function validateFamilyMembers() {
         " ou choisir une autre licence ou un autre niveau de pratique"         
       )      
     }
+    // 5- Level Touring must be assigned to a U18+
+    if (isLevelTouring(level) && !isU18Plus(dob)) {
+      return (first_name + " " + last_name + " n'est pas U18+ (né en ou avant " + first_year_u18plus + ") " +
+              "et ne peut donc pas être enregistré pour la pratiqe de l'activité " + getTouringString())
+    }
 
     // License validation:
     //
     // 0- A license must be in the list of possible licenses
-    // 1- A license must match the age of the person it's attributed to
-    // 2- An exec license requires a city of birth an a License only level
-    // 3- An existing non exec license doesn't require a city of birth
     if (!license_map.hasOwnProperty(license)) {
       return (first_name + " " + last_name + "La licence attribuée '" + license +
               "' n'est pas une licence existante !")
     }   
-    // When a license for a family member, it must match the dob requirement
+    // 1- A license must match the age of the person it's attributed to
     if (isLicenseDefined(license) && ! license_map[license].ValidateDoB(dob)) {
       return (first_name + " " + last_name +
               ": l'année de naissance " + getDoBYear(dob) +
@@ -176,6 +178,7 @@ function validateFamilyMembers() {
               "licence choisie. Une " + license + ' ' +
               license_map[license].ValidDoBRangeMessage() + '.')
     }
+    // 2- An exec license requires a city of birth an a License only level
     if (isLicenseExec(license)) {
       if (city == '') {
         return (first_name + " " + last_name + ": la licence attribuée [" +
@@ -186,10 +189,20 @@ function validateFamilyMembers() {
                 license + "] requiert de choisir le niveau '" + getOnlyLicense() + "'.");        
       }
     }
+    // 3- An existing non exec license doesn't require a city of birth
     if (isLicenseDefined(license) && !isLicenseExec(license) && city != '') {
       return (first_name + " " + last_name + ": la licence attribuée [" +
               license + "] ne requiert pas de renseigner une ville et un pays de naissance. " +
               "Supprimez cette donnée")
+    }
+    // 4- A Touring level requires an adult license - competitor or not and that includes an exec
+    //    or a familly license (U18+ will have been verified before)
+    if (isLevelTouring(level) &&
+        (!isLicenseExec(license) && !isLicenseNonCompFamily(license) &&
+         !isLicenseCompAdult(license) && !isLicenseNonCompAdult(license))) {
+      return (first_name + " " + last_name + ": la licence " + license + " n'est pas suffisante " +
+              "pour la pratique de l'activité " + getTouringString() + ". Une license adulte loisir/compétition " +
+              "ou une license famille est nécessaire pour la pratique de cette activité.")
     }
   }
   return ''
