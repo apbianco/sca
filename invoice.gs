@@ -2527,7 +2527,7 @@ function magicWand() {
                                   total_students + Plural(total_students, " étudiant"))
             }
             if (getTotalSkiPasses() >= 4) {
-              status_bar_text += "\n⚠️ Réduction famille possible. Validez la facture..."
+              status_bar_text += "\n⚠️ Réduction famille à évaluer en validant la facture..."
             }
             updateStatusBar(status_bar_text, "green")
             return

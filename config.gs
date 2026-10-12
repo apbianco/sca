@@ -30,12 +30,22 @@ var basic_subscription_coord = [41, 5]
 //
 var comp_subscription_map = {
 // What                     | Dob/Y | Dob/Y | Row | Col
+//                            ↖        ↖_ the DoB of the YOUNGEST in the category
+//                              \_The DoB of the OLDEST in the category
   'U6':                      [2021,   2022,   57,   5],
   'U8':                      [2019,   2020,   58,   5],
   'U10':                     [2017,   2018,   59,   5],
-  // U12+ The first listed year is the LAST year of the category
+  // U12+ The first listed year is the YOUNGEST year of the category because it's a threshold.
   'U12+':                    [2016,   -1,     60,   5],
+// U12:                      [2015,   2016]
+// U14:                      [2013,   2014]
+// U16:                      [2011,   2012]
+// U18:                      [2009,   2010]
 }
+
+// First year of a U18+. A U18+ must be born on that year or before
+var first_year_u18plus = 2010
+
 // Number of kids per competitor families
 var comp_kids_per_family = 4
 //
