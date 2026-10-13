@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// Version: 2025-11-12T11:28 - BAS 2025
+// Version: 2026-10-13T21:33+02:00 - Competitor registration
 //
 // Validation routines table. They must be running in a specific order defined here after.
 // For some, failing is a  show stopper. For others, it's possible to decline accepting

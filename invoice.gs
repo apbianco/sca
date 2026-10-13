@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
-// Version: Sep 2026 - Development
+// Version: 2026-10-13T21:33+02:00 - Competitor registration
 //
 // This validates the invoice sheet (more could be done BTW) and
 // sends an email with the required attached pieces.

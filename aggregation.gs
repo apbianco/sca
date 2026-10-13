@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// Version: 2025-11-12T11:28 - BAS 2025
+// Version: 2026-10-13T21:33+02:00 - Competitor registration
 //
 // Update various aggregation trix:
 //  - There is one that is used to project future level groups

@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// Version: 2026-09-04T19:02+02:00 - WIP 2026
+// Version: 2026-10-13T21:33+02:00 - Competitor registration
 //
 // Seasonal parameters - change for each season or change when the trix
 // is changing (adding new rows/columns, etc...)
