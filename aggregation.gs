@@ -154,6 +154,7 @@ function doUpdateAccountingTrix(data) {
       function levelRider(entry) { return isLevelRider(entry.level) }
       function levelRiderPlus(entry) { return isLevelRiderPlus(entry.level) }
       function levelRecreationalNonRider(entry) { return isLevelRecreationalNonRider(entry.level)}
+      function levelTouring(entry) { return isLevelTouring(entry.level) }
       // This one tests entry.dob
       function levelAdult(entry) { return isAdult(new Date(entry.dob)) }
       var subscription = non_comp_subscriptions[key]
@@ -168,8 +169,9 @@ function doUpdateAccountingTrix(data) {
       // data, this is the last filter to select a particular entry in data.
       var determination = (isSubscriptionAdult(key) ?
                            levelAdult : isLevelRider(key) ?
-                                        levelRider : isLevelRiderPlus(key) ?
-                                        levelRiderPlus : levelRecreationalNonRider)
+                           levelRider : isLevelRiderPlus(key) ?
+                           levelRiderPlus : isLevelTouring(key) ?
+                           levelTouring : levelRecreationalNonRider)
       // Go over all entries and dispatch charges as possible
       for (var entry of data) {
         // Stop when we have dispatched all existing charges
@@ -183,7 +185,10 @@ function doUpdateAccountingTrix(data) {
         // Determination has been previously picked to be the right
         // function.
         if (determination(entry)) {
-          entry.subscription_type = subscription.HumanReadableName() + " loisir"
+          entry.subscription_type = subscription.HumanReadableName()
+          if (!levelTouring(entry)) {
+            entry.subscription_type += " loisir"
+          }
           entry.subscription_fee = fee
           number_charges -= 1
         }
