@@ -750,7 +750,14 @@ function validateSkiPasses() {
   if (number_of_non_student_adults != 2) {  
     updateStatusBar("💰 Pas de réduction applicable", "grey", add=true)
     SpreadsheetApp.flush();
-  }  
+  }
+  var total_ski_passes = getTotalSkiPasses()
+  if (total_ski_passes > 0) {
+    displayWarningPanel(total_ski_passes + Plural(total_ski_passes, " forfait ") +
+                        Plural(total_ski_passes, " acheté") + ". Verifier le nombre " +
+                        "de " + Plural(total_ski_passes, "Support Rechargeable retourné ") +
+                        "et ajuster le nombre de Support Rechargeable à acheter si nécessaire (line 32).")
+  }
   return ''
 }
 
