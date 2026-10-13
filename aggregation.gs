@@ -107,8 +107,9 @@ function updateAggregationTrix() {
     if (isLevelRecreationalNonRider(family_member.level) ||
         isLevelEitherRider(family_member.level) ||
         isLevelTouring(family_member.level)) {
-      // If the member is an adult, its category is changed to "Adulte"
-      if (isAdult(family_member.dob)) {
+      // If the member is an adult, its category is changed to "Adulte", unless
+      // it's in Touring
+      if (!isLevelTouring(family_member.level) && isAdult(family_member.dob)) {
         family_member.level = 'Adulte'
       }
       family.push(family_member)
@@ -362,7 +363,8 @@ function updateAccountingTrix() {
     // instructor
     if (isLevelComp(family_member.level) ||
         isLevelRecreationalNonRider(family_member.level) ||
-        isLevelEitherRider(family_member.level)) {
+        isLevelEitherRider(family_member.level) ||
+        isLevelTouring(family_member.level)) {
       family.push(family_member)
     }
   }
