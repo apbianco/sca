@@ -323,7 +323,8 @@ function validateOnlyLicensesLevel() {
   coords_identity_rows.forEach(function(row) {
     var level = getStringAt([row, coord_level_column])
     var license = getStringAt([row, coord_license_column])
-    if (isLevelLicenseOnly(level) && !isLicenseExec(license)) {
+    if (isLevelTouring(level) ||
+        (isLevelLicenseOnly(level) && !isLicenseExec(license))) {
       basic_subscription_number += 1
     }
   })
@@ -450,6 +451,7 @@ function validateNonCompSubscriptions() {
   var rider_total = 0
   var non_rider_kid_number = 0
   var non_rider_adult_number = 0
+  var touring_number = 0
   coords_identity_rows.forEach(function(row) {
     var level = getStringAt([row, coord_level_column])
     var license = getStringAt([row, coord_license_column])
@@ -458,6 +460,9 @@ function validateNonCompSubscriptions() {
     }
     if (isLevelRiderPlus(level)) {
       rider_plus_number += 1
+    }
+    if (isLevelTouring(level)) {
+      touring_number += 1
     }
     if (isLevelRecreationalNonRider(level)) {
       // Here we need to make a difference between a kid and an adult:
@@ -567,6 +572,24 @@ function validateNonCompSubscriptions() {
 	    Plural(subscribed_non_rider_adult_number, "souscrite") + " [" + subscribed_non_rider_adult_number + "] " +
             "ne correspond pas au nombre " +
             "de loisir adulte " + Plural(non_rider_adult_number, "renseigné") + " [" + non_rider_adult_number + "]")
+  }
+  // 6- Found pure Touring number must be at most the number of purchase touring subscription
+  //    (remember - Touring can be declared (pure Touring) but someone with a specific license can buy touring as
+  //     long as they qualify)
+  var subscribed_touring_number = subscription_map[getTouringString()].PurchasedSubscriptionAmount()
+  if (touring_number > subscribed_touring_number) {
+    return ("Le nombre d'" + Plural(subscribed_touring_number, "adhésion") + " rando " +
+	    Plural(subscribed_touring_number, "souscrite") + " [" + subscribed_touring_number + "] " +
+            "ne peut être strictement inférieur au nombre de niveau Rando " +
+            Plural(touring_number, "renseigné") + " [" + touring_number + "]")
+  }
+  // 7- Found pure Tourning number must be at most the the number of adult BASIC subscription
+  var adult_basic_subscription_number = GetBasicSubscriptionNumber()
+  if (touring_number > adult_basic_subscription_number) {
+    return ("Le nombre de " + Plural(adult_basic_subscription_number, "licence") + " sans enseignement de ski " +
+	    Plural(adult_basic_subscription_number, "souscrite") + " [" + adult_basic_subscription_number + "] " +
+            "ne peut être strictement inférieur au nombre de niveau Rando " +
+            Plural(touring_number, "renseigné") + " [" + touring_number + "]")    
   }
   return ''
 }

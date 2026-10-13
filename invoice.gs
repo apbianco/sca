@@ -373,11 +373,15 @@ function isLevelTouring(level) {
   return level == getTouringString()
 }
 
+// Return true when the level is someone supervised for
+// non competition ski instructions and is not a rider/rider+
+// and not touring. It can be an adult or a non adult.
 function isLevelRecreationalNonRider(level) {
   return (isLevelLicenseOnly(level) ?
           false : (! isLevelDefined(level) ?
                    false : (isLevelEitherRider(level) ?
-                            false : isLevelNotComp(level))))
+                            false : (isLevelTouring(level) ? 
+                                     false : isLevelNotComp(level)))))
 }
 
 function isSubscriptionAdult(subscription) {
@@ -541,14 +545,6 @@ function UpdateBasicSubscriptionNumber(basic_subscriptions_number) {
 
 function GetBasicSubscriptionNumber() {
   return getNumberAt(basic_subscription_coord)
-}
-
-function UpdateTouringSubscriptionNumber(touring_subscriptions_number) {
-  setStringAt(touring_subscription_coord, touring_subscriptions_number <= 0 ? '' : touring_subscriptions_number)
-}
-
-function GetTouringSubscriptionNumber() {
-  return getNumberAt(touring_subscription_coord)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1415,7 +1411,7 @@ function autoFillLicensePurchases() {
   return true
 }
 
-function adjustSubscriptionSlots(subscription_slots, number_of_adults) {
+function adjustSubscriptionSlots(subscription_slots, number_of_adults, touring_subscriptions_number) {
   // A rider or a rider+ subscription counts as an occupied non-rider subscription slot.
   // Processing BEFORE adding the adult produces this intermediary result:
   //    R  R+ 1st 2nd 3rd 4th         R  R+ 1st 2nd 3rd 4th
@@ -1425,15 +1421,16 @@ function adjustSubscriptionSlots(subscription_slots, number_of_adults) {
   // - [1, 1, 1,  0,  0,  0] becomes [1, 1, 0,  0,  1,  0]
   // - [1, 2, 1,  0,  0,  0] becomes [1, 2, 0,  0,  0,  1]
   //
-  // Then the number of adults gets inserted, so we end up with, for instance:
-  //  A, R  R+ 1st 2nd 3rd 4th
-  // [N, 1, 0, 0,  1,  0,  0]
-  // [N, 2, 0, 0,  0,  1,  1]
+  // Then the number of adults (N) and the number of touring (M) get inserted so we end up with, for instance:
+  //  A, R  R+ T, 1st 2nd 3rd 4th
+  // [N, 1, 0, M, 0,  1,  0,  0]
+  // [N, 2, 0, M, 0,  0,  1,  1]
   // This adjustment can not happen as we built  subscrition_slots because a rider
   // can happen at any time in the list of registered familly members.
   var rider = subscription_slots[0] || 0;
   var rider_plus = subscription_slots[1] || 0;
   var total_riders = rider + rider_plus;
+  // FIXME: This index should be a defined constant
   var kids = subscription_slots.slice(2);
   var shifted_kids = [0, 0, 0, 0];
   var overflow = false;
@@ -1452,6 +1449,8 @@ function adjustSubscriptionSlots(subscription_slots, number_of_adults) {
   for (var j = 0; j < shifted_kids.length; j++) {
     subscription_slots.push(shifted_kids[j]);
   }
+  // FIXME: This index should be a defined constant
+  subscription_slots.splice(3, 0, touring_subscriptions_number)
   return overflow;
 }
 
@@ -1526,19 +1525,17 @@ function autoFillNonCompSubscriptions() {
       continue
     }
   }
-  if (adjustSubscriptionSlots(subscription_slots, number_of_adults)) {
+  if (adjustSubscriptionSlots(subscription_slots, number_of_adults, touring_subscriptions_number)) {
     displayWarningPanel("Il n'y a plus de place pour inscrire des non-riders " +
                         "automatiquement. Ajuster et procéder de manière manuelle " +
                         "après ce remplissage automatique")    
   }
-  subscription_slots.splice(3, 0, getNumberAt(coord_touring_count))
 
   for (var index in noncomp_subscription_categories) {
     var subscription = noncomp_subscription_categories[index]
     subscription_map[subscription].SetPurchasedSubscriptionAmount(subscription_slots[index])
   }
   UpdateBasicSubscriptionNumber(basic_subscriptions_number)
-  UpdateTouringSubscriptionNumber(touring_subscriptions_number)
   return true
 }
 

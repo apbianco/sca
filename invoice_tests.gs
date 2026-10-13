@@ -899,7 +899,7 @@ function testIsLevel() {
     "Ski/Fun":         [false,        false,       true,     false,  true,     false,  false,   false,         false,  true,                  false],
     "Rider":           [false,        false,       true,     false,  true,     true,   false,   true,          false,  false,                 false],
     "Rider+":          [false,        false,       true,     false,  true,     false,  true,    true,          false,  false,                 false],
-    "Rando":           [false,        false,       true,     false,  true,     false,  false,   false,         true,   true,                  false],
+    "Rando":           [false,        false,       true,     false,  true,     false,  false,   false,         true,   false,                 false],
     "Snow Découverte": [false,        false,       true,     false,  true,     false,  false,   false,         false,  true,                  false],
     "Snow 1":          [false,        false,       true,     false,  true,     false,  false,   false,         false,  true,                  false],
     "Snow 2":          [false,        false,       true,     false,  true,     false,  false,   false,         false,  true,                  false],
@@ -1436,73 +1436,83 @@ function testIsSubscriptionAdult() {
 function testAdjustSubscriptionSlots() {
   var testCases = [
     {
-      description: "1 Rider, 1 kid in 1st kid slot, 2 adults",
+      description: "1 Rider, 1 kid in 1st kid slot add 2 adults, 0 touring",
       inputSlots: [1, 0, 1, 0, 0, 0],
       adults: 2,
-      expected: [2, 1, 0, 0, 1, 0, 0],
+      touring: 0,
+      expected: [2, 1, 0, 0, 0, 1, 0, 0],
       expectedOverflow: false
     },
     {
-      description: "2 Riders, 2 kids in 1st & 2nd kid slots, 1 adult",
+      description: "2 Riders, 2 kids in 1st & 2nd kid slots add 1 adult, 0 touring",
       inputSlots: [2, 0, 1, 1, 0, 0],
       adults: 1,
-      expected: [1, 2, 0, 0, 0, 1, 1],
+      touring: 0,
+      expected: [1, 2, 0, 0, 0, 0, 1, 1],
       expectedOverflow: false
     },
     {
-      description: "0 Rider, 1 Rider+, 1 kid in 1st kid slot, 0 adults",
+      description: "0 Rider, 1 Rider+, 1 kid in 1st kid slot add 0 adults, 0 touring",
       inputSlots: [0, 1, 1, 0, 0, 0],
       adults: 0,
-      expected: [0, 0, 1, 0, 1, 0, 0],
+      touring: 0,
+      expected: [0, 0, 1, 0, 0, 1, 0, 0],
       expectedOverflow: false
     },
     {
-      description: "1 Rider, 1 Rider+, 1 kid in 1st kid slot, 3 adults",
+      description: "1 Rider, 1 Rider+, 1 kid in 1st kid slot add 3 adults, 1 touring",
       inputSlots: [1, 1, 1, 0, 0, 0],
       adults: 3,
-      expected: [3, 1, 1, 0, 0, 1, 0],
+      touring: 1,
+      expected: [3, 1, 1, 1, 0, 0, 1, 0],
       expectedOverflow: false
     },
     {
-      description: "1 Rider, 2 Rider+, 1 kid in 1st kid slot, 1 adult",
+      description: "1 Rider, 2 Rider+, 1 kid in 1st kid slot add 1 adult, 3 touring",
       inputSlots: [1, 2, 1, 0, 0, 0],
       adults: 1,
-      expected: [1, 1, 2, 0, 0, 0, 1],
+      touring: 3,
+      expected: [1, 1, 2, 3, 0, 0, 0, 1],
       expectedOverflow: false
     },
     {
-      description: "No riders, 2 kids, 2 adults",
+      description: "No riders, 2 kids add 2 adults and 3 touring",
       inputSlots: [0, 0, 1, 1, 0, 0],
       adults: 2,
-      expected: [2, 0, 0, 1, 1, 0, 0],
+      touring: 3,
+      expected: [2, 0, 0, 3, 1, 1, 0, 0],
       expectedOverflow: false
     },
     {
-      description: "1 Rider, no kids, 1 adult",
+      description: "1 Rider, no kids add 1 adult and 99 touring",
       inputSlots: [1, 0, 0, 0, 0, 0],
       adults: 1,
-      expected: [1, 1, 0, 0, 0, 0, 0],
+      touring: 99,
+      expected: [1, 1, 0, 99, 0, 0, 0, 0],
       expectedOverflow: false
     },
     {
-      description: "4 Riders (2 Rider, 2 Rider+), 2 kids (overflow), 0 adults",
+      description: "4 Riders (2 Rider, 2 Rider+), 2 kids (overflow) add 0 adult and 1 touring",
       inputSlots: [2, 2, 1, 1, 0, 0],
       adults: 0,
-      expected: [0, 2, 2, 0, 0, 0, 0],
+      touring: 1,
+      expected: [0, 2, 2, 1, 0, 0, 0, 0],
       expectedOverflow: true
     },
     {
-      description: "3 Riders, 2 kids (1 shifted to 4th slot, 1 overflow)",
+      description: "3 Riders, 2 kids (1 shifted to 4th slot, 1 overflow) add 1 adult and 1 touring",
       inputSlots: [3, 0, 1, 1, 0, 0],
       adults: 1,
-      expected: [1, 3, 0, 0, 0, 0, 1],
+      touring: 1,
+      expected: [1, 3, 0, 1, 0, 0, 0, 1],
       expectedOverflow: true
     },
     {
-      description: "No riders, 5 kids (5th kid in input array overflows)",
+      description: "No riders, 5 kids (5th kid in input array overflows), 2 touring",
       inputSlots: [0, 0, 1, 1, 1, 1, 1],
       adults: 0,
-      expected: [0, 0, 0, 1, 1, 1, 1],
+      touring: 2,
+      expected: [0, 0, 0, 2, 1, 1, 1, 1],
       expectedOverflow: true
     }
   ];
@@ -1512,7 +1522,7 @@ function testAdjustSubscriptionSlots() {
   for (var i = 0; i < testCases.length; i++) {
     var tc = testCases[i];
     var slots = tc.inputSlots.slice();
-    var overflow = adjustSubscriptionSlots(slots, tc.adults);
+    var overflow = adjustSubscriptionSlots(slots, tc.adults, tc.touring);
     if (!areArraysEqual(slots, tc.expected) || overflow !== tc.expectedOverflow) {
       failures++;
       Logger.log("--------------------------------------------------");
@@ -1548,7 +1558,7 @@ function testIsLevelRecreationalNonRider() {
     "Argent":           true,
     "Or":               true,
     "Ski/Fun":          true,
-    "Rando":            true,
+    "Rando":            false,
     "Snow Découverte":  true,
     "Snow 1":           true,
     "Snow 2":           true,
