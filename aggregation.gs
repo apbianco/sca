@@ -104,7 +104,9 @@ function updateAggregationTrix() {
     }
     // Retain someone with a non comp license that has a ski level. Setting a ski level
     // signal the intention to be placed under the supervision of an instructor.
-    if (isLevelRecreationalNonRider(family_member.level) || isLevelEitherRider(family_member.level)) {
+    if (isLevelRecreationalNonRider(family_member.level) ||
+        isLevelEitherRider(family_member.level) ||
+        isLevelTouring(family_member.level)) {
       // If the member is an adult, its category is changed to "Adulte"
       if (isAdult(family_member.dob)) {
         family_member.level = 'Adulte'
