@@ -1,4 +1,4 @@
-// Version: 2026-10-11T11:03+02:00 - Comp registration
+// Version: 2026-10-13T21:33+02:00 - Competitor registration
 //
 // Code implementing the trigger for the 2026/2027 seasons
 //
@@ -69,15 +69,15 @@ var ranges_current_season = {
 //
 // 3.3- Edit /tmp/LIST to remove undesirable entries
 //
-// 3.4- Install in cell B2:
-//      - Start by populating the F sheet in column A. The easiest is to just
+// 3.4- Install in cell B2 - 3 Steps:
+//      - 1- Start by populating the F sheet in column A. The easiest is to just
 //        cat /tmp/LIST after you've done 3- and paste the output into F!A after
 //        having cleared F!A. 
-//      - The go back to the main tab and adjust the data validation definition
+//      - 2- The go back to the main tab and adjust the data validation definition
 //        to be =F!$A$1:$A$<LAST> (for instance, F!$A$1:$A$155). To do this,
 //        select B2, Click Donnée > Validation des données and in the pannel that
 //        opened to the right, click on the first rule and change F!$A$!...
-//      - The click on cell B2 to verify all elements are there.
+//      - 3- The click on cell B2 to verify all elements are there.
 
 // There's nothing to change past this line...
 
