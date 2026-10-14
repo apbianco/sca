@@ -1309,8 +1309,9 @@ function autoComputeLicenses() {
             license == getNonCompAdultLicenseString())
   }
   updateStatusBar("Attribution automatique des licences...", "grey")
-  // FIXME: Eligible to using getMemoizedLicensesMap.
-  var license_map = createLicensesMap(SpreadsheetApp.getActiveSheet())
+  // Eligible to use getMemoizedLicensesMap as license_map is read-only here
+  // (no license instance properties/counts are mutated during auto-computation).
+  var license_map = getMemoizedLicensesMap()
   // We're going to store what will be computed in these two array: one
   // to remember the row we changed and an other one to remember the
   // value we want to write back.

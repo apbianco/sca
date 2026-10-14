@@ -67,10 +67,11 @@ function TESTValidation() {
 // other validations are easier to implement.
 function validateFamilyMembers() {
   updateStatusBar("Validation des données de la famille...", "grey", add=true)
-  // Get a licene map so that we can immediately verify the age picked
+  // Get a license map so that we can immediately verify the age picked
   // for a license is correct.
-  // FIXME: eligible to use getMemoizedLicensesMap.
-  var license_map = createLicensesMap(SpreadsheetApp.getActiveSheet())
+  // Eligible to use getMemoizedLicensesMap as license_map is read-only here
+  // (no license instance properties/counts are mutated during validation).
+  var license_map = getMemoizedLicensesMap()
   for (var index in coords_identity_rows) {
     var first_name = getStringAt([coords_identity_rows[index], coord_first_name_column]);
     var last_name = getStringAt([coords_identity_rows[index], coord_last_name_column]);
