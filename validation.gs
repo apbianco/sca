@@ -323,8 +323,7 @@ function validateOnlyLicensesLevel() {
   coords_identity_rows.forEach(function(row) {
     var level = getStringAt([row, coord_level_column])
     var license = getStringAt([row, coord_license_column])
-    if (isLevelTouring(level) ||
-        (isLevelLicenseOnly(level) && !isLicenseExec(license))) {
+    if (isLevelLicenseOnly(level) && !isLicenseExec(license)) {
       basic_subscription_number += 1
     }
   })
@@ -582,14 +581,6 @@ function validateNonCompSubscriptions() {
 	    Plural(subscribed_touring_number, "souscrite") + " [" + subscribed_touring_number + "] " +
             "ne peut être strictement inférieur au nombre de niveau Rando " +
             Plural(touring_number, "renseigné") + " [" + touring_number + "]")
-  }
-  // 7- Found pure Tourning number must be at most the the number of adult BASIC subscription
-  var adult_basic_subscription_number = GetBasicSubscriptionNumber()
-  if (touring_number > adult_basic_subscription_number) {
-    return ("Le nombre de " + Plural(adult_basic_subscription_number, "licence") + " sans enseignement de ski " +
-	    Plural(adult_basic_subscription_number, "souscrite") + " [" + adult_basic_subscription_number + "] " +
-            "ne peut être strictement inférieur au nombre de niveau Rando " +
-            Plural(touring_number, "renseigné") + " [" + touring_number + "]")    
   }
   return ''
 }
