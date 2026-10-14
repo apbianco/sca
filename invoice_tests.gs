@@ -1689,6 +1689,37 @@ function testAdjustedNonCompSubscriptionCategories() {
   return failures === 0;
 }
 
+function testGetMemoizedLicensesMapLatency() {
+  var sheet = SpreadsheetApp.getActiveSheet();
+  var iterations = 100;
+
+  var startTimeCreate = Date.now();
+  for (var i = 0; i < iterations; i++) {
+    createLicensesMap(sheet);
+  }
+  var durationCreate = Date.now() - startTimeCreate;
+
+  var startTimeMemo = Date.now();
+  for (var i = 0; i < iterations; i++) {
+    getMemoizedLicensesMap();
+  }
+  var durationMemo = Date.now() - startTimeMemo;
+
+  var gain = durationCreate - durationMemo;
+  Logger.log("createLicensesMap duration (" + iterations + " calls): " + durationCreate + " ms");
+  Logger.log("getMemoizedLicensesMap duration (" + iterations + " calls): " + durationMemo + " ms");
+  Logger.log("Latency gain using getMemoizedLicensesMap: " + gain + " ms");
+
+  var passed = durationMemo <= durationCreate;
+  if (!passed) {
+    Logger.log("--------------------------------------------------");
+    Logger.log("FAIL: testGetMemoizedLicensesMapLatency - getMemoizedLicensesMap took longer than createLicensesMap");
+  }
+
+  Logger.log("Finished testGetMemoizedLicensesMapLatency().");
+  return passed;
+}
+
 function RUN_ALL_TESTS() {
   Logger.log("Starting all invoice tests...");
   var failedSuites = [];
@@ -1771,6 +1802,9 @@ function RUN_ALL_TESTS() {
   if (!testAdjustedNonCompSubscriptionCategories()) {
     failedSuites.push("testAdjustedNonCompSubscriptionCategories");
   }
+ if (!testGetMemoizedLicensesMapLatency()) {
+    failedSuites.push("testGetMemoizedLicensesMapLatency");
+  }  
   if (failedSuites.length === 0) {
     Logger.log("Summary: ✅✅✅ All test suites passed successfully!");
   } else {
