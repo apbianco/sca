@@ -7,6 +7,14 @@
 //  - There is one used by accounting
 ///////////////////////////////////////////////////////////////////////////////
 
+function getAccountingTrix() {
+  return isProd() ? accounting_trix : accounting_test_trix
+}
+
+function getAggregationTrix() {
+  return isProd() ? license_trix : license_test_trix
+}
+
 // Search for data.{first_name, last_name} starting at data.row_start in sheet.
 // Return the index at which the element was found or the index of the first
 // empty row. Return -1 if more than one element matched the search criteria.
@@ -53,10 +61,6 @@ function SearchEntry(sheet, data, positions, label) {
     return first_empty_row
   }
   return index
-}
-
-function getAggregationTrix() {
-  return isProd() ? license_trix : license_test_trix
 }
 
 function doUpdateAggregationTrix(data) {
@@ -116,10 +120,6 @@ function updateAggregationTrix() {
     }
   }
   doUpdateAggregationTrix(family)
-}
-
-function getAccountingTrix() {
-  return isProd() ? accounting_trix : accounting_test_trix
 }
 
 function doUpdateAccountingTrix(data) {
@@ -395,7 +395,7 @@ function updateProblematicRegistration(link, context) {
   }
 
   updateStatusBar('⏳ Enregistrement de la notification de problème...', 'orange')
-  var sheet = SpreadsheetApp.openById(license_trix).getSheetByName(license_trix_pb_sheet)
+  var sheet = SpreadsheetApp.openById(getAggregationTrix()).getSheetByName(license_trix_pb_sheet)
   var insertion_range = findFirstEmptySlot(sheet, sheet.getRange(license_trix_pb_sheet_search_range))
   var entire_range = sheet.getRange(license_trix_pb_sheet_whole_range)
   var row = insertion_range.getRow()
