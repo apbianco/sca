@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// Version: 2026-10-13T21:33+02:00 - Competitor registration
+// Version: 2026-10-22T11:11+02:00 - Fix aggregation
 //
 // Update various aggregation trix:
 //  - There is one that is used to project future level groups
@@ -27,8 +27,8 @@ function SearchEntry(sheet, data, positions, label) {
   // slice() skips header data... Note: we have populated a rank/index column at position
   // 1 for a sufficient number of rows so that the sheet has data past the last element,
   // which allows us to determine there is an empty element past that.
-  const allData = sheet.getDataRange().getValues().slice(index-1);
-  const matchingRows = allData.filter(
+  var allData = sheet.getDataRange().getValues().slice(index-1);
+  var matchingRows = allData.filter(
       row => {
         if (row[positions.last_name] == '' && !stop_updating_first_empty_row) {
           first_empty_row = global_index
@@ -48,7 +48,7 @@ function SearchEntry(sheet, data, positions, label) {
   )
   if (matchingRows.length > 1) {
     var ranks = ''
-    for (element of matchingRows) {
+    for (var element of matchingRows) {
       ranks += (ranks.length > 0 ? ", " : "") + element[0] 
     }
     var message = matchingRows.length + " " + matchingRows[0][1] + " "  + matchingRows[0][2] +
@@ -58,6 +58,9 @@ function SearchEntry(sheet, data, positions, label) {
     return -1
   }
   if (matchingRows.length == 0) {
+    if (!stop_updating_first_empty_row) {
+      first_empty_row = global_index
+    }
     return first_empty_row
   }
   return index
@@ -335,8 +338,8 @@ function doUpdateAccountingTrix(data) {
   for (var index in data) {
     var row = SearchEntry(sheet, data[index],
                           {row_start: accounting_trix_row_start,
-                           last_name:1,
-                           first_name:2},
+                           last_name: 1,
+                           first_name: 2},
                           accounting_trix_sheet)
     if (row == -1) {
       continue

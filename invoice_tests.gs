@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
-// Version: 2026-10-13T21:33+02:00 - Competitor registration
+// Version: 2026-10-22T11:11+02:00 - Fix aggregation
 ///////////////////////////////////////////////////////////////////////////////
 
 function testNormalizeName() {
@@ -1720,6 +1720,104 @@ function testGetMemoizedLicensesMapLatency() {
   return passed;
 }
 
+function testSearchEntry() {
+  function makeMockSheet(dataRows) {
+    return {
+      getDataRange: function() {
+        return {
+          getValues: function() {
+            return dataRows;
+          }
+        };
+      }
+    };
+  }
+
+  var failures = 0;
+
+  // Test Case 1: Totally empty data range ([]), no leading empty data rows (row_start = 1)
+  var sheetEmpty = makeMockSheet([]);
+  var resEmpty = SearchEntry(sheetEmpty, { last_name: "DURAND", first_name: "Charlie" }, { row_start: 1, last_name: 1, first_name: 2 }, "test");
+  if (resEmpty !== 1) {
+    failures++;
+    Logger.log("FAIL: testSearchEntry - Totally empty data range. Expected 1, got " + resEmpty);
+  }
+
+  // Test Case 2: Entry found with NO leading empty rows (data starts at row_start = 1)
+  var sheetNoLeading = makeMockSheet([
+    ["1", "DUPONT", "Alice"], // row 1
+    ["2", "MARTIN", "Bob"]     // row 2
+  ]);
+  var resFound = SearchEntry(sheetNoLeading, { last_name: "MARTIN", first_name: "Bob" }, { row_start: 1, last_name: 1, first_name: 2 }, "test");
+  if (resFound !== 2) {
+    failures++;
+    Logger.log("FAIL: testSearchEntry - Entry found without leading empty rows. Expected 2, got " + resFound);
+  }
+
+  // Test Case 3: Entry NOT found, all rows filled, NO leading empty rows (row_start = 1)
+  var resNotFoundNoEmpty = SearchEntry(sheetNoLeading, { last_name: "DURAND", first_name: "Charlie" }, { row_start: 1, last_name: 1, first_name: 2 }, "test");
+  if (resNotFoundNoEmpty !== 3) {
+    failures++;
+    Logger.log("FAIL: testSearchEntry - Non-existent entry with no empty row (no leading empty rows). Expected 3, got " + resNotFoundNoEmpty);
+  }
+
+  // Test Case 4: Entry NOT found, slice contains an empty row at row 2, NO leading empty rows (row_start = 1)
+  var sheetWithEmptyRow = makeMockSheet([
+    ["1", "DUPONT", "Alice"], // row 1
+    ["2", "", ""]             // row 2 (last_name empty)
+  ]);
+  var resEmptyRow = SearchEntry(sheetWithEmptyRow, { last_name: "DURAND", first_name: "Charlie" }, { row_start: 1, last_name: 1, first_name: 2 }, "test");
+  if (resEmptyRow !== 2) {
+    failures++;
+    Logger.log("FAIL: testSearchEntry - Non-existent entry with empty row (no leading empty rows). Expected 2, got " + resEmptyRow);
+  }
+
+  // Test Case 5: Multiple matches found, NO leading empty rows (row_start = 1)
+  var sheetDuplicates = makeMockSheet([
+    ["1", "DUPONT", "Alice"], // row 1
+    ["2", "DUPONT", "Alice"]  // row 2
+  ]);
+  var originalDisplayWarningPanel = typeof displayWarningPanel !== 'undefined' ? displayWarningPanel : null;
+  displayWarningPanel = function(msg) {}; // silent mock
+  var resDuplicates = SearchEntry(sheetDuplicates, { last_name: "DUPONT", first_name: "Alice" }, { row_start: 1, last_name: 1, first_name: 2 }, "test");
+  if (originalDisplayWarningPanel) {
+    displayWarningPanel = originalDisplayWarningPanel;
+  }
+  if (resDuplicates !== -1) {
+    failures++;
+    Logger.log("FAIL: testSearchEntry - Multiple matches. Expected -1, got " + resDuplicates);
+  }
+
+  // Test Case 6 (Featuring leading empty data rows): Entry found starting at row_start = 5
+  var sheetLeading = makeMockSheet([
+    ["1", "", ""],            // row 1
+    ["2", "", ""],            // row 2
+    ["3", "", ""],            // row 3
+    ["4", "", ""],            // row 4
+    ["5", "DUPONT", "Alice"], // row 5
+    ["6", "MARTIN", "Bob"]     // row 6
+  ]);
+  var resLeadingFound = SearchEntry(sheetLeading, { last_name: "MARTIN", first_name: "Bob" }, { row_start: 5, last_name: 1, first_name: 2 }, "test");
+  if (resLeadingFound !== 6) {
+    failures++;
+    Logger.log("FAIL: testSearchEntry - Entry found with leading empty rows. Expected 6, got " + resLeadingFound);
+  }
+
+  // Test Case 7 (Featuring leading empty data rows): Entry NOT found, all rows filled, starting at row_start = 5
+  var resLeadingNotFound = SearchEntry(sheetLeading, { last_name: "DURAND", first_name: "Charlie" }, { row_start: 5, last_name: 1, first_name: 2 }, "test");
+  if (resLeadingNotFound !== 7) {
+    failures++;
+    Logger.log("FAIL: testSearchEntry - Non-existent entry with leading empty rows and all rows filled. Expected 7, got " + resLeadingNotFound);
+  }
+
+  if (failures > 0) {
+    Logger.log("--------------------------------------------------");
+    Logger.log("testSearchEntry: " + failures + " test(s) failed.");
+  }
+  Logger.log("Finished testSearchEntry().");
+  return failures === 0;
+}
+
 function RUN_ALL_TESTS() {
   Logger.log("Starting all invoice tests...");
   var failedSuites = [];
@@ -1804,6 +1902,9 @@ function RUN_ALL_TESTS() {
   }
  if (!testGetMemoizedLicensesMapLatency()) {
     failedSuites.push("testGetMemoizedLicensesMapLatency");
+  }  
+  if (!testSearchEntry()) {
+    failedSuites.push("testSearchEntry");
   }  
   if (failedSuites.length === 0) {
     Logger.log("Summary: ✅✅✅ All test suites passed successfully!");
