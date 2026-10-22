@@ -48,7 +48,7 @@ function SearchEntry(sheet, data, positions, label) {
   )
   if (matchingRows.length > 1) {
     var ranks = ''
-    for (element of matchingRows) {
+    for (var element of matchingRows) {
       ranks += (ranks.length > 0 ? ", " : "") + element[0] 
     }
     var message = matchingRows.length + " " + matchingRows[0][1] + " "  + matchingRows[0][2] +
@@ -58,6 +58,9 @@ function SearchEntry(sheet, data, positions, label) {
     return -1
   }
   if (matchingRows.length == 0) {
+    if (!stop_updating_first_empty_row) {
+      first_empty_row = global_index
+    }
     return first_empty_row
   }
   return index

@@ -1689,6 +1689,94 @@ function testAdjustedNonCompSubscriptionCategories() {
   return failures === 0;
 }
 
+function testSearchEntry() {
+  function makeMockSheet(dataRows) {
+    return {
+      getDataRange: function() {
+        return {
+          getValues: function() {
+            return dataRows;
+          }
+        };
+      }
+    };
+  }
+
+  var failures = 0;
+
+  // Test Case 1: Entry found in sheet
+  var sheet1 = makeMockSheet([
+    ["1", "", ""],            // row 1
+    ["2", "", ""],            // row 2
+    ["3", "", ""],            // row 3
+    ["4", "", ""],            // row 4
+    ["5", "DUPONT", "Alice"], // row 5
+    ["6", "MARTIN", "Bob"]     // row 6
+  ]);
+  var res1 = SearchEntry(sheet1, { last_name: "MARTIN", first_name: "Bob" }, { row_start: 5, last_name: 1, first_name: 2 }, "test");
+  if (res1 !== 6) {
+    failures++;
+    Logger.log("FAIL: testSearchEntry - Entry found. Expected 6, got " + res1);
+  }
+
+  // Test Case 2: Entry NOT found, slice contains empty row at row 6
+  var sheet2 = makeMockSheet([
+    ["1", "", ""],            // row 1
+    ["2", "", ""],            // row 2
+    ["3", "", ""],            // row 3
+    ["4", "", ""],            // row 4
+    ["5", "DUPONT", "Alice"], // row 5
+    ["6", "", ""]             // row 6 (last_name empty)
+  ]);
+  var res2 = SearchEntry(sheet2, { last_name: "DURAND", first_name: "Charlie" }, { row_start: 5, last_name: 1, first_name: 2 }, "test");
+  if (res2 !== 6) {
+    failures++;
+    Logger.log("FAIL: testSearchEntry - Non-existent entry with empty row. Expected 6, got " + res2);
+  }
+
+  // Test Case 3: Entry NOT found, slice has NO empty row (all rows filled)
+  var sheet3 = makeMockSheet([
+    ["1", "", ""],            // row 1
+    ["2", "", ""],            // row 2
+    ["3", "", ""],            // row 3
+    ["4", "", ""],            // row 4
+    ["5", "DUPONT", "Alice"], // row 5
+    ["6", "MARTIN", "Bob"]     // row 6
+  ]);
+  var res3 = SearchEntry(sheet3, { last_name: "DURAND", first_name: "Charlie" }, { row_start: 5, last_name: 1, first_name: 2 }, "test");
+  if (res3 !== 7) {
+    failures++;
+    Logger.log("FAIL: testSearchEntry - Non-existent entry with no empty row. Expected 7, got " + res3);
+  }
+
+  // Test Case 4: Multiple matches found
+  var sheet4 = makeMockSheet([
+    ["1", "", ""],            // row 1
+    ["2", "", ""],            // row 2
+    ["3", "", ""],            // row 3
+    ["4", "", ""],            // row 4
+    ["5", "DUPONT", "Alice"], // row 5
+    ["6", "DUPONT", "Alice"]  // row 6
+  ]);
+  var originalDisplayWarningPanel = typeof displayWarningPanel !== 'undefined' ? displayWarningPanel : null;
+  displayWarningPanel = function(msg) {}; // silent mock
+  var res4 = SearchEntry(sheet4, { last_name: "DUPONT", first_name: "Alice" }, { row_start: 5, last_name: 1, first_name: 2 }, "test");
+  if (originalDisplayWarningPanel) {
+    displayWarningPanel = originalDisplayWarningPanel;
+  }
+  if (res4 !== -1) {
+    failures++;
+    Logger.log("FAIL: testSearchEntry - Multiple matches. Expected -1, got " + res4);
+  }
+
+  if (failures > 0) {
+    Logger.log("--------------------------------------------------");
+    Logger.log("testSearchEntry: " + failures + " test(s) failed.");
+  }
+  Logger.log("Finished testSearchEntry().");
+  return failures === 0;
+}
+
 function testGetMemoizedLicensesMapLatency() {
   var sheet = SpreadsheetApp.getActiveSheet();
   var iterations = 100;
@@ -1805,6 +1893,9 @@ function RUN_ALL_TESTS() {
  if (!testGetMemoizedLicensesMapLatency()) {
     failedSuites.push("testGetMemoizedLicensesMapLatency");
   }  
+  if (!testSearchEntry()) {
+    failedSuites.push("testSearchEntry");
+  }
   if (failedSuites.length === 0) {
     Logger.log("Summary: ✅✅✅ All test suites passed successfully!");
   } else {
