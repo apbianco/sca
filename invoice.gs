@@ -2267,9 +2267,9 @@ function generatePDFAndMaybeSendEmail(config) {
       "documents attentivement.</p>");
   }
 
-  function handleUnexpectedValue(symbol) {
+  function handleUnexpectedValue(context, symbol) {
     var symbol_name = Object.keys(symbol)[0]
-    displayErrorPanel(symbol_name + ': ' + symbol[symbol_name])
+    displayErrorPanel(context + ': ' + symbol_name + ': ' + symbol[symbol_name])
     updateStatusBar("❌ Instruction non traitée", "red")
   }
 
@@ -2292,8 +2292,12 @@ function generatePDFAndMaybeSendEmail(config) {
         break
       case 'Non nécessaire':
         break
+      // When #yolo is on.
+      // FIXME: pass is_yolo and verify
+      case undefined:
+        break
       default:
-        return handleUnexpectedValue({legal_disclaimer_validation})
+        return handleUnexpectedValue("Validation mention légale", {legal_disclaimer_validation})
         break
     }
 
@@ -2338,9 +2342,12 @@ function generatePDFAndMaybeSendEmail(config) {
       
       case 'Non nécessaire':
         break
-
+      // When #yolo is on.
+      // FIXME: pass is_yolo and verify
+      case undefined:
+        break
       default:
-        return handleUnexpectedValue({ffs_medical_form_validation})
+        return handleUnexpectedValue("Validation questionaire santé", {ffs_medical_form_validation})
         break
     }
 
@@ -2356,8 +2363,12 @@ function generatePDFAndMaybeSendEmail(config) {
         break
       case 'Non nécessaire':
         break
+      // When #yolo is on.
+      // FIXME: pass is_yolo and verify
+      case undefined:
+        break        
       default:
-        return handleUnexpectedValue({cut_resistant_pants_validation})
+        return handleUnexpectedValue("Validation collant anti-coupure", {cut_resistant_pants_validation})
     }
   }
   
