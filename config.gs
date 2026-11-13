@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// Version: 2026-10-13T21:33+02:00 - Competitor registration
+// Version: 2026-11-13T05:05+01:00 - BAS
 //
 // Seasonal parameters - change for each season or change when the trix
 // is changing (adding new rows/columns, etc...)
@@ -178,10 +178,15 @@ var coord_rebate_family_of_4_amount = [23, 4]
 var coord_rebate_family_of_4_count  = [23, 5]
 var coord_rebate_family_of_5_amount = [24, 4]
 var coord_rebate_family_of_5_count  = [24, 5]
-// - Location where total number of order ski passes is stored and where
-//   the total amount paid for ski passes is due (before rebate)
+// - Location where total number of ordered ski passes is stored and where
+//   the total amount paid for ski passes is due (before rebate).
+//   coord_total_ski_pass column is 6 because it's unmerged with column 5 which
+//   holds text. coord_total_ski_pass_card is at column 5 because it's merged
+//   with column 6.
+var total_ski_pass_card_row         = 32
+var coord_total_ski_pass_card       = [total_ski_pass_card_row, 5]
 var coord_total_ski_pass            = [40, 6]
-var coord_total_ski_pass_amount    =  [40, 9]
+var coord_total_ski_pass_amount     = [40, 9]
 //
 // - Parameters defining the valid ranges to be retained during the
 //   generation of the invoice's PDF

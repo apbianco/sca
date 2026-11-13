@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// Version: 2026-10-22T11:11+02:00 - Fix aggregation
+// Version: 2026-11-13T05:05+01:00 - BAS
 //
 // Update various aggregation trix:
 //  - There is one that is used to project future level groups

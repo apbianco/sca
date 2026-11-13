@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
-// Version: 2026-10-13T21:33+02:00 - Competitor registration
+// Version: 2026-11-13T05:05+01:00 - BAS
 //
 // This validates the invoice sheet (more could be done BTW) and
 // sends an email with the required attached pieces.

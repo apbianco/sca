@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// Version: 2026-10-13T21:33+02:00 - Competitor registration
+// Version: 2026-11-13T05:05+01:00 - BAS
 //
 // Validation routines table. They must be running in a specific order defined here after.
 // For some, failing is a  show stopper. For others, it's possible to decline accepting
@@ -742,12 +742,18 @@ function validateSkiPasses() {
     updateStatusBar("💰 Pas de réduction applicable", "grey", add=true)
     SpreadsheetApp.flush();
   }
+  // If ski passes are purchased and the number of physical card hasn't
+  // been adjusted, display a warning.
   var total_ski_passes = getTotalSkiPasses()
-  if (total_ski_passes > 0) {
+  var total_cards = (getStringAt(coord_total_ski_pass_card) != "" ?
+                     getNumberAt(coord_total_ski_pass_card) : -1)
+  if (total_ski_passes > 0 && total_cards == -1) {
     displayWarningPanel(total_ski_passes + Plural(total_ski_passes, " forfait ") +
                         Plural(total_ski_passes, " acheté") + ". Verifier le nombre " +
                         "de " + Plural(total_ski_passes, "Support Rechargeable retourné ") +
-                        "et ajuster le nombre de Support Rechargeable à acheter si nécessaire (line 32).")
+                        "et ajuster le nombre de Support Rechargeable à acheter si nécessaire (ligne " +
+                        total_ski_pass_card_row + ") entre 0 et " + total_ski_passes + " pour ne plus " +
+                        "générer cette alerte.")
   }
   return ''
 }
