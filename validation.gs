@@ -92,8 +92,12 @@ function validateFamilyMembers() {
     if (first_name == "" && last_name == "") {
       if (isLicenseDefined(license) || dob != undefined || isLevelDefined(level) ||
           sex != '' || city != '' || license_number != '') {
-        return (nthString(index) + " membre de famille: information définie (naissance, sexe, etc...) " +
-                "sans prénom on nom de famille renseigné")        
+        return ("Ligne " + coords_identity_rows[index] +
+                ": la ligne est donnée pour vide mais des informations subsistent.\n" +
+                (dob != undefined ? "\nReste une date de naissance: " + dob : '') +
+                (isLevelDefined(level) ? "\nReste un niveau: " + level : '') +
+                (sex != '' ? "\nReste un sexe: " + sex : '') +
+                (license_number != '' ? "\nReste un numéro de licence: " + license_number : ''))
       }
       continue;
     }
