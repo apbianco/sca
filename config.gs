@@ -8,6 +8,11 @@
 //
 // - Name of the season
 var season = "2026/2027"
+///////////////////////////////////////////////////////////////////////////////
+// Current experimentations
+// 17/11/2026: Using the Gmail REST API to send email
+///////////////////////////////////////////////////////////////////////////////
+var email_via_rest_api = false
 //
 // - A map of available licenses and validation dates. This map is used
 //   to create a map of properly configured license objects. Edit this

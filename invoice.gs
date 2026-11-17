@@ -2140,6 +2140,87 @@ function shouldWeEmailLicenseSCA(family_dict) {
   return false
 }
 
+////////////////////////////////////////////////////////////////////////////////////////
+// Mail operations
+////////////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * Sends an email using the Gmail REST API Advanced Service.
+ *
+ * @param {Object} options Email options:
+ *   - to {string} Recipient address
+ *   - cc {string} [optional] CC recipient address
+ *   - name {string} [optional] Sender display name
+ *   - subject {string} Email subject
+ *   - htmlBody {string} HTML content
+ *   - attachments {Blob|Blob[]} [optional] Attachment blobs (PDFs, etc.)
+ * @return {Object} Gmail API message resource
+ */
+function sendEmailViaGmailRestApi(options) {
+  var boundary = '----=_Part_' + Utilities.getUuid();
+  var mimeLines = [];
+
+  // 1. Headers
+  var senderEmail = Session.getActiveUser().getEmail() || 'me';
+  if (options.name) {
+    var encodedName = '=?UTF-8?B?' + Utilities.base64Encode(options.name, Utilities.Charset.UTF_8) + '?=';
+    mimeLines.push('From: ' + encodedName + ' <' + senderEmail + '>');
+  } else {
+    mimeLines.push('From: ' + senderEmail);
+  }
+
+  mimeLines.push('To: ' + options.to);
+  if (options.cc) {
+    mimeLines.push('Cc: ' + options.cc);
+  }
+
+  // RFC 2047 encode the subject (French accents, emojis)
+  var encodedSubject = '=?UTF-8?B?' + Utilities.base64Encode(options.subject, Utilities.Charset.UTF_8) + '?=';
+  mimeLines.push('Subject: ' + encodedSubject);
+  mimeLines.push('MIME-Version: 1.0');
+  mimeLines.push('Content-Type: multipart/mixed; boundary="' + boundary + '"');
+  mimeLines.push('');
+
+  // 2. HTML Body
+  mimeLines.push('--' + boundary);
+  mimeLines.push('Content-Type: text/html; charset=UTF-8');
+  mimeLines.push('Content-Transfer-Encoding: base64');
+  mimeLines.push('');
+  var bodyBase64 = Utilities.base64Encode(options.htmlBody, Utilities.Charset.UTF_8);
+  mimeLines.push(bodyBase64.replace(/(.{76})/g, '$1\r\n'));
+
+  // 3. Attachments
+  var attachments = options.attachments || [];
+  if (!Array.isArray(attachments)) {
+    attachments = [attachments];
+  }
+
+  for (var i = 0; i < attachments.length; i++) {
+    var attachment = attachments[i];
+    if (!attachment) continue;
+    var filename = attachment.getName() || ('attachment_' + (i + 1) + '.pdf');
+    var encodedFilename = '=?UTF-8?B?' + Utilities.base64Encode(filename, Utilities.Charset.UTF_8) + '?=';
+    var contentType = attachment.getContentType() || 'application/pdf';
+
+    mimeLines.push('--' + boundary);
+    mimeLines.push('Content-Type: ' + contentType + '; name="' + encodedFilename + '"');
+    mimeLines.push('Content-Disposition: attachment; filename="' + encodedFilename + '"');
+    mimeLines.push('Content-Transfer-Encoding: base64');
+    mimeLines.push('');
+    var attachmentBase64 = Utilities.base64Encode(attachment.getBytes());
+    mimeLines.push(attachmentBase64.replace(/(.{76})/g, '$1\r\n'));
+  }
+
+  mimeLines.push('--' + boundary + '--');
+
+  // 4. Base64url encode the entire MIME message
+  var rawMime = mimeLines.join('\r\n');
+  var rawBase64Url = Utilities.base64EncodeWebSafe(rawMime, Utilities.Charset.UTF_8);
+
+  // 5. Send directly via the Advanced Service
+  return Gmail.Users.Messages.send({ raw: rawBase64Url }, 'me');
+}
+
 function maybeEmailLicenseSCA(invoice, ignore_payment) {
   if (! ignore_payment && ! askingLicenseOK()) {
     updateStatusBar("⚠️ PAS de demande de licence (voir paiement)", "orange", add=true)      
@@ -2192,8 +2273,18 @@ function maybeEmailLicenseSCA(invoice, ignore_payment) {
       "<p>Merci!</p>",
     attachments: invoice,
   } 
-  MailApp.sendEmail(email_options)
-  return true
+  if (email_via_rest_api) {
+    try {
+      sendEmailViaGmailRestApi(email_options)
+      return true
+    } catch (e) {
+      displayErrorPanel("Erreur lors de l'envoi de la demande de licence: " + e.message)
+      return false
+    }
+  } else {
+    MailApp.sendEmail(email_options)
+    return true
+  }
 }
 
 function updateStatusBar(message, color, add=false) {
@@ -2434,30 +2525,61 @@ function generatePDFAndMaybeSendEmail(config) {
   // updated.
   var final_status = ['', 'green']
   if (email_folder) {
-    var emailQuotaRemaining = MailApp.getRemainingDailyQuota();
-    if (emailQuotaRemaining < email_quota_threshold) {
-      displayWarningPanel("Quota email insuffisant. Envoi " +
-                          (just_generate_invoice ? "de la facture" : "du dossier") +
-                          " retardé. Quota restant: " + emailQuotaRemaining +
-                          ". Nécessaire: " + email_quota_threshold);
-      final_status[0] = "⚠️ Quota email insuffisant. Envoi retardé"
-      final_status[1] = "orange";
-      // Insert a reference to the file in a trix
-      var link = '=HYPERLINK("' + SpreadsheetApp.getActive().getUrl() +
-                             '"; "' + SpreadsheetApp.getActive().getName() + '")'
-      var context = (just_generate_invoice ? 'Facture seule à renvoyer' : 'Dossier complet à renvoyer')
-      updateProblematicRegistration(link, context)
-    } else {
-      // Send the email  
-      MailApp.sendEmail(email_options)
-      final_status[0] = "✅ Dossier envoyé"
-      // When the license wasn't sent, warn and add to the status bar so that
-      // it is visible
-      if (! maybeEmailLicenseSCA([attachments[0]])) {
-        final_status[0] += ".\n⚠️ PAS de demande de licence (voir paiement)"
+    if (email_via_rest_api) {
+      try {
+        sendEmailViaGmailRestApi(email_options)
+        final_status[0] = "✅ Dossier envoyé"
+        if (! maybeEmailLicenseSCA([attachments[0]])) {
+          final_status[0] += ".\n⚠️ PAS de demande de licence (voir paiement)"
+          final_status[1] = "orange";
+        } else {
+          final_status[0] += ", demande de licence faite"
+        }
+      } catch (e) {
+        // Catch quota/rate limit errors (HTTP 429 or 403 quotaExceeded)
+        if (e.statusCode === 429 || e.statusCode === 403 || (e.message && e.message.toLowerCase().indexOf('quota') !== -1)) {
+          displayWarningPanel("Quota email Gmail API insuffisant ou dépassé. Envoi " +
+                              (just_generate_invoice ? "de la facture" : "du dossier") +
+                              " retardé. (" + e.message + ")");
+          final_status[0] = "⚠️ Quota email insuffisant. Envoi retardé"
+          final_status[1] = "orange";
+          var link = '=HYPERLINK("' + SpreadsheetApp.getActive().getUrl() +
+                                '"; "' + SpreadsheetApp.getActive().getName() + '")'
+          var context = (just_generate_invoice ? 'Facture seule à renvoyer' : 'Dossier complet à renvoyer')
+          updateProblematicRegistration(link, context)
+        } else {
+          displayErrorPanel("Échec de l'envoi email (Gmail API): " + e.message)
+          final_status[0] = "❌ Échec envoi email"
+          final_status[1] = "red";
+        }
+      }
+    }
+    else {
+      var emailQuotaRemaining = MailApp.getRemainingDailyQuota();
+      if (emailQuotaRemaining < email_quota_threshold) {
+        displayWarningPanel("Quota email insuffisant. Envoi " +
+                            (just_generate_invoice ? "de la facture" : "du dossier") +
+                            " retardé. Quota restant: " + emailQuotaRemaining +
+                            ". Nécessaire: " + email_quota_threshold);
+        final_status[0] = "⚠️ Quota email insuffisant. Envoi retardé"
         final_status[1] = "orange";
+        // Insert a reference to the file in a trix
+        var link = '=HYPERLINK("' + SpreadsheetApp.getActive().getUrl() +
+                              '"; "' + SpreadsheetApp.getActive().getName() + '")'
+        var context = (just_generate_invoice ? 'Facture seule à renvoyer' : 'Dossier complet à renvoyer')
+        updateProblematicRegistration(link, context)
       } else {
-        final_status[0] += ", demande de licence faite"
+        // Send the email  
+        MailApp.sendEmail(email_options)
+        final_status[0] = "✅ Dossier envoyé"
+        // When the license wasn't sent, warn and add to the status bar so that
+        // it is visible
+        if (! maybeEmailLicenseSCA([attachments[0]])) {
+          final_status[0] += ".\n⚠️ PAS de demande de licence (voir paiement)"
+          final_status[1] = "orange";
+        } else {
+          final_status[0] += ", demande de licence faite"
+        }
       }
     }
   } else if (license_request) {
