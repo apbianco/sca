@@ -475,10 +475,23 @@ function GenerateEntry() {
       "cette feuille.");
     return;
   }
+
+  // Lock for 1 minute if re-clicked and message via a toast()
+  // FIXME: This could be a scoped object but later.
+  var cache = CacheService.getScriptCache();
+  if (cache.get('GenerateEntry_lock')) {
+    SpreadsheetApp.getActiveSpreadsheet().toast(
+      "⚠️ La création du dossier est déjà en cours, veuillez patienter...",
+      "⏳ Traitement en cours...",
+      5
+    );
+    return;
+  }
+  cache.put('GenerateEntry_lock', '1', 60);
   
   // Clear the status bar.
   clearRange(sheet, coord_status_info);
-  
+
   // Capture the sanitized family name. Warn if that doesn't work and return.
   var new_family = true;
   var family_name = getFamilyName(sheet, coord_family_name);
@@ -490,6 +503,7 @@ function GenerateEntry() {
         "⚠️ Veuillez correctement saisir ou selectionner un " +
 	    "nom de famille.\n\n" +
         "N'avez vous pas oublié de valider par [return] ou [enter] 😋 ?");
+      cache.remove('GenerateEntry_lock')
       return;
     }
     new_family = false;
@@ -515,12 +529,14 @@ function GenerateEntry() {
       setRangeTextColor(sheet, coord_status_info,
   		    "✅ Le dossier existe déjà. Cliquez sur le lien en bas de cette page " +
   		    "pour charger la facture.", "orange");
+      cache.remove('GenerateEntry_lock')
       return
     }
     displayErrorPannel(
       sheet,
       "⚠️ Un dossier d'inscription existe déjà sous cette dénomination: " +
       already_exists[0] + " mais n'a pu être localisé");
+      cache.remove('GenerateEntry_lock')
       return;
   }
   
@@ -545,4 +561,5 @@ function GenerateEntry() {
     createNewFamilySheetFromOld(sheet, family_name);
   }
   SpreadsheetApp.flush();
+  cache.remove('GenerateEntry_lock')
 }
